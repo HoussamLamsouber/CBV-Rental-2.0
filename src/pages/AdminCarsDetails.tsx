@@ -1163,7 +1163,7 @@ export default function AdminVehicleDetail() {
                       </CardHeader>
                       <CardContent>
                         <p className="text-2xl font-bold text-primary">
-                          {offer.price} MAD {i18n.language === "fr" ? offer.price_label_fr : offer.price_label_en}
+                          {offer.price} MAD/{i18n.language === "fr" ? offer.price_label_fr : offer.price_label_en}
                         </p>
                         <p className="text-sm text-muted-foreground mt-2">
                           {t('admin_vehicle_detail.offers_management.special_price_for')} {displayPeriod.toLowerCase()}
