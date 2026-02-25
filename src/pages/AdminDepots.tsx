@@ -533,7 +533,7 @@ export default function AdminDepots() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30 p-4 sm:p-6">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-50 p-4 sm:p-6">
       <div className="max-w-7xl mx-auto">
         {/* En-tête amélioré */}
         <div className="mb-8">

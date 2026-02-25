@@ -20,7 +20,11 @@ interface Car {
 
 interface CarOffer {
   period: string;
-  price: string;
+  price: {
+    value: number;
+    fr: string;
+    en: string;
+  };
 }
 
 interface OfferRecord {
@@ -28,10 +32,12 @@ interface OfferRecord {
   car_id: string;
   period: string;
   price: number;
+  price_label_fr: string;
+  price_label_en: string;
 }
 
 const Offres = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [cars, setCars] = useState<Car[]>([]);
   const [offers, setOffers] = useState<Record<string, CarOffer[]>>({});
   const [selectedCarId, setSelectedCarId] = useState<string | null>(null);
@@ -75,13 +81,25 @@ const Offres = () => {
 
       const records = data as OfferRecord[];
       const map: Record<string, CarOffer[]> = {};
+      console.log(records);
+
       records.forEach((o) => {
         if (!map[o.car_id]) map[o.car_id] = [];
-        map[o.car_id].push({ period: o.period, price: `${o.price} Dhs` });
+
+        // ⚠️ ON GARDE LA VALEUR BRUTE
+        map[o.car_id].push({
+          period: o.period,
+          price: {
+            value: o.price,
+            fr: o.price_label_fr,
+            en: o.price_label_en
+          }
+        });
       });
 
       setOffers(map);
     };
+
     fetchOffers();
   }, []);
 
@@ -91,10 +109,23 @@ const Offres = () => {
   const currentCarOffers = selectedCarId ? offers[selectedCarId] || [] : [];
   const currentCar = selectedCarId ? cars.find((c) => c.id === selectedCarId) : null;
 
-  const getTranslatedPeriod = (periodKey: string) => {
-    const translation = t(`offers_page.periods.${periodKey}`);
-    return translation.startsWith('offers_page.periods.') ? periodKey : translation;
+  const getTranslatedPeriod = (periodJson: string) => {
+    if (!periodJson) return "";
+
+    try {
+      // Si periodJson est déjà un objet, on le garde
+      const periodObj = typeof periodJson === "string" ? JSON.parse(periodJson) : periodJson;
+
+      // Récupérer la langue courante
+      const lang = i18n.language || "fr";
+
+      return periodObj[lang] || Object.values(periodObj)[0] || "";
+    } catch (err) {
+      console.warn("Erreur parsing period JSON:", periodJson, err);
+      return periodJson;
+    }
   };
+
 
   if (loading) {
     return (
@@ -196,9 +227,9 @@ const Offres = () => {
                     <td className="px-4 py-4">
                       <div>
                         <p className="text-lg font-bold text-primary">
-                          {car.price} Dhs
+                          {car.price} MAD
                         </p>
-                        <p className="text-xs text-gray-500">{t("offers_page.perDay")}</p>
+                        <p className="text-sm text-gray-500">{t("offers_page.perDay")}</p>
                       </div>
                     </td>
 
@@ -208,7 +239,7 @@ const Offres = () => {
                         <div className="text-sm text-gray-600">
                           <p className="font-medium">{offers[car.id].length} {t("offers_page.offers_available", "offre(s) spéciale(s)")}</p>
                           <p className="text-xs text-gray-500 mt-1">
-                            {t("offers_page.from", "À partir de")} {Math.min(...offers[car.id].map(o => parseInt(o.price)))}
+                            {t("offers_page.from", "À partir de")} {Math.min(...offers[car.id].map(o => o.price.value))}
                           </p>
                         </div>
                       ) : (
@@ -256,8 +287,14 @@ const Offres = () => {
         )}
 
         {selectedCarId && currentCar && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            onClick={closeOffersModal}
+          >
+            <div
+              className="bg-white rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="flex items-center justify-between p-4 sm:p-6 border-b">
                 <div className="flex items-center gap-3">
                   <img src={currentCar.image_url} alt={currentCar.name} className="w-12 h-12 object-cover rounded-lg" />
@@ -279,7 +316,7 @@ const Offres = () => {
                       <p className="text-blue-900 text-sm">{t("offers_page.dailyRental")}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-lg font-bold text-blue-900">{currentCar.price} Dhs</p>
+                      <p className="text-lg font-bold text-blue-900">{currentCar.price} MAD</p>
                       <p className="text-blue-800 text-sm">{t("offers_page.perDay")}</p>
                     </div>
                   </div>
@@ -301,7 +338,16 @@ const Offres = () => {
                               {getTranslatedPeriod(offer.period)}
                             </span>
                           </div>
-                          <span className="text-lg font-bold text-green-600">{offer.price}</span>
+                          <div className="flex flex-col items-end leading-tight">
+                            <span className="text-lg font-bold text-green-600">
+                              {offer.price.value} MAD
+                            </span>
+                            <span className="text-sm text-green-800">
+                              {i18n.language === "fr"
+                                ? offer.price.fr || offer.price.en
+                                : offer.price.en || offer.price.fr}
+                            </span>
+                          </div>
                         </div>
                       ))}
                     </div>

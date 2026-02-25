@@ -163,7 +163,7 @@
             "category": "Catégorie",
             "pickup": "Départ",
             "return": "Retour",
-            "location": "Lieu",
+            "location": "Localisation",
             "phone": "Téléphone",
             "email": "Email",
             "total_price": "Prix total",
@@ -366,7 +366,7 @@
             "client": "Client",
             "period": "Période",
             "status":"Statut",
-            "locations": "Lieux",
+            "localisations": "Localisations",
             "registered_user": "Utilisateur enregistré",
             "guest": "Invité",
             "unknown": "Inconnu",
@@ -414,11 +414,14 @@
             
             "add_offer": "Ajouter une offre spéciale",
             "period_required": "Période *",
-            "period_placeholder": "Ex: 3 jours, 1 semaine, 1 mois...",
             "price_required": "Prix (MAD) *",
             "price_placeholder": "Prix pour la période",
             "create_offer": "Créer l'offre",
-            "creating_offer": "Création..."
+            "creating_offer": "Création...",
+            "period_label": "Période",
+            "period_placeholder": "Saisir la période",
+            "day":"Jour",
+            "price_label":"Label de prix"
         },
         
         "status": {
@@ -454,7 +457,7 @@
             "offer_created_success": "L'offre a été ajoutée avec succès.",
             "offer_archived_success": "L'offre a été archivée avec succès.",
             "vehicles_reserved": "véhicule(s) réservé(s)",
-            "day": "jour",
+            "day": "Jour",
             "no_image": "No image",
             "loading": "Chargement..."
         },
@@ -628,7 +631,7 @@
     },
 
     "admin_vehicles": {
-        "title": "Géstion des véhicules",
+        "title": "Gestion des véhicules",
         "subtitle": "Surveillez les performances de votre flotte automobile",
         
         "stats": {
@@ -902,7 +905,7 @@
         "table": {
             "vehicle": "Véhicule",
             "dates": "Dates",
-            "locations": "Lieux",
+            "locations": "Localisations",
             "client": "Client",
             "status": "Statut",
             "price": "Prix",
@@ -930,7 +933,7 @@
             "no_reservations_user": "Vous n'avez pas encore effectué de réservation.",
             "no_reservations_guest": "Vous n'avez pas de réservation en cours.",
             "reservations_found": "{count} réservation(s) trouvée(s)",
-            "cannot_cancel": "Cette réservation ne peut pas être annulée - elle a été refusée par l'hôte",
+            "cannot_cancel": "Cette réservation ne peut pas être annulée",
             "cannot_cancel_passed": "Cette réservation ne peut pas être annulée - la période de location est terminée",
             "from_date": "Du {date}",
             "to_date": "Au {date}"
@@ -953,7 +956,7 @@
         "defaultFuel": "Essence",
         "seats": "places",
         "startFrom": "À partir de",
-        "perDay": "jour",
+        "perDay": "Jour",
         "view": "Voir",
         "noCarsTitle": "Aucun véhicule disponible",
         "noCarsSubtitle": "Tous nos véhicules sont actuellement en location.",
@@ -1087,7 +1090,7 @@
     "reservation_modal": {
         "title": "Réserver {carName}",
         "currency": "MAD",
-        "currency_per_day": "MAD / jour",
+        "currency_per_day": "MAD / Jour",
         "total_price": "Prix total",
         "at_time": "à",
         "reservation_confirmation_note": "Votre réservation sera confirmée après validation par notre équipe.",
@@ -1156,7 +1159,7 @@
 
     "car_card": {
         "currency": "Dhs",
-        "per_day": "jour",
+        "per_day": "Jour",
         "seats": "places",
         
         "status": {
@@ -1448,7 +1451,7 @@
             "loading": "Chargement des localisations...",
             "no_localisations": "Aucune localisation trouvée",
             "no_results": "Aucun résultat pour \"{searchTerm}\"",
-            "localisation_added": "Location ajoutée",
+            "localisation_added": "Localisation ajoutée",
             "localisation_added_success": "{name} a été ajouté avec succès",
             "missing_field": "Champ manquant",
             "missing_display_name": "Veuillez saisir un nom d'affichage",

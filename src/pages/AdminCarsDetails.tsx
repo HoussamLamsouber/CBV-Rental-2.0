@@ -11,8 +11,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { ArrowLeft, Calendar, Trash2 } from "lucide-react";
+import { ArrowLeft, Calendar, Trash2, Pencil } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
 type CarRow = {
   id: string;
@@ -43,9 +44,6 @@ type ReservationRow = {
     full_name: string | null;
     email: string;
   } | null;
-  guest_name?: string | null;
-  guest_email?: string | null;
-  guest_phone?: string | null;
   car_category?: string;
   car_price?: number;
   car_image?: string | null;
@@ -72,14 +70,29 @@ type Vehicle = {
   status?: string;
   created_at: string;
   depot_id?: string;
+
   depots?: {
     id: string;
+    phone: string;
+    email: string;
+    depot_translations: {
+      name: string;
+      city: string;
+      address: string;
+      language_code: string;
+    }[];
+  } | null;
+
+  depot?: {
+    id?: string;
+    phone?: string;
+    email?: string;
     name: string;
     city: string;
     address: string;
-    phone: string;
-  } | null;
+  };
 };
+
 
 export default function AdminVehicleDetail() {
   const { id } = useParams<{ id: string }>();
@@ -87,17 +100,35 @@ export default function AdminVehicleDetail() {
   const { toast } = useToast();
   const { authLoading, adminLoading, isUserAdmin } = useAuth();
   const { t } = useTranslation();
-  
+  const [activeLang, setActiveLang] = useState<"fr" | "en">("fr");
+  const [activePriceLabelLang, setActivePriceLabelLang] = useState<"fr" | "en">("fr");
   const [vehicle, setVehicle] = useState<CarRow | null>(null);
   const [reservations, setReservations] = useState<ReservationRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [activeTab, setActiveTab] = useState<'availability' | 'vehicles' | 'offers' | 'reservations' | 'calendar'>('availability');
-  const [offers, setOffers] = useState<any[]>([]);
+  const [locationsMap, setLocationsMap] = useState<Record<string, string>>({});
+  type Offer = {
+    id: string;
+    period: string;
+    price: number;
+    price_label_fr: string;
+    price_label_en: string;
+  };
+  const { i18n } = useTranslation();
+  const [offers, setOffers] = useState<Offer[]>([]);
   const [isCreateOfferModalOpen, setIsCreateOfferModalOpen] = useState(false);
   const [isCreateVehicleModalOpen, setIsCreateVehicleModalOpen] = useState(false);
-  const [newOffer, setNewOffer] = useState({ period: "", price: "" });
+  const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const [newOffer, setNewOffer] = useState({
+    price: "",
+    period: { fr: "", en: "" },
+    price_label_fr: "",
+    price_label_en: ""
+  });
   const [newVehicle, setNewVehicle] = useState({
     matricule: "",
     obd: "",
@@ -106,6 +137,87 @@ export default function AdminVehicleDetail() {
     status: "available" as 'available' | 'reserved' | 'maintenance'
   });
   const [allReservations, setAllReservations] = useState<ReservationRow[]>([]);
+  
+  const lang = i18n.language;
+
+  const handleEdit = (vehicle: Vehicle) => {
+    setEditingVehicle(vehicle);
+    setIsModalOpen(true);
+  };
+  const fetchVehicles = async () => {
+    if (!id) return;
+
+    const { data } = await supabase
+      .from("vehicles")
+      .select(`
+        *,
+        depots (
+          id,
+          phone,
+          email,
+          depot_translations (
+            name,
+            city,
+            address,
+            language_code
+          )
+        )
+      `)
+      .eq("car_id", id)
+      .is("is_deleted", false)
+      .order("matricule");
+
+
+    const mapped = data?.map(v => {
+      const tr = v.depots?.depot_translations?.find(
+        t => t.language_code === i18n.language
+      );
+
+      return {
+        ...v,
+        depot: {
+          id: v.depots?.id,
+          phone: v.depots?.phone,
+          email: v.depots?.email,
+          name: tr?.name ?? "—",
+          city: tr?.city ?? "—",
+          address: tr?.address ?? "—"
+        }
+      };
+    });
+
+    setVehicles(mapped || []);
+  };
+
+
+  const handleSubmit = async () => {
+    if (!editingVehicle) return;
+
+    const payload = {
+      matricule: editingVehicle.matricule,
+      obd: editingVehicle.obd,
+      date_obd: editingVehicle.date_obd,
+      objet: editingVehicle.objet,
+      status: editingVehicle.status,
+      depot_id: editingVehicle.depot_id ?? null
+    };
+
+    const { error } = await supabase
+      .from("vehicles")
+      .update(payload)
+      .eq("id", editingVehicle.id);
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    setIsModalOpen(false);
+    setEditingVehicle(null);
+
+    await fetchVehicles(); // refresh propre
+  };
+
   
   // Nouvelles variables pour le calendrier
   const [dates, setDates] = useState<string[]>([]);
@@ -131,23 +243,60 @@ export default function AdminVehicleDetail() {
         setVehicle(vData as CarRow);
 
         // 2. Charger les véhicules individuels avec leurs dépôts
-        const { data: vehiclesData } = await supabase
+        const { data: vehiclesData, error } = await supabase
           .from("vehicles")
           .select(`
             *,
             depots (
               id,
-              name,
-              city,
-              address,
-              phone
+              phone,
+              email,
+              depot_translations (
+                name,
+                city,
+                address,
+                language_code
+              )
             )
           `)
           .eq("car_id", id)
           .is("is_deleted", false)
           .order("matricule");
 
-        setVehicles(vehiclesData || []);
+        const vehicles = vehiclesData?.map(v => {
+          const tr = v.depots?.depot_translations?.find(
+            t => t.language_code === i18n.language
+          );
+
+          return {
+            ...v,
+            depot: {
+              id: v.depots?.id,
+              phone: v.depots?.phone,
+              email: v.depots?.email,
+              name: tr?.name ?? "—",
+              city: tr?.city ?? "—",
+              address: tr?.address ?? "—"
+            }
+          };
+        });
+
+
+        setVehicles(vehicles || []);
+
+        const { data: locations } = await supabase
+          .from("localisation_translations")
+          .select("localisation_id, display_name, language")
+          .eq("language", i18n.language);
+
+        if (locations) {
+          const map: Record<string, string> = {};
+          locations.forEach(loc => {
+            map[loc.localisation_id] = loc.display_name;
+          });
+          setLocationsMap(map);
+        }
+
 
         // 3. Charger TOUTES les réservations avec les données associées
         console.log("🔄 Chargement des réservations...");
@@ -155,9 +304,25 @@ export default function AdminVehicleDetail() {
         // D'abord charger les réservations sans jointures
         const { data: simpleReservationsData, error: reservationsError } = await supabase
           .from("reservations")
-          .select("*")
+          .select(`
+            *,
+            pickup_location:active_localisations!reservations_pickup_location_fkey (
+              id,
+              translations:localisation_translations (
+                language,
+                display_name
+              )
+            ),
+            return_location:active_localisations!reservations_return_location_fkey (
+              id,
+              translations:localisation_translations (
+                language,
+                display_name
+              )
+            )
+          `)
           .eq("car_id", id)
-          .order("created_at", { ascending: false });
+          .order("pickup_date", { ascending: false });
 
         if (reservationsError) {
           console.error("❌ Erreur chargement réservations:", reservationsError);
@@ -193,6 +358,7 @@ export default function AdminVehicleDetail() {
                     .from("vehicles")
                     .select("id, matricule, status")
                     .eq("id", reservation.assigned_vehicle_id)
+                    .is("is_deleted", false)
                     .single();
                   
                   vehicleInfo = vehicleData;
@@ -213,9 +379,6 @@ export default function AdminVehicleDetail() {
                 user_id: reservation.user_id,
                 profiles: profileInfo,
                 vehicles: vehicleInfo,
-                guest_name: reservation.guest_name,
-                guest_email: reservation.guest_email,
-                guest_phone: reservation.guest_phone,
                 car_category: reservation.car_category,
                 car_price: reservation.car_price,
                 car_image: reservation.car_image,
@@ -240,7 +403,6 @@ export default function AdminVehicleDetail() {
           .eq("status", "accepted");
 
         setAcceptedReservations(acceptedReservationsData || []);
-        setReservations(acceptedReservationsData || []);
 
         // 5. Charger les offres du véhicule
         await loadOffers();
@@ -322,14 +484,6 @@ export default function AdminVehicleDetail() {
       };
     }
     
-    if (reservation.guest_name || reservation.guest_email) {
-      return {
-        name: reservation.guest_name || t('admin_vehicle_detail.reservations.not_specified'),
-        email: reservation.guest_email || t('admin_vehicle_detail.reservations.not_specified'),
-        type: t('admin_vehicle_detail.reservations.guest')
-      };
-    }
-    
     return {
       name: t('admin_vehicle_detail.reservations.not_specified'),
       email: t('admin_vehicle_detail.reservations.not_specified'),
@@ -353,6 +507,7 @@ export default function AdminVehicleDetail() {
         .from("vehicles")
         .select("matricule")
         .eq("matricule", newVehicle.matricule)
+        .is("is_deleted", false)
         .single();
   
       if (existingVehicle) {
@@ -375,6 +530,7 @@ export default function AdminVehicleDetail() {
           status: newVehicle.status,
           created_at: new Date().toISOString(),
         }])
+        .is("is_deleted", false)
         .select()
         .single();
   
@@ -395,13 +551,7 @@ export default function AdminVehicleDetail() {
   
       setIsCreateVehicleModalOpen(false);
       
-      const { data: vehiclesData } = await supabase
-        .from("vehicles")
-        .select("*")
-        .eq("car_id", id)
-        .is("is_deleted", false)
-        .order("matricule");
-      setVehicles(vehiclesData || []);
+      await fetchVehicles();
   
       const { data: updatedVehicle } = await supabase
         .from("cars")
@@ -521,13 +671,7 @@ export default function AdminVehicleDetail() {
       });
   
       // Recharger la liste des véhicules
-      const { data: vehiclesData } = await supabase
-        .from("vehicles")
-        .select("*")
-        .eq("car_id", id)
-        .is("is_deleted", false)
-        .order("matricule");
-      setVehicles(vehiclesData || []);
+      await fetchVehicles();
   
       // Recharger les données du véhicule pour avoir la quantité mise à jour
       const { data: updatedVehicle } = await supabase
@@ -559,6 +703,7 @@ export default function AdminVehicleDetail() {
           status: newStatus,
           updated_at: new Date().toISOString()
         })
+        .is("is_deleted", false)
         .eq("id", vehicleId);
 
       if (error) throw error;
@@ -589,7 +734,13 @@ export default function AdminVehicleDetail() {
 
   // Fonction pour créer une offre
   const handleCreateOffer = async () => {
-    if (!newOffer.period || !newOffer.price) {
+    if (
+      !newOffer.period.fr ||
+      !newOffer.period.en ||
+      !newOffer.price ||
+      !newOffer.price_label_fr ||
+      !newOffer.price_label_en
+    ) {
       toast({
         title: t('admin_vehicle_detail.messages.missing_fields'),
         description: t('admin_vehicle_detail.messages.fill_all_offer_fields'),
@@ -599,40 +750,37 @@ export default function AdminVehicleDetail() {
     }
 
     setSaving(true);
+
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("offers")
         .insert([{
           car_id: id,
-          period: newOffer.period,
+          period: JSON.stringify(newOffer.period),
           price: Number(newOffer.price),
-          created_at: new Date().toISOString(),
-        }])
-        .select()
-        .single();
+          price_label_fr: newOffer.price_label_fr,
+          price_label_en: newOffer.price_label_en,
+        }]);
 
       if (error) throw error;
 
-      toast({
-        title: t('admin_vehicle_detail.messages.offer_created'),
-        description: t('admin_vehicle_detail.messages.offer_created_success'),
+      setNewOffer({
+        price: "",
+        period: { fr: "", en: "" },
+        price_label_fr: "",
+        price_label_en: ""
       });
 
-      setNewOffer({ period: "", price: "" });
       setIsCreateOfferModalOpen(false);
       await loadOffers();
 
-    } catch (error: any) {
-      console.error("Erreur création offre:", error);
-      toast({
-        title: t("error"),
-        description: error.message || t('admin_vehicle_detail.messages.cannot_create_offer'),
-        variant: "destructive",
-      });
+    } catch (err: any) {
+      console.error(err);
     } finally {
       setSaving(false);
     }
   };
+
 
   // Fonction pour supprimer une offre
   const handleDeleteOffer = async (offerId: string) => {
@@ -672,10 +820,6 @@ export default function AdminVehicleDetail() {
     return <div><main className="container mx-auto p-6">{t('admin_vehicle_detail.messages.missing_id')}</main></div>;
   } 
   
-  if (loading) { 
-    return <div><main className="container mx-auto p-6">{t('admin_vehicle_detail.messages.loading')}</main></div>;
-  }
-  
   if (!vehicle) { 
     return <div><main className="container mx-auto p-6">{t('admin_vehicle_detail.messages.vehicle_not_found')}</main></div>;
   }
@@ -684,38 +828,25 @@ export default function AdminVehicleDetail() {
   const stats = getVehicleStats();
 
   // Fonction utilitaire pour traduire les lieux
-  const translateLocation = (location: string) => {
-    if (!location) return location;
-    
-    // Retirer les préfixes "airport_" et "station_" si présents
-    const cleanLocation = location
-      .replace('airport_', '')
-      .replace('station_', '');
-    
-    console.log(`🔍 Translation debug - Original: ${location}, Clean: ${cleanLocation}`);
-    
-    // Essayer la traduction des aéroports
-    const airportTrans = t(`airports.${cleanLocation}`);
-    if (airportTrans !== `airports.${cleanLocation}`) {
-      console.log(`✅ Found airport translation: ${airportTrans}`);
-      return airportTrans;
+  const translateLocation = (loc?: any) => {
+    if (!loc) return "-";
+
+    // cas où c'est déjà une string (fallback)
+    if (typeof loc === "string") {
+      return locationsMap[loc] || loc.slice(0, 6);
     }
-    
-    // Essayer la traduction des gares
-    const stationTrans = t(`stations.${cleanLocation}`);
-    if (stationTrans !== `stations.${cleanLocation}`) {
-      console.log(`✅ Found station translation: ${stationTrans}`);
-      return stationTrans;
-    }
-    
-    console.log(`❌ No translation found for: ${location}`);
-    // Fallback : retourner la valeur originale
-    return location;
+
+    // cas jointure supabase (objet)
+    const translation = loc.translations?.find(
+      (t: any) => t.language === i18n.language
+    );
+
+    return translation?.display_name || loc.id?.slice(0, 6) || "-";
   };
 
   return (
     <>
-      <main className="container mx-auto p-6">
+      <main className="container bg-gradient-to-b from-blue-50 to-gray-50 mx-auto p-6">
         {/* En-tête du véhicule */}
         <div className="flex items-start gap-6 mb-6">
           <div className="w-48">
@@ -733,11 +864,8 @@ export default function AdminVehicleDetail() {
 
             {/* Stock affiché simplement sans input */}
             <div className="mb-4">
-              <label className="block text-sm text-gray-600 mb-1">{t('admin_vehicle_detail.vehicle_info.total_stock')}</label>
+              <label className="block text-sm text-gray-600 mb-1">{t('admin_vehicle_detail.vehicle_info.total_stock')} : {vehicle.quantity}</label>
               <div className="flex items-center gap-2">
-                <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 font-medium min-w-20">
-                  {vehicle.quantity}
-                </div>
                 <span className="text-sm text-gray-500">
                   ({t('admin_vehicle_detail.vehicle_info.auto_sync')} {vehicles.length} {t('admin_vehicle_detail.vehicle_info.vehicles_active')})
                 </span>
@@ -919,13 +1047,13 @@ export default function AdminVehicleDetail() {
                           {vehicleItem.date_obd ? format(new Date(vehicleItem.date_obd), "dd/MM/yyyy") : '-'}
                         </td>
                         <td className="p-4">
-                          {vehicleItem.depots ? (
+                          {vehicleItem.depot ? (
                             <div className="space-y-1">
-                              <div className="font-medium text-sm">{vehicleItem.depots.name}</div>
-                              <div className="text-xs text-gray-600">{vehicleItem.depots.city}</div>
-                              {vehicleItem.depots.address && (
+                              <div className="font-medium text-sm">{vehicleItem.depot.name}</div>
+                              <div className="text-xs text-gray-600">{vehicleItem.depot.city}</div>
+                              {vehicleItem.depot.address && (
                                 <div className="text-xs text-gray-500 truncate max-w-xs">
-                                  {vehicleItem.depots.address}
+                                  {vehicleItem.depot.address}
                                 </div>
                               )}
                             </div>
@@ -953,14 +1081,26 @@ export default function AdminVehicleDetail() {
                           </select>
                         </td>
                         <td className="p-4">
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleDeleteVehicle(vehicleItem.id, vehicleItem.matricule)}
-                          >
-                            {t('admin_vehicle_detail.vehicles_management.delete')}
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => handleEdit(vehicleItem)}
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+
+                            <Button
+                              variant="destructive"
+                              size="icon"
+                              onClick={() => handleDeleteVehicle(vehicleItem.id, vehicleItem.matricule)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </td>
+
+
                       </tr>
                     );
                   })}
@@ -994,41 +1134,44 @@ export default function AdminVehicleDetail() {
 
             {offers.length === 0 ? (
               <Card>
-                <CardContent className="py-8 text-center">
-                  <div className="text-4xl mb-4">🎯</div>
-                  <p className="text-muted-foreground mb-4">{t('admin_vehicle_detail.offers_management.no_offers')}</p>
-                  <Button onClick={() => setIsCreateOfferModalOpen(true)}>
-                    {t('admin_vehicle_detail.offers_management.create_first_offer')}
-                  </Button>
+                <CardContent>
+                  <div className="flex flex-col items-start">
+                    <p className="text-2xl font-bold text-primary">Aucune offre disponible</p>
+                  </div>
                 </CardContent>
               </Card>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {offers.map((offer) => (
-                  <Card key={offer.id} className="relative group hover:shadow-lg transition-shadow duration-200">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-lg flex items-center justify-between">
-                        {t(`admin_vehicle_detail.periods.${offer.period}`)}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteOffer(offer.id)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-50 hover:text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-2xl font-bold text-primary">
-                        {offer.price} MAD
-                      </p>
-                      <p className="text-sm text-muted-foreground mt-2">
-                        {t('admin_vehicle_detail.offers_management.special_price_for')} {t(`admin_vehicle_detail.periods.${offer.period}`).toLowerCase()}
-                      </p>
-                    </CardContent>
-                  </Card>
-                ))}
+                {offers.map((offer) => {
+                  const parsed = JSON.parse(offer.period || "{}");
+                  const displayPeriod = i18n.language === "fr" ? parsed.fr : parsed.en;
+
+                  return (
+                    <Card key={offer.id} className="relative group hover:shadow-lg transition-shadow duration-200">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-lg flex items-center justify-between">
+                          {displayPeriod}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteOffer(offer.id)}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-50 hover:text-red-600"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-2xl font-bold text-primary">
+                          {offer.price} MAD {i18n.language === "fr" ? offer.price_label_fr : offer.price_label_en}
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          {t('admin_vehicle_detail.offers_management.special_price_for')} {displayPeriod.toLowerCase()}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             )}
           </>
@@ -1048,7 +1191,7 @@ export default function AdminVehicleDetail() {
                     <th className="p-4 text-left">{t('admin_vehicle_detail.reservations.period')}</th>
                     <th className="p-4 text-left">{t('admin_vehicle_detail.reservations.status')}</th>
                     <th className="p-4 text-left">{t('admin_vehicle_detail.reservations.assigned_vehicle', 'Véhicule attribué')}</th>
-                    <th className="p-4 text-left">{t('admin_vehicle_detail.reservations.locations')}</th>
+                    <th className="p-4 text-left">{t('admin_vehicle_detail.reservations.localisations')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1355,6 +1498,75 @@ export default function AdminVehicleDetail() {
           </div>
         </Dialog>
 
+        {/* Modal édition véhicule */}
+        <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} className="relative z-50">
+          <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+          <div className="fixed inset-0 flex items-center justify-center p-4">
+            <Dialog.Panel className="bg-white rounded-lg p-6 w-full max-w-md">
+              <Dialog.Title className="text-lg font-semibold mb-4">
+                Modifier véhicule
+              </Dialog.Title>
+
+              {editingVehicle && (
+                <div className="space-y-4">
+
+                  <div>
+                    <Label>Matricule</Label>
+                    <Input
+                      value={editingVehicle.matricule}
+                      onChange={(e) =>
+                        setEditingVehicle({ ...editingVehicle, matricule: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Label>OBD</Label>
+                    <Input
+                      value={editingVehicle.obd || ""}
+                      onChange={(e) =>
+                        setEditingVehicle({ ...editingVehicle, obd: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Date OBD</Label>
+                    <Input
+                      type="date"
+                      value={editingVehicle.date_obd || ""}
+                      onChange={(e) =>
+                        setEditingVehicle({ ...editingVehicle, date_obd: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Objet</Label>
+                    <Input
+                      value={editingVehicle.objet || ""}
+                      onChange={(e) =>
+                        setEditingVehicle({ ...editingVehicle, objet: e.target.value })
+                      }
+                    />
+                  </div>
+
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 mt-6">
+                <Button variant="secondary" onClick={() => setIsModalOpen(false)}>
+                  Annuler
+                </Button>
+                <Button onClick={handleSubmit}>
+                  Enregistrer
+                </Button>
+              </div>
+            </Dialog.Panel>
+          </div>
+        </Dialog>
+
+
         {/* Modal de création d'offre */}
         <Dialog open={isCreateOfferModalOpen} onClose={() => setIsCreateOfferModalOpen(false)} className="relative z-50">
           <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
@@ -1365,26 +1577,65 @@ export default function AdminVehicleDetail() {
               </Dialog.Title>
 
               <div className="space-y-4">
-                <div>
-                  <Label htmlFor="period">{t('admin_vehicle_detail.modals.period_required')}</Label>
+                {/* Bouton FR/EN pour switcher les deux champs texte */}
+                <div className="flex gap-2 mb-2">
+                  {["fr", "en"].map((lang) => (
+                    <button
+                      key={lang}
+                      type="button"
+                      onClick={() => setActiveLang(lang as "fr" | "en")}
+                      className={`px-3 py-1 rounded-md text-sm font-medium transition ${
+                        activeLang === lang
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
+                    >
+                      {lang.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Période */}
+                <div className="space-y-1">
+                  <Label>{t("admin_vehicle_detail.modals.period_label")}</Label>
                   <Input
-                    id="period"
-                    value={newOffer.period}
-                    onChange={(e) => setNewOffer({...newOffer, period: e.target.value})}
-                    placeholder={t('admin_vehicle_detail.modals.period_placeholder')}
-                    required
+                    value={newOffer.period[activeLang]}
+                    onChange={(e) =>
+                      setNewOffer((prev) => ({
+                        ...prev,
+                        period: { ...prev.period, [activeLang]: e.target.value },
+                      }))
+                    }
+                    placeholder={`${t("admin_vehicle_detail.modals.period_placeholder")} (${activeLang.toUpperCase()})`}
                   />
                 </div>
 
+                {/* Prix */}
                 <div>
                   <Label htmlFor="price">{t('admin_vehicle_detail.modals.price_required')}</Label>
                   <Input
                     id="price"
                     type="number"
                     value={newOffer.price}
-                    onChange={(e) => setNewOffer({...newOffer, price: e.target.value})}
+                    onChange={(e) => setNewOffer({ ...newOffer, price: e.target.value })}
                     placeholder={t('admin_vehicle_detail.modals.price_placeholder')}
                     required
+                  />
+                </div>
+
+                {/* Label prix FR/EN */}
+                <div className="space-y-1">
+                  <Label>{t('admin_vehicle_detail.modals.price_label')}</Label>
+                  <Input
+                    value={activeLang === "fr" ? newOffer.price_label_fr : newOffer.price_label_en}
+                    onChange={(e) =>
+                      setNewOffer((prev) => ({
+                        ...prev,
+                        price_label_fr: activeLang === "fr" ? e.target.value : prev.price_label_fr,
+                        price_label_en: activeLang === "en" ? e.target.value : prev.price_label_en,
+                      }))
+                    }
+                    placeholder={activeLang === "fr" ? "/jour" : "/day"}
                   />
                 </div>
               </div>

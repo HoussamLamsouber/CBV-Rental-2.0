@@ -10,35 +10,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { 
   ArrowLeft, 
-  Search, 
-  UserPlus, 
+  Search,  
   Mail, 
   Phone, 
   Calendar,
   Users,
   UserCog,
-  UserX,
   Eye,
-  Trash2,
-  ChevronDown,
-  ChevronUp
+  Trash2
 } from "lucide-react";
-import { Dialog } from "@headlessui/react";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { cn } from "@/lib/utils";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
 type Profile = {
   id: string;
@@ -64,20 +47,8 @@ export default function AdminUsers() {
   const [filteredProfiles, setFilteredProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isAddAdminModalOpen, setIsAddAdminModalOpen] = useState(false);
-  const [newAdmin, setNewAdmin] = useState({
-    email: "",
-    full_name: "",
-    telephone: "",
-    password: ""
-  });
-  const [showPassword, setShowPassword] = useState(false);
   const [allEmails, setAllEmails] = useState<{email: string, full_name: string | null}[]>([]);
   const [selectedEmail, setSelectedEmail] = useState("");
-  const [emailSearchOpen, setEmailSearchOpen] = useState(false);
-  const [emailSearchTerm, setEmailSearchTerm] = useState("");
-  const [sortField, setSortField] = useState<keyof Profile>('created_at');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   // Vérification des permissions admin
   if (authLoading || adminLoading) {
@@ -117,34 +88,9 @@ export default function AdminUsers() {
         return matchesSearch && profile.role === 'client';
       }
     });
-    
-    // Trier les résultats
-    const sorted = [...filtered].sort((a, b) => {
-      let aValue = a[sortField];
-      let bValue = b[sortField];
-      
-      // Gérer les valeurs nulles
-      if (aValue === null) aValue = '';
-      if (bValue === null) bValue = '';
-      
-      if (sortDirection === 'asc') {
-        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-      } else {
-        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
-      }
-    });
-    
-    setFilteredProfiles(sorted);
-  }, [searchTerm, profiles, activeTab, sortField, sortDirection]);
 
-  const handleSort = (field: keyof Profile) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('desc');
-    }
-  };
+    setFilteredProfiles(filtered);
+  }, [searchTerm, profiles, activeTab]);
 
   const loadProfiles = async () => {
     try {
@@ -174,162 +120,6 @@ export default function AdminUsers() {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  // Charger tous les emails au montage du composant
-  useEffect(() => {
-    loadAllEmails();
-  }, []);
-
-  // Modifiez la fonction loadAllEmails pour ne charger que les clients
-  const loadAllEmails = async () => {
-    try {
-      console.log("🔄 Chargement des clients...");
-      
-      const { data: profiles, error } = await supabase
-        .from("profiles")
-        .select("email, full_name, role")
-        .eq("role", "client")
-        .order("email");
-
-      if (error) {
-        console.error("❌ Erreur chargement clients:", error);
-        throw error;
-      }
-
-      console.log("📋 Clients chargés:", profiles);
-      setAllEmails(profiles || []);
-
-    } catch (error) {
-      console.error("💥 Erreur chargement emails:", error);
-    }
-  };
-
-  const handleAddAdmin = async () => {
-    if (!selectedEmail) return;
-
-    try {
-      const cleanEmail = selectedEmail.trim().toLowerCase();
-      
-      console.log("🔍 Promotion via fonction stockée:", cleanEmail);
-
-      // Utiliser la fonction stockée
-      const { error } = await supabase.rpc('promote_to_admin', {
-        user_email: cleanEmail
-      });
-
-      if (error) {
-        console.error("❌ Erreur fonction stockée:", error);
-        throw error;
-      }
-
-      console.log("✅ Fonction stockée exécutée");
-
-      // Vérifier le résultat
-      const { data: verificationData } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("email", cleanEmail)
-        .single();
-
-      console.log("🔍 Rôle après promotion:", verificationData?.role);
-
-      if (verificationData?.role === 'admin') {
-        toast({
-          title: t('admin_users.messages.promotion_success'),
-          description: t('admin_users.messages.now_admin', { email: cleanEmail }),
-        });
-      } else {
-        toast({
-          title: t('admin_users.messages.no_change'),
-          description: t('admin_users.messages.not_client_or_not_exists', { email: cleanEmail }),
-          variant: "default",
-        });
-      }
-
-      setSelectedEmail("");
-      setIsAddAdminModalOpen(false);
-      
-      setTimeout(async () => {
-        await loadProfiles();
-        await loadAllEmails();
-      }, 1000);
-
-    } catch (error: any) {
-      console.error("💥 Erreur:", error);
-      toast({
-        title: t("error"),
-        description: t('admin_users.messages.cannot_promote_user'),
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleRemoveAdmin = async (profileId: string, email: string) => {
-    if (!confirm(t('admin_users.messages.confirm_remove_admin', { email }))) {
-      return;
-    }
-
-    try {
-      console.log("🔍 Retrait des droits admin pour:", email);
-
-      // Approche directe d'abord
-      const { error } = await supabase
-        .from("profiles")
-        .update({ role: "client" })
-        .eq("id", profileId);
-
-      if (error) {
-        console.error("❌ Erreur retrait admin:", error);
-        throw error;
-      }
-
-      // Vérification
-      const { data: verificationData } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", profileId)
-        .single();
-
-      console.log("🔍 Rôle après retrait:", verificationData?.role);
-
-      if (verificationData?.role === 'client') {
-        toast({
-          title: t('admin_users.messages.rights_removed'),
-          description: t('admin_users.messages.no_longer_admin', { email }),
-        });
-      } else {
-        throw new Error(t('admin_users.messages.removal_failed'));
-      }
-
-      await loadProfiles();
-
-    } catch (error: any) {
-      console.error("Erreur retrait admin:", error);
-      
-      // Si l'approche directe échoue, utiliser une fonction stockée
-      try {
-        const { error: rpcError } = await supabase.rpc('demote_admin', {
-          user_id: profileId
-        });
-
-        if (rpcError) throw rpcError;
-
-        toast({
-          title: t('admin_users.messages.rights_removed'),
-          description: t('admin_users.messages.no_longer_admin', { email }),
-        });
-
-        await loadProfiles();
-
-      } catch (rpcError: any) {
-        toast({
-          title: t("error"),
-          description: t('admin_users.messages.cannot_remove_admin_rights'),
-          variant: "destructive",
-        });
-      }
     }
   };
 
@@ -377,22 +167,8 @@ export default function AdminUsers() {
   const adminsCount = profiles.filter(p => p.role === 'admin').length;
   const clientsCount = profiles.filter(p => p.role === 'client').length;
 
-  const SortableHeader = ({ field, children }: { field: keyof Profile; children: React.ReactNode }) => (
-    <TableHead 
-      className="cursor-pointer hover:bg-gray-50 transition-colors"
-      onClick={() => handleSort(field)}
-    >
-      <div className="flex items-center gap-1">
-        {children}
-        {sortField === field && (
-          sortDirection === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
-        )}
-      </div>
-    </TableHead>
-  );
-
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-50">
       <main className="container mx-auto px-4 py-8">
         {/* En-tête */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
@@ -404,11 +180,6 @@ export default function AdminUsers() {
               </p>
             </div>
           </div>
-          
-          <Button onClick={() => setIsAddAdminModalOpen(true)}>
-            <UserPlus className="h-4 w-4 mr-2" />
-            {t('admin_users.actions.add_admin')}
-          </Button>
         </div>
 
         {/* Onglets */}
@@ -462,104 +233,114 @@ export default function AdminUsers() {
         ) : (
           <Card>
             <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <SortableHeader field="full_name">
-                      {t('admin_users.table.name')}
-                    </SortableHeader>
-                    <SortableHeader field="email">
-                      {t('admin_users.table.email')}
-                    </SortableHeader>
-                    <SortableHeader field="telephone">
-                      {t('admin_users.table.phone')}
-                    </SortableHeader>
-                    <SortableHeader field="role">
-                      {t('admin_users.table.role')}
-                    </SortableHeader>
-                    <SortableHeader field="created_at">
-                      {t('admin_users.table.registration_date')}
-                    </SortableHeader>
-                    <TableHead className="text-right">
-                      {t('admin_users.table.actions')}
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredProfiles.map((profile) => (
-                    <TableRow key={profile.id} className="hover:bg-gray-50">
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
+              <div className="w-full overflow-x-auto">
+                <table className="w-full text-sm table-fixed">
+                  <thead className="bg-gray-50 border-b text-gray-600 text-xs uppercase tracking-wide">
+                    <tr>
+                      <th className="text-left px-4 py-3 font-medium">
+                        {t('admin_users.table.name')}
+                      </th>
+
+                      <th className="text-left px-4 py-3 font-medium">
+                        {t('admin_users.table.email')}
+                      </th>
+
+                      <th className="text-left px-4 py-3 font-medium">
+                        {t('admin_users.table.phone')}
+                      </th>
+
+                      <th className="text-left px-4 py-3 font-medium">
+                        {t('admin_users.table.role')}
+                      </th>
+
+                      <th className="text-left px-4 py-3 font-medium">
+                        {t('admin_users.table.registration_date')}
+                      </th>
+
+                      <th className="w-[120px] px-4 py-3 font-medium">
+                        {t('admin_users.table.actions')}
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {filteredProfiles.map(profile => (
+                      <tr key={profile.id} className="border-b last:border-0">
+
+                        {/* Name */}
+                        <td className="px-4 py-3 font-medium">
                           {profile.full_name || t('admin_users.messages.not_provided')}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Mail className="h-4 w-4 text-gray-400" />
-                          <span className="truncate max-w-[200px]">{profile.email}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {profile.telephone ? (
+                        </td>
+
+                        {/* Email */}
+                        <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
-                            <Phone className="h-4 w-4 text-gray-400" />
-                            {profile.telephone}
+                            <Mail className="h-4 w-4 text-gray-400" />
+                            <span className="truncate max-w-[200px]">
+                              {profile.email}
+                            </span>
                           </div>
-                        ) : (
-                          <span className="text-gray-400">{t('admin_users.messages.not_provided')}</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {profile.role === 'admin' ? (
-                          <Badge variant="default">{t('admin_users.roles.admin')}</Badge>
-                        ) : (
-                          <Badge variant="secondary">{t('admin_users.roles.client')}</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-gray-400" />
-                          {formatDateTime(profile.created_at)}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => navigate(`/admin/reservations?user=${profile.id}`)}
-                            title={t('admin_users.actions.view_reservations')}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteUser(profile.id, profile.email, profile.role)}
-                            title={t('admin_users.actions.delete_user', { 
-                              role: profile.role === 'admin' ? t('admin_users.roles.admin') : t('admin_users.roles.client')
-                            })}
-                          >
-                            <Trash2 className="h-4 w-4 text-red-600" />
-                          </Button>
-                          
-                          {activeTab === 'admins' && profile.role === 'admin' && (
+                        </td>
+
+                        {/* Phone */}
+                        <td className="px-4 py-3">
+                          {profile.telephone ? (
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-4 w-4 text-gray-400" />
+                              {profile.telephone}
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">
+                              {t('admin_users.messages.not_provided')}
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Role */}
+                        <td className="px-4 py-3">
+                          {profile.role === 'admin'
+                            ? <Badge>{t('admin_users.roles.admin')}</Badge>
+                            : <Badge variant="secondary">{t('admin_users.roles.client')}</Badge>
+                          }
+                        </td>
+
+                        {/* Date */}
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-gray-400" />
+                            {formatDateTime(profile.created_at)}
+                          </div>
+                        </td>
+
+                        {/* Actions */}
+                        <td className="w-[120px] px-4 py-3">
+                          <div className="flex gap-2">
+                            
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleRemoveAdmin(profile.id, profile.email)}
-                              title={t('admin_users.actions.remove_admin_rights')}
+                              onClick={() => navigate(`/admin/reservations?user=${profile.id}`)}
                             >
-                              <UserX className="h-4 w-4 text-orange-600" />
+                              <Eye className="h-4 w-4" />
                             </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteUser(profile.id, profile.email, profile.role)}
+                            >
+                              <Trash2 className="h-4 w-4 text-red-600" />
+                            </Button>
+
+                          </div>
+                        </td>
+
+                      </tr>
+                    ))}
+                  </tbody>
+
+                </table>
+              </div>
             </CardContent>
           </Card>
         )}
@@ -578,147 +359,9 @@ export default function AdminUsers() {
                 {searchTerm ? t('admin_users.messages.no_search_results') : 
                  activeTab === 'admins' ? t('admin_users.messages.no_admins_yet') : t('admin_users.messages.no_clients_yet')}
               </p>
-              {activeTab === 'admins' && (
-                <Button onClick={() => setIsAddAdminModalOpen(true)}>
-                  {t('admin_users.actions.add_admin')}
-                </Button>
-              )}
             </CardContent>
           </Card>
         )}
-
-        {/* Modal d'ajout d'admin */}
-        <Dialog open={isAddAdminModalOpen} onClose={() => setIsAddAdminModalOpen(false)} className="relative z-50">
-          <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
-          <div className="fixed inset-0 flex items-center justify-center p-4">
-            <Dialog.Panel className="bg-white rounded-lg p-6 w-full max-w-md">
-              <Dialog.Title className="text-lg font-semibold mb-4">
-                {t('admin_users.modals.add_admin.title')}
-              </Dialog.Title>
-
-              <div className="space-y-4 mb-4">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <p className="text-sm text-blue-800">
-                    {t('admin_users.modals.add_admin.info')}
-                  </p>
-                </div>
-
-                <div>
-                  <Label htmlFor="user-select">{t('admin_users.modals.add_admin.select_client')} *</Label>
-                  <Popover open={emailSearchOpen} onOpenChange={setEmailSearchOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={emailSearchOpen}
-                        className="w-full justify-between h-10 border-gray-300 hover:border-blue-500 transition-colors"
-                      >
-                        <div className="flex items-center gap-2 flex-1 text-left min-w-0">
-                          <Mail className="h-4 w-4 text-gray-400" />
-                          <span className={cn("truncate", !selectedEmail && "text-muted-foreground")}>
-                            {selectedEmail 
-                              ? allEmails.find(email => email.email === selectedEmail)?.email 
-                              : t('admin_users.modals.add_admin.choose_client')
-                            }
-                          </span>
-                        </div>
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent 
-                      className="w-[var(--radix-popover-trigger-width)] p-0 max-h-[60vh] overflow-y-auto" 
-                      align="start"
-                      side="bottom"
-                    >
-                      <Command>
-                        <CommandInput 
-                          placeholder={t('admin_users.modals.add_admin.search_client')}
-                          value={emailSearchTerm}
-                          onValueChange={setEmailSearchTerm}
-                        />
-                        <CommandEmpty className="py-6 text-center text-sm text-muted-foreground">
-                          {t('admin_users.modals.add_admin.no_clients_found')}
-                        </CommandEmpty>
-                        <CommandGroup className="max-h-60 overflow-y-auto">
-                          {allEmails
-                            .filter(profile => 
-                              profile.email.toLowerCase().includes(emailSearchTerm.toLowerCase()) ||
-                              (profile.full_name && profile.full_name.toLowerCase().includes(emailSearchTerm.toLowerCase()))
-                            )
-                            .map((profile) => (
-                              <CommandItem
-                                key={profile.email}
-                                value={profile.email}
-                                onSelect={(currentValue) => {
-                                  setSelectedEmail(currentValue === selectedEmail ? "" : currentValue);
-                                  setEmailSearchOpen(false);
-                                  setEmailSearchTerm("");
-                                }}
-                                className="flex items-center gap-2"
-                              >
-                                <Check
-                                  className={cn(
-                                    "h-4 w-4",
-                                    selectedEmail === profile.email ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
-                                <div className="flex flex-col min-w-0 flex-1">
-                                  <span className="font-medium truncate">{profile.email}</span>
-                                  {profile.full_name && (
-                                    <span className="text-xs text-gray-500 truncate">{profile.full_name}</span>
-                                  )}
-                                </div>
-                              </CommandItem>
-                            ))
-                          }
-                        </CommandGroup>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {allEmails.length} {t('admin_users.modals.add_admin.clients_available')}
-                  </p>
-                </div>
-
-                <div>
-                  <Label htmlFor="full_name">{t('admin_users.modals.add_admin.new_full_name')}</Label>
-                  <Input
-                    id="full_name"
-                    value={newAdmin.full_name}
-                    onChange={(e) => setNewAdmin({...newAdmin, full_name: e.target.value})}
-                    placeholder={t('admin_users.modals.add_admin.keep_current_name')}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="telephone">{t('admin_users.modals.add_admin.new_phone')}</Label>
-                  <Input
-                    id="telephone"
-                    value={newAdmin.telephone}
-                    onChange={(e) => setNewAdmin({...newAdmin, telephone: e.target.value})}
-                    placeholder={t('admin_users.modals.add_admin.keep_current_phone')}
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2 mt-6">
-                <Button variant="secondary" onClick={() => {
-                  setIsAddAdminModalOpen(false);
-                  setSelectedEmail("");
-                  setNewAdmin({ email: "", full_name: "", telephone: "", password: "" });
-                }}>
-                  {t('admin_users.modals.add_admin.cancel')}
-                </Button>
-                <Button 
-                  onClick={handleAddAdmin}
-                  disabled={!selectedEmail || allEmails.length === 0}
-                >
-                  {t('admin_users.modals.add_admin.promote_to_admin')}
-                </Button>
-              </div>
-            </Dialog.Panel>
-          </div>
-        </Dialog>
       </main>
     </div>
   );

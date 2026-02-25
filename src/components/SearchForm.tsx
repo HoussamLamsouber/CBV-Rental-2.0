@@ -263,7 +263,7 @@ const TimePickerField = ({
 
 // --- Search Form ---
 export const SearchForm = ({ onSearch }: SearchFormProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const [pickupLocation, setPickupLocation] = useState("");
   const [returnLocation, setReturnLocation] = useState("");
@@ -272,7 +272,7 @@ export const SearchForm = ({ onSearch }: SearchFormProps) => {
   const [returnDate, setReturnDate] = useState<Date>();
   const [pickupTime, setPickupTime] = useState("09:00");
   const [returnTime, setReturnTime] = useState("09:00");
-  const [activeLocations, setActiveLocations] = useState<{ value: string; label: string }[]>([]);
+  const [activeLocations, setActiveLocations] = useState<{ value: string; label: string; type: string }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const [filters, setFilters] = useState({
@@ -301,35 +301,61 @@ export const SearchForm = ({ onSearch }: SearchFormProps) => {
   const fetchActiveLocations = async () => {
     try {
       setIsLoading(true);
-      const { data, error } = await supabase
-        .from("active_locations" as any)
-        .select("location_value, display_name, location_type, translation_key")
-        .eq("is_active", true)
-        .order("location_type")
-        .order("display_name");
-      if (error) throw error;
 
-      const formatted = data.map((loc: any) => {
-        let label = loc.display_name;
-        if (loc.translation_key) {
-          const ns = loc.location_type === 'airport' ? 'airports' : 'stations';
-          const tr = t(`${ns}.${loc.translation_key}`);
-          if (tr && !tr.startsWith(ns + '.')) label = tr;
-        }
-        return { value: loc.location_value, label, type: loc.location_type };
+      // Récupération des localisations actives
+      const { data: locations, error: locError } = await supabase
+        .from("active_localisations")
+        .select("id, localisation_value, localisation_type")
+        .eq("is_active", true)
+        .order("localisation_type")
+        .order("localisation_value");
+
+      if (locError) throw locError;
+
+      // Récupération des traductions pour la langue courante
+      const { data: translations, error: transError } = await supabase
+        .from("localisation_translations")
+        .select("localisation_id, display_name, language")
+        .eq("language", i18n.language); // utilise la langue courante
+      if (transError) throw transError;
+
+      // Fusion localisation + traduction
+      const formatted = locations.map((loc: any) => {
+        const tr = translations.find((t: any) => t.localisation_id === loc.id);
+        const label = tr ? tr.display_name : loc.localisation_value;
+        return {
+          value: loc.localisation_value,
+          label,
+          type: loc.localisation_type
+        };
       });
+
       setActiveLocations(formatted);
+
     } catch (err) {
       console.error("Erreur chargement locations:", err);
       setActiveLocations(getFallbackLocations());
-    } finally { setIsLoading(false); }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
+
   const getFallbackLocations = () => {
-    const airports = ["agadir","casablanca","marrakech","rabat","tanger"].map(a => ({ value: `airport_${a}`, label: t(`airports.${a}`) }));
-    const stations = ["casa_voyageurs","rabat_agdal","marrakech"].map(s => ({ value: `station_${s}`, label: t(`stations.${s}`) }));
+    const airports = ["agadir","casablanca","marrakech","rabat","tanger"].map(a => ({
+      value: `airport_${a}`,
+      label: t(`airports.${a}`),
+      type: "airport"
+    }));
+    const stations = ["casa_voyageurs","rabat_agdal","marrakech"].map(s => ({
+      value: `station_${s}`,
+      label: t(`stations.${s}`),
+      type: "station"
+    }));
     return [...airports, ...stations];
   };
+
+
 
   const getLocationLabel = (value: string) => activeLocations.find(item => item.value === value)?.label || value;
 

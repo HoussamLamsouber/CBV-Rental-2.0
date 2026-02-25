@@ -48,25 +48,20 @@ export const ReservationModal = ({
   const { toast } = useToast();
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const [pickupLocationName, setPickupLocationName] = useState("");
+  const [returnLocationName, setReturnLocationName] = useState("");
 
-  // Fonction pour traduire les lieux (aéroports et gares)
-  const getTranslatedLocation = (locationValue: string) => {
-    // Essayer d'abord les aéroports
-    const airportKey = locationValue.replace('airport_', '');
-    const airportTranslation = t(`airports.${airportKey}`);
-    if (airportTranslation && !airportTranslation.startsWith('airports.')) {
-      return airportTranslation;
-    }
-    
-    // Essayer ensuite les gares
-    const stationKey = locationValue.replace('station_', '');
-    const stationTranslation = t(`stations.${stationKey}`);
-    if (stationTranslation && !stationTranslation.startsWith('stations.')) {
-      return stationTranslation;
-    }
-    
-    // Retourner la valeur originale si aucune traduction trouvée
-    return locationValue;
+  const getLocationId = async (value: string) => {
+    const { data, error } = await supabase
+      .from("active_localisations")
+      .select("id")
+      .eq("localisation_value", value)
+      .is("deleted_at", null)
+      .single();
+
+    if (error || !data) throw new Error("Location not found: " + value);
+
+    return data.id;
   };
 
   useEffect(() => {
@@ -93,6 +88,22 @@ export const ReservationModal = ({
     const available = await checkRealTimeAvailability();
     setIsAvailable(available);
   };
+
+  const loadLocationNames = async () => {
+    if (!searchData) return;
+
+    const pickupId = await getLocationId(searchData.pickupLocation);
+    const returnId = await getLocationId(
+      searchData.sameLocation
+        ? searchData.pickupLocation
+        : searchData.returnLocation || searchData.pickupLocation
+    );
+
+    setPickupLocationName(await getLocationName(pickupId));
+    setReturnLocationName(await getLocationName(returnId));
+  };
+
+  loadLocationNames();
 
   const checkRealTimeAvailability = async (): Promise<boolean> => {
     if (!car || !searchData?.pickupDate || !searchData?.returnDate) return false;
@@ -140,7 +151,28 @@ export const ReservationModal = ({
     return car.price * numberOfDays;
   };
 
+  const getLocationName = async (id: string) => {
+    const { data, error } = await supabase
+      .from("localisation_translations")
+      .select("display_name")
+      .eq("localisation_id", id)
+      .eq("language", i18n.language)
+      .single();
+
+    if (error || !data) return id; // fallback uuid
+
+    return data.display_name;
+  };
+
   const handleConfirm = async () => {
+    const pickupLocationId = await getLocationId(searchData.pickupLocation);
+
+    const returnLocationId = await getLocationId(
+      searchData.sameLocation
+        ? searchData.pickupLocation
+        : searchData.returnLocation || searchData.pickupLocation
+    );
+
     if (!car || !searchData || !user) return;
 
     const isAvailable = await checkRealTimeAvailability();
@@ -166,10 +198,8 @@ export const ReservationModal = ({
         car_category: car.category,
         car_price: car.price,
         car_image: car.image_url || null,
-        pickup_location: searchData.pickupLocation,
-        return_location: searchData.sameLocation
-          ? searchData.pickupLocation
-          : searchData.returnLocation || searchData.pickupLocation,
+        pickup_location: pickupLocationId,
+        return_location: returnLocationId,
         pickup_date: pickupDateStr,
         pickup_time: searchData.pickupTime,
         return_date: returnDateStr,
@@ -177,7 +207,7 @@ export const ReservationModal = ({
         total_price: totalPrice,
         status: "pending",
         date: formatDateForDB(new Date()),
-        user_id: user.id, // Maintenant obligatoire
+        user_id: user.id,
       };
 
       const { data: newReservation, error } = await supabase
@@ -202,6 +232,13 @@ export const ReservationModal = ({
       // AJOUT: Récupérer la langue actuelle
       const currentLanguage = i18n.language;
 
+      const pickupLocationName = await getLocationName(pickupLocationId);
+      const returnLocationName = await getLocationName(
+        searchData.sameLocation
+          ? pickupLocationId
+          : returnLocationId
+      );
+
       await emailJSService.sendNewReservationAdminEmail({
         reservationId: newReservation.id,
         clientName,
@@ -213,10 +250,8 @@ export const ReservationModal = ({
         pickupTime: searchData.pickupTime,
         returnDate: formatDisplayDate(searchData.returnDate.toString()),
         returnTime: searchData.returnTime,
-        pickupLocation: getTranslatedLocation(searchData.pickupLocation),
-        returnLocation: searchData.sameLocation 
-          ? getTranslatedLocation(searchData.pickupLocation) 
-          : getTranslatedLocation(searchData.returnLocation || searchData.pickupLocation),
+        pickupLocation: pickupLocationName,
+        returnLocation: returnLocationName,
         totalPrice,
         language: currentLanguage
       });
@@ -265,8 +300,8 @@ export const ReservationModal = ({
         <p className="mb-4 font-semibold">{car.price} {t('reservation_modal.currency_per_day')}</p>
 
         <div className="mb-4 space-y-2 text-sm">
-          <p><strong>{t('reservation_modal.fields.pickup_location')}:</strong> {getTranslatedLocation(searchData.pickupLocation)}</p>
-          <p><strong>{t('reservation_modal.fields.return_location')}:</strong> {getTranslatedLocation(searchData.sameLocation ? searchData.pickupLocation : (searchData.returnLocation || searchData.pickupLocation))}</p>
+          <p><strong>{t('reservation_modal.fields.pickup_location')}:</strong> {pickupLocationName}</p>
+          <p><strong>{t('reservation_modal.fields.return_location')}:</strong> {returnLocationName}</p>
           <p><strong>{t('reservation_modal.fields.pickup_date')}:</strong> {formatDisplayDate(searchData.pickupDate.toString())} {t('reservation_modal.at_time')} {searchData.pickupTime}</p>
           <p><strong>{t('reservation_modal.fields.return_date')}:</strong> {formatDisplayDate(searchData.returnDate.toString())} {t('reservation_modal.at_time')} {searchData.returnTime}</p>
         </div>

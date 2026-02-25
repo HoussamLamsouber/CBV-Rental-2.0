@@ -163,7 +163,7 @@
             "category": "Category",
             "pickup": "Pickup",
             "return": "Return",
-            "location": "Location",
+            "location": "Localisation",
             "phone": "Phone",
             "email": "Email",
             "total_price": "Total price",
@@ -174,8 +174,8 @@
             "accepted_on": "accepted on",
             "rejected_on": "rejected on",
             "contact": "Contact",
-            "pickup_location": "Pickup Location",
-            "return_location": "Return Location"
+            "pickup_location": "Pickup Localisation",
+            "return_location": "Return Localisation"
         },
         
         "messages": {
@@ -241,10 +241,10 @@
             "no_vehicles_desc": "All vehicles of this model are reserved for this period.",
             "cancel": "Cancel",
             "confirm": "Confirm assignment",
-            "location_unknown": "Location unknown",
+            "location_unknown": "Localisation unknown",
             "not_available_period": "Not available for this period",
             "closest": "Closest",
-            "from_pickup": "from pickup location",
+            "from_pickup": "from pickup localisation",
             "found": "{{count}} vehicle(s) found", 
             "distance_unknown": "Distance unknown",
             "depot": "Depot", 
@@ -366,7 +366,7 @@
             "client": "Client",
             "period": "Period",
             "status":"Status",
-            "locations": "Locations",
+            "localisations": "Localisations",
             "registered_user": "Registered user",
             "guest": "Guest",
             "unknown": "Unknown",
@@ -414,11 +414,14 @@
             
             "add_offer": "Add special offer",
             "period_required": "Period *",
-            "period_placeholder": "Ex: 3 days, 1 week, 1 month...",
             "price_required": "Price (MAD) *",
             "price_placeholder": "Price for the period",
             "create_offer": "Create offer",
-            "creating_offer": "Creating..."
+            "creating_offer": "Creating...",
+            "period_label": "Period",
+            "period_placeholder": "Enter period",
+            "day":"Day",
+            "price_label":"Price label"
         },
         
         "status": {
@@ -454,7 +457,7 @@
             "offer_created_success": "Offer has been successfully added.",
             "offer_archived_success": "Offer has been successfully archived.",
             "vehicles_reserved": "vehicle(s) reserved",
-            "day": "day",
+            "day": "Day",
             "no_image": "No image",
             "loading": "Loading..."
         },
@@ -869,7 +872,7 @@
             "suggestions": "Suggestions",
             "try_different_dates": "Try different dates",
             "expand_search_categories": "Expand your search to other categories",
-            "check_other_locations": "Check other pickup locations",
+            "check_other_locations": "Check other pickup localisations",
             "start_search_placeholder": "Start by performing a search to see available vehicles."
         }
     },
@@ -902,7 +905,7 @@
         "table": {
             "vehicle": "Vehicle",
             "dates": "Dates",
-            "locations": "Locations",
+            "locations": "Localisations",
             "client": "Client",
             "status": "Status",
             "price": "Price",
@@ -930,7 +933,7 @@
             "no_reservations_user": "You haven't made any reservations yet.",
             "no_reservations_guest": "You don't have any current reservations.",
             "reservations_found": "{count} reservation(s) found",
-            "cannot_cancel": "This reservation cannot be canceled - it was declined",
+            "cannot_cancel": "This reservation cannot be canceled",
             "cannot_cancel_passed": "This reservation cannot be canceled - the rental period is over",
             "from_date": "From {date}",
             "to_date": "To {date}"
@@ -953,7 +956,7 @@
         "defaultFuel": "Petrol",
         "seats": "seats",
         "startFrom": "From",
-        "perDay": "day",
+        "perDay": "Day",
         "view": "View",
         "noCarsTitle": "No vehicles available",
         "noCarsSubtitle": "All our vehicles are currently rented out.",
@@ -1041,14 +1044,14 @@
 
     "searchForm": {
         "title": "Search for a car",
-        "pickupPlaceholder": "Pickup location",
-        "returnPlaceholder": "Return location",
+        "pickupPlaceholder": "Pickup localisation",
+        "returnPlaceholder": "Return localisation",
         "pickupDate": "Pickup date",
         "returnDate": "Return date",
         "pickupTime": "Pickup time",
         "returnTime": "Return time",
         "search": "Search",
-        "swap": "Same locations",
+        "swap": "Same localisations",
         "filters": "Filters",
         "category": "Category",
         "transmission": "Transmission",
@@ -1060,7 +1063,7 @@
         "selectTime": "Select time",
         "hours": "Hours",
         "minutes": "Minutes",
-        "noLocations": "No locations found",
+        "noLocations": "No localisations found",
         "loadingLocations": "Loading...",
         "errorRequired": "Please fill in all required fields",
 
@@ -1093,8 +1096,8 @@
         "reservation_confirmation_note": "Your reservation will be confirmed after validation by our team.",
         
         "fields": {
-            "pickup_location": "Pickup location",
-            "return_location": "Return location",
+            "pickup_location": "Pickup localisation",
+            "return_location": "Return localisation",
             "pickup_date": "Pickup date",
             "return_date": "Return date",
             "full_name": "Full name",
@@ -1460,9 +1463,9 @@
             "cannot_load": "Unable to load localisations",
             "cannot_add": "Unable to add localisation",
             "cannot_update": "Unable to update status",
-            "confirm_delete": "Are you sure you want to delete this location?",
+            "confirm_delete": "Are you sure you want to delete this localisation?",
             "deleted": "Deleted",
-            "deleted_success": "Location successfully deleted",
+            "deleted_success": "Localisation successfully deleted",
             "cannot_delete": "Unable to delete"
         },
         

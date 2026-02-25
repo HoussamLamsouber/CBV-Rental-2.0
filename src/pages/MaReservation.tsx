@@ -30,9 +30,11 @@ type ReservationRow = Database["public"]["Tables"]["reservations"]["Row"];
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
 type ReservationWithProfile = ReservationRow & {
-  client_name?: string;
-  client_email?: string;
-  client_phone?: string;
+  client_name: string;
+  client_email: string;
+  client_phone?: string | null;
+  pickup_location_name?: string;
+  return_location_name?: string;
 };
 
 const MaReservation = () => {
@@ -51,11 +53,13 @@ const MaReservation = () => {
       try {
         setLoading(true);
 
-        if (user) {
-          await loadUserReservations();
-        } else {
-          await loadGuestReservations();
+        if (!user) {
+          setReservations([]);
+          return;
         }
+
+        await loadUserReservations();
+
       } catch (err) {
         console.error(err);
         if (mounted) toast({ 
@@ -69,6 +73,7 @@ const MaReservation = () => {
     };
 
     const loadUserReservations = async () => {
+      // 1️⃣ Récupérer les réservations
       const { data: reservationsData, error: reservationsError } = await supabase
         .from("reservations")
         .select("*")
@@ -83,91 +88,66 @@ const MaReservation = () => {
         return;
       }
 
+      // 2️⃣ Récupérer le profil utilisateur
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("full_name, email, telephone")
         .eq("id", user.id)
         .single();
 
-      if (profileError) {
-        console.error("Erreur chargement profil:", profileError);
-      }
+      if (profileError) console.error("Erreur chargement profil:", profileError);
 
+      // 3️⃣ Récupérer les localisations traduites
+      const locationIds = [
+        ...new Set(
+          reservationsData.flatMap(r => [r.pickup_location, r.return_location])
+        )
+      ];
+
+      const { data: locationsData, error: locationsError } = await supabase
+        .from("localisation_translations")
+        .select("localisation_id, language, display_name")
+        .in("localisation_id", locationIds)
+        .eq("language", i18n.language);
+
+      if (locationsError) console.error("Erreur chargement localisations:", locationsError);
+
+      // 4️⃣ Construire un dictionnaire pour lookup rapide
+      const locationMap = new Map<string, string>();
+      locationsData?.forEach(loc => {
+        locationMap.set(loc.localisation_id, loc.display_name);
+      });
+
+      // 5️⃣ Construire les réservations finales
       const reservationsWithProfile: ReservationWithProfile[] = reservationsData.map(reservation => ({
         ...reservation,
         client_name: profileData?.full_name || user.email || t('ma_reservation.messages.not_specified'),
         client_email: profileData?.email || user.email,
-        client_phone: profileData?.telephone
+        client_phone: profileData?.telephone,
+        pickup_location_name: locationMap.get(reservation.pickup_location) || reservation.pickup_location,
+        return_location_name: locationMap.get(reservation.return_location) || reservation.return_location,
       }));
 
       setReservations(reservationsWithProfile);
     };
 
-    const loadGuestReservations = async () => {
-      const guestReservations = localStorage.getItem("guest_reservations");
-      if (guestReservations) {
-        const reservationIds = JSON.parse(guestReservations);
-        
-        if (reservationIds.length > 0) {
-          const { data: reservationsData, error: reservationsError } = await supabase
-            .from("reservations")
-            .select("*")
-            .in("id", reservationIds)
-            .neq("status", "cancelled")
-            .order("created_at", { ascending: false });
-    
-          if (reservationsError) {
-            await loadGuestReservationsFallback(reservationIds);
-            return;
-          }
-    
-          const reservationsWithGuestData: ReservationWithProfile[] = (reservationsData || []).map(reservation => ({
-            ...reservation,
-            client_name: reservation.guest_name || t('ma_reservation.messages.guest'),
-            client_email: reservation.guest_email || t('ma_reservation.messages.not_specified'),
-            client_phone: reservation.guest_phone
-          }));
-    
-          setReservations(reservationsWithGuestData);
-        } else {
-          setReservations([]);
-        }
-      } else {
-        setReservations([]);
-      }
-    };
-    
-    const loadGuestReservationsFallback = async (reservationIds: string[]) => {
-      try {
-        const reservations: ReservationWithProfile[] = [];
-        
-        for (const id of reservationIds) {
-          const { data: reservation, error } = await supabase
-            .from("reservations")
-            .select("*")
-            .eq("id", id)
-            .single();
-    
-          if (!error && reservation) {
-            reservations.push({
-              ...reservation,
-              client_name: reservation.guest_name || t('ma_reservation.messages.guest'),
-              client_email: reservation.guest_email || t('ma_reservation.messages.not_specified'),
-              client_phone: reservation.guest_phone
-            });
-          }
-        }
-    
-        setReservations(reservations);
-      } catch (err) {
-        console.error("Erreur fallback chargement réservations:", err);
-        setReservations([]);
-      }
-    };
 
     loadReservations();
     return () => { mounted = false; };
-  }, [toast, navigate, user, t]);
+  }, [user, t]);
+
+  const getLocationName = async (id: string) => {
+    const { data, error } = await supabase
+      .from("localisation_translations")
+      .select("display_name")
+      .eq("localisation_id", id)
+      .eq("language", i18n.language)
+      .single();
+
+    if (error || !data) return id;
+
+    return data.display_name;
+  };
 
   const handleCancelReservation = async (res: ReservationWithProfile) => {
     if (!confirm(t('ma_reservation.messages.confirm_cancellation'))) {
@@ -191,12 +171,15 @@ const MaReservation = () => {
       const currentLanguage = i18n.language;
   
       console.log('📧 Tentative envoi emails annulation pour:', res.client_email);
+
+      const pickupLocationName = await getLocationName(res.pickup_location);
+      const returnLocationName = await getLocationName(res.return_location);
   
       // Envoyer les emails d'annulation
       const emailResult = await emailJSService.sendCancellationEmails({
         reservationId: res.id,
-        clientName: res.client_name || t('ma_reservation.messages.guest'),
-        clientEmail: res.client_email || t('ma_reservation.messages.not_specified'),
+        clientName: res.client_name,
+        clientEmail: res.client_email,
         clientPhone: res.client_phone,
         carName: res.car_name,
         carCategory: getTranslatedCategory(res.car_category),
@@ -204,8 +187,8 @@ const MaReservation = () => {
         pickupTime: res.pickup_time,
         returnDate: formatDisplayDate(res.return_date),
         returnTime: res.return_time,
-        pickupLocation: getTranslatedLocation(res.pickup_location),
-        returnLocation: getTranslatedLocation(res.return_location),
+        pickupLocation: pickupLocationName,
+        returnLocation: returnLocationName,
         totalPrice: res.total_price,
         language: currentLanguage
       });
@@ -243,28 +226,13 @@ const MaReservation = () => {
     const now = new Date();
     
     // Combiner la date de retour et l'heure de retour
-    const [returnHours, returnMinutes] = res.return_time.split(':').map(Number);
+    const time = res.return_time || "23:59";
+    const [returnHours, returnMinutes] = time.split(":").map(Number);
     const returnDateTime = new Date(res.return_date);
     returnDateTime.setHours(returnHours, returnMinutes, 0, 0);
     
     // Vérifier si la date/heure de retour est passée
     return now > returnDateTime;
-  };
-
-  const getTranslatedLocation = (locationValue: string) => {
-    const airportKey = locationValue.replace('airport_', '');
-    const airportTranslation = t(`airports.${airportKey}`);
-    if (airportTranslation && !airportTranslation.startsWith('airports.')) {
-      return airportTranslation;
-    }
-    
-    const stationKey = locationValue.replace('station_', '');
-    const stationTranslation = t(`stations.${stationKey}`);
-    if (stationTranslation && !stationTranslation.startsWith('stations.')) {
-      return stationTranslation;
-    }
-    
-    return locationValue;
   };
 
   const getTranslatedCategory = (category: string) => {
@@ -312,9 +280,6 @@ const MaReservation = () => {
     );
   };
 
-  // 🔥 FILTRER LES RÉSERVATIONS ANNULÉES POUR NE PAS LES AFFICHER
-  const activeReservations = reservations.filter(res => res.status !== 'cancelled');
-
   const renderContent = () => {
     if (loading) {
       return (
@@ -333,10 +298,7 @@ const MaReservation = () => {
               {t('ma_reservation.messages.no_reservations')}
             </h1>
             <p className="text-gray-600 mb-6">
-              {user 
-                ? t('ma_reservation.messages.no_reservations_user') 
-                : t('ma_reservation.messages.no_reservations_guest')
-              }
+              {t('ma_reservation.messages.no_reservations_user')}
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button onClick={() => navigate("/")}>
@@ -395,7 +357,7 @@ const MaReservation = () => {
         </tr>
       </thead>
       <tbody className="divide-y divide-gray-200">
-        {activeReservations.map(res => (
+        {reservations.map(res => (
           <tr key={res.id} className="hover:bg-gray-50/50 transition-colors">
             {/* Colonne Véhicule */}
             <td className="px-4 py-4">
@@ -440,7 +402,7 @@ const MaReservation = () => {
                     {t('ma_reservation.pickup')}
                   </div>
                   <div className="text-gray-600 text-xs">
-                    {getTranslatedLocation(res.pickup_location)}
+                    {res.pickup_location_name}
                   </div>
                 </div>
                 <div>
@@ -448,7 +410,7 @@ const MaReservation = () => {
                     {t('ma_reservation.return')}
                   </div>
                   <div className="text-gray-600 text-xs">
-                    {getTranslatedLocation(res.return_location)}
+                    {res.return_location_name}
                   </div>
                 </div>
               </div>
