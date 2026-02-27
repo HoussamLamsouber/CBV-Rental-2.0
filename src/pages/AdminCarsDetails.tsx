@@ -781,6 +781,18 @@ export default function AdminVehicleDetail() {
     }
   };
 
+  const getTranslatedMonth = (dateString: string) => {
+    const monthIndex = new Date(dateString).getMonth();
+
+    const monthKeys = [
+      "jan", "feb", "mar", "apr", "may", "jun",
+      "jul", "aug", "sep", "oct", "nov", "dec"
+    ];
+
+    const key = monthKeys[monthIndex];
+
+    return t(`common.months.${key}`);
+  };
 
   // Fonction pour supprimer une offre
   const handleDeleteOffer = async (offerId: string) => {
@@ -826,6 +838,20 @@ export default function AdminVehicleDetail() {
 
   // Le reste du rendu JSX
   const stats = getVehicleStats();
+
+  // Réservations actuellement en cours
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const currentReservations = acceptedReservations.filter((reservation) => {
+    const start = new Date(reservation.pickup_date);
+    const end = new Date(reservation.return_date);
+
+    start.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+
+    return start <= today && end >= today;
+  });
 
   // Fonction utilitaire pour traduire les lieux
   const translateLocation = (loc?: any) => {
@@ -1322,7 +1348,7 @@ export default function AdminVehicleDetail() {
                         ${t('admin_vehicle_detail.calendar.total_stock')} ${vehicle.quantity} ${t('admin_vehicle_detail.calendar.vehicles')}`}
                       >
                         <span className="font-semibold">{format(new Date(date), "dd")}</span>
-                        <span className="text-[10px] opacity-70">{format(new Date(date), "MMM")}</span>
+                        <span className="text-[10px] opacity-70">{getTranslatedMonth(date)}</span>
                         <div className="mt-1 flex flex-col items-center space-y-0.5">
                           {/* Indicateur visuel simple */}
                           <div className="flex items-center gap-1">
@@ -1406,7 +1432,7 @@ export default function AdminVehicleDetail() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-blue-600">
-                    {acceptedReservations.length}
+                    {currentReservations.length}
                   </div>
                   <p className="text-sm text-muted-foreground mt-2">
                     {t('admin_vehicle_detail.calendar.accepted_reservations')}
@@ -1421,7 +1447,7 @@ export default function AdminVehicleDetail() {
                 <CardContent>
                   <div className="text-2xl font-bold text-purple-600">
                     {vehicle.quantity > 0 
-                      ? `${Math.round((acceptedReservations.length / vehicle.quantity) * 100)}%`
+                      ? `${Math.round((currentReservations.length / vehicle.quantity) * 100)}%`
                       : '0%'
                     }
                   </div>
