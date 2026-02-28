@@ -376,7 +376,7 @@ export const SearchForm = ({ onSearch }: SearchFormProps) => {
   return (
     <div className="bg-white/95 backdrop-blur-sm border border-gray-200/80 rounded-2xl p-4 sm:p-6 shadow-xl shadow-blue-500/5 relative overflow-visible">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6 sm:mb-8">
+      <div className="flex items-center gap-3 mb-6 sm:mb-8" >
         <div className="p-2 bg-blue-100 rounded-lg">
           <Car className="h-5 w-5 text-blue-600" />
         </div>
