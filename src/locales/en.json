@@ -602,6 +602,11 @@
                 "title": "Reservation Trends",
                 "subtitle": "Evolution of reservation numbers"
             },
+            "reservation_trend": {
+                "title": "Reservation Trends",
+                "subtitle": "Visualize reservation evolution over time",
+                "tooltip": "Reservations"
+            },
             "month": "Month: {{month}}"
         },
         

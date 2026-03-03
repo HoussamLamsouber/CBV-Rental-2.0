@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
+  Area,
+  AreaChart,
   BarChart,
   Bar,
   XAxis,
@@ -90,20 +92,26 @@ export default function AdminDashboard() {
   const [revenueData, setRevenueData] = useState<ChartData[]>([]);
   const [reservationTrendData, setReservationTrendData] = useState<ChartData[]>([]);
   const [translationKey, setTranslationKey] = useState(0);
-
+  const [chartKey, setChartKey] = useState(0);
   useEffect(() => {
     fetchData();
   }, []);
 
   useEffect(() => {
-    // Forcer le re-rendu pour les traductions instantanées
-    setTranslationKey(prev => prev + 1);
-    
-    // Recalculer les données des graphiques si nécessaire
     if (vehicles.length > 0 && allReservations.length > 0) {
       prepareChartData(vehicles, allReservations);
     }
   }, [i18n.language]);
+
+  useEffect(() => {
+    if (
+      revenueData.length > 0 &&
+      categoryData.length > 0 &&
+      reservationTrendData.length > 0
+    ) {
+      setChartKey(prev => prev + 1);
+    }
+  }, [revenueData, categoryData, reservationTrendData]);
 
   const fetchData = async () => {
     try {
@@ -144,6 +152,23 @@ export default function AdminDashboard() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const getReservationState = (reservation: Reservation): "active" | "completed" | "expired" | "pending" | "refused" | "cancelled" => {
+    const today = new Date();
+    const pickup = new Date(reservation.pickup_date);
+    const returnDate = new Date(reservation.return_date);
+
+    if (reservation.status === "accepted") {
+      if (today >= pickup && today <= returnDate) return "active";
+      if (today > returnDate) return "completed";
+    }
+
+    if (reservation.status === "pending") return "pending";
+    if (reservation.status === "refused") return "refused";
+    if (reservation.status === "cancelled") return "cancelled";
+
+    return "expired"; // par défaut
   };
 
   const calculateStats = (vehicles: any[], allReservations: Reservation[]) => {
@@ -242,7 +267,10 @@ export default function AdminDashboard() {
     });
   
     allReservations
-      .filter(res => res.status === "accepted")
+      .filter(res => {
+        const state = getReservationState(res);
+        return state === "active" || state === "completed";
+      })
       .forEach(reservation => {
         const reservationMonth = reservation.created_at.slice(0, 7);
         if (monthlyRevenue.hasOwnProperty(reservationMonth)) {
@@ -359,11 +387,11 @@ export default function AdminDashboard() {
 
               {/* Graphiques */}
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+                key={`${i18n.language}-${chartKey}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8 }}
                 className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8"
-                key={translationKey}
               >
                 <ChartCard
                   title={t("admin_dashboard.charts.revenue.title")}
@@ -415,8 +443,11 @@ export default function AdminDashboard() {
                         dataKey="value"
                         nameKey="name"
                       >
-                        {categoryData.map((_, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        {categoryData.map((entry, index) => (
+                          <Cell
+                            key={`cell-${entry.name}-${index}`}
+                            fill={COLORS[index % COLORS.length]}
+                          />
                         ))}
                       </Pie>
                       <Tooltip 
@@ -428,57 +459,54 @@ export default function AdminDashboard() {
                     </PieChart>
                   </ResponsiveContainer>
                 </ChartCard>
-              </motion.div>
 
-              {/* Réservations récentes */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.9 }}
-                className="bg-white rounded-2xl shadow-md p-6 border"
-              >
-                <div className="flex justify-between items-center mb-6">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {t("admin_dashboard.recent_reservations.title")}
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      {t("admin_dashboard.recent_reservations.subtitle")}
-                    </p>
-                  </div>
-                  <Link to="/admin/reservations">
-                    <Button variant="ghost" size="sm" className="text-blue-600">
-                      {t("admin_dashboard.actions.see_all")}{" "}
-                      <ChevronRight className="h-4 w-4 ml-1" />
-                    </Button>
-                  </Link>
-                </div>
-                {/* Placeholder si aucune donnée */}
-                {allReservations.length === 0 ? (
-                  <div className="text-center text-gray-500 py-12">
-                    <Clock className="h-10 w-10 mx-auto mb-2 text-gray-400" />
-                    <p>{t("admin_dashboard.messages.no_recent_reservations")}</p>
-                  </div>
-                ) : (
-                  allReservations.slice(0, 5).map((r,index) => (
-                    <div 
-                      key={r.id || `reservation-${index}`} 
-                      className="p-4 border rounded-lg mb-2 hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="flex justify-between items-center">
-                        <span className="font-semibold text-gray-800">
-                          {r.car_name || "Véhicule non spécifié"}
-                        </span>
-                        <span className={`px-2 py-1 text-xs rounded-full ${getStatusColorClasses(r.status)}`}>
-                          {translateStatus(r.status) || t("common.unknown")}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {formatDateSafe(r.pickup_date)} - {formatDateSafe(r.return_date)}
-                      </p>
-                    </div>
-                  ))
-                )}
+                <ChartCard
+                  className="lg:col-span-2"
+                  title={t("admin_dashboard.charts.reservation_trend.title")}
+                  subtitle={t("admin_dashboard.charts.reservation_trend.subtitle")}
+                  icon={Calendar}
+                  color="pink"
+                >
+                  <ResponsiveContainer width="100%" height={300}>
+                    <AreaChart data={reservationTrendData}>
+                      <defs>
+                        <linearGradient id="vividGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#EC4899" stopOpacity={0.8} />
+                          <stop offset="100%" stopColor="#F9A8D4" stopOpacity={0.1} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                      <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#6B7280' }} />
+                      <YAxis tick={{ fontSize: 12, fill: '#6B7280' }} />
+                      <Tooltip
+                        formatter={(value: number) => [value, t("admin_dashboard.charts.reservation_trend.tooltip")]}
+                        contentStyle={{ borderRadius: '8px', backgroundColor: '#fff', borderColor: '#E5E7EB' }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="value"
+                        stroke="none"
+                        fill="url(#vividGradient)"
+                        fillOpacity={1}
+                        isAnimationActive={true}
+                        animationDuration={2000}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="value"
+                        stroke="#EC4899"
+                        strokeWidth={3}
+                        dot={{ r: 0 }}
+                        activeDot={{ r: 6 }}
+                        name={t("admin_dashboard.charts.reservation_trend.tooltip")}
+                        isAnimationActive={true}
+                        animationDuration={2000}
+                        animationEasing="ease-out"
+                        animationBegin={300}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </ChartCard>
               </motion.div>
             </>
           )}
@@ -512,14 +540,15 @@ function StatCard({ title, value, subtitle, icon: Icon, color }: any) {
   );
 }
 
-function ChartCard({ title, subtitle, icon: Icon, color, children }: any) {
+function ChartCard({ title, subtitle, icon: Icon, color, children, className }: any) {
   const colorMap: any = {
     blue: "text-blue-600 bg-blue-50",
     green: "text-green-600 bg-green-50",
     orange: "text-orange-600 bg-orange-50",
+    pink: "text-pink-600 bg-pink-50"
   };
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md border transition-all">
+    <div className={`bg-white rounded-2xl p-6 shadow-sm hover:shadow-md border transition-all ${className || ""}`}>
       <div className="flex items-center gap-3 mb-4">
         <div className={`p-2 rounded-lg ${colorMap[color]}`}>
           <Icon className={`h-5 w-5 ${colorMap[color].split(" ")[0]}`} />
