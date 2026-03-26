@@ -1,4 +1,12 @@
 {
+    "status": {
+        "active": "Actif",
+        "inactive": "Inactif"
+    },
+    "transmission": {
+        "automatic": "Automatique",
+        "manual": "Manuelle"
+    },
     "home": "Accueil",
     "offers": "Offres",
     "my_reservations": "Mes réservations",
@@ -19,20 +27,33 @@
     "see_you_soon": "À bientôt !",
     "error": "Erreur",
     "logout_error": "Impossible de vous déconnecter",
-    "email":"Email",
-
+    "email": "Email",
     "footer_description": "Votre partenaire de confiance pour la location de véhicules premium à Tanger et dans tout le Maroc.",
     "navigation": "Navigation",
-    "contact": "Contact",
-    "phone": "Téléphone",
-    "address": "Adresse",
+    "contact": {
+        "label": "Contact",
+        "title": "Contactez-nous",
+        "subtitle": "Notre équipe est à votre disposition pour répondre à toutes vos questions et vous accompagner dans votre location.",
+        "address": "Adresse",
+        "phone": "Téléphone",
+        "hours": "Horaires",
+        "location": "Notre emplacement",
+        "locationDescription": "Retrouvez-nous directement à la gare TGV de Tanger pour récupérer votre véhicule.",
+        "mapTitle": "Carte de localisation CBV Rental",
+        "mapHelp": "Cliquez sur la carte pour agrandir l'itinéraire",
+        "phone_number": "+212665291314",
+        "phone_display": "+212 6 65 29 13 14",
+        "email": "contact@cbvrental.com",
+        "hours_weekday": "08:00 - 20:00",
+        "hours_saturday": "09:00 - 18:00",
+        "hours_sunday": "09:00 - 16:00",
+        "brand_name": "CBV Rental",
+        "logo_text": "CBV"
+    },
     "morocco": "Maroc",
-    "opening_hours": "Horaires d'ouverture",
     "monday_friday": "Lun - Ven",
     "saturday": "Samedi",
     "sunday": "Dimanche",
-    "all_rights_reserved": "Tous droits réservés.",
-
     "forgot_password": "Mot de passe oublié ?",
     "forgotpassword": "Mot de passe oublié",
     "reset_password": "Réinitialiser le mot de passe",
@@ -50,27 +71,29 @@
     "update_password": "Mettre à jour le mot de passe",
     "saving": "Enregistrement",
     "redirecting_in": "Redirection vers la page d'accueil dans",
-
     "common": {
         "months": {
-        "jan": "Jan",
-        "feb": "Fév",
-        "mar": "Mar",
-        "apr": "Avr",
-        "may": "Mai",
-        "jun": "Juin",
-        "jul": "Juil",
-        "aug": "Aoû",
-        "sep": "Sep",
-        "oct": "Oct",
-        "nov": "Nov",
-        "dec": "Déc"
+            "jan": "Jan",
+            "feb": "Fév",
+            "mar": "Mar",
+            "apr": "Avr",
+            "may": "Mai",
+            "jun": "Juin",
+            "jul": "Juil",
+            "aug": "Aoû",
+            "sep": "Sep",
+            "oct": "Oct",
+            "nov": "Nov",
+            "dec": "Déc"
         }
     },
-
     "about_page": {
         "title": "Préparez votre arrivée avec sérénité",
         "subtitle": "Un service de location pensé pour vous : le bon véhicule, au bon moment. Profitez d'une expérience simple, rapide et sans stress, avant, pendant et après votre réservation.",
+        "station_tangier": "Gare TGV, Tanger",
+        "email_support": "Email",
+        "featured_vehicles": "Véhicules à l'affiche",
+        "featured_vehicles_subtitle": "Découvrez notre sélection de véhicules premium disponibles dès maintenant pour votre prochain voyage.",
         "card1": {
             "title": "Le bon véhicule, au bon moment",
             "text": "Profitez d'un large choix de modèles Volvo adaptés à vos besoins — que ce soit pour une échappée ou un déplacement professionnel."
@@ -97,7 +120,6 @@
         },
         "button": "Découvrir nos offres"
     },
-
     "admin_login": {
         "title": "Connexion Administration",
         "description": "Utilisez vos identifiants administrateur",
@@ -113,20 +135,17 @@
         "error_unauthorized": "Vous n'avez pas les droits administrateur.",
         "error_generic": "Une erreur inattendue s'est produite."
     },
-
     "admin_reservations": {
         "title": "Gestion des réservations",
-        "total_reservations": "réservation(s) au total",
+        "total_reservations": "Réservation(s) total",
         "client_reservations": "réservation(s) pour ce client",
         "results": "résultat(s)",
-        
         "search": {
             "placeholder": "Rechercher par nom, email, modèle..."
         },
-        
         "filters": {
             "title": "Filtres",
-            "reset": "Réinitialiser",
+            "reset": "Effacer",
             "date": "Date spécifique",
             "date_help": "Date de départ, retour ou création",
             "vehicle_model": "Modèle de véhicule",
@@ -134,7 +153,6 @@
             "status": "Statut",
             "all_status": "Tous les statuts"
         },
-        
         "status": {
             "pending": "En attente",
             "accepted": "Acceptées",
@@ -144,24 +162,21 @@
             "expired": "Expirées",
             "cancelled": "Annulées"
         },
-        
         "actions": {
             "back": "Retour",
             "back_users": "Retour aux utilisateurs",
             "see_all": "Voir toutes les réservations",
             "accept": "Accepter",
             "reject": "Refuser",
-            "title": "Actions",
-            "release_vehicle": "Libérer véhicule",
+            "title": "Infos",
             "change_vehicle": "Changer véhicule"
         },
-        
         "reservation": {
             "details": "Détails de la réservation",
             "id": "ID",
             "vehicle": "Véhicule",
             "category": "Catégorie",
-            "pickup": "Départ",
+            "pickup": "Départ / Arrivée",
             "return": "Retour",
             "location": "Localisation",
             "phone": "Téléphone",
@@ -175,9 +190,9 @@
             "rejected_on": "refusée le",
             "contact": "Contact",
             "pickup_location": "Lieu de prise en charge",
-            "return_location": "Lieu de restitution"
+            "return_location": "Lieu de restitution",
+            "reservation_date": "Date de réservation"
         },
-        
         "messages": {
             "loading": "Chargement des réservations...",
             "no_reservations": "Aucune réservation",
@@ -191,7 +206,6 @@
             "expired_description": "Cette réservation n'a pas été traitée à temps et est maintenant expirée.",
             "expired_on": "Expirée le"
         },
-        
         "reject_modal": {
             "title": "Refuser la réservation",
             "reason": "Raison du refus *",
@@ -201,7 +215,6 @@
             "missing_reason": "Raison manquante",
             "missing_reason_desc": "Veuillez saisir la raison du refus."
         },
-        
         "toast": {
             "reservation_accepted": "✅ Réservation acceptée",
             "accepted_with_auto_reject": "✅ Acceptée + {{count}} refus auto",
@@ -223,9 +236,6 @@
             "accept_error": "Impossible de finaliser l'acceptation.",
             "all_vehicles_reserved": "Tous les véhicules de ce modèle sont réservés pour cette période.",
             "no_available_vehicles": "Aucun véhicule disponible",
-            "vehicle_released": "✅ Véhicule libéré",
-            "vehicle_now_available": "Le véhicule est maintenant disponible.",
-            "cannot_release_vehicle": "Impossible de libérer le véhicule.",
             "vehicle_changed": "✅ Véhicule changé",
             "new_vehicle_assigned": "Nouveau véhicule {{registration}} attribué",
             "vehicle_changed_success": "Véhicule changé avec succès",
@@ -233,7 +243,12 @@
             "same_vehicle": "Véhicule identique",
             "same_vehicle_desc": "Le véhicule sélectionné est le même que celui actuellement attribué."
         },
-
+        "offers_page": {
+            "title": "Offres Spéciales",
+            "subtitle": "Profitez de nos offres de location exclusives pour une durée limitée",
+            "noSpecialOffers": "Aucune offre spéciale disponible pour le moment.",
+            "bookNow": "Choisir ce véhicule"
+        },
         "vehicle_modal": {
             "title": "Attribuer un véhicule",
             "subtitle": "Sélectionnez le véhicule à attribuer à cette réservation",
@@ -244,7 +259,7 @@
             "location_unknown": "Localisation inconnue",
             "not_available_period": "Non disponible pour cette période",
             "closest": "Le plus proche",
-            "from_pickup": "du lieu de prise en charge", 
+            "from_pickup": "du lieu de prise en charge",
             "found": "{{count}} véhicule(s) trouvé(s)",
             "distance_unknown": "Distance inconnue",
             "depot": "Dépôt",
@@ -255,7 +270,6 @@
             "distance_unavailable": "Distance non disponible",
             "change_vehicle": "Changer le véhicule"
         },
-
         "vehicle_info": {
             "title": "Véhicule attribué",
             "assigned_vehicle": "Véhicule attribué",
@@ -265,28 +279,24 @@
             "not_assigned": "Non attribué",
             "no_depot": "Dépôt non spécifié"
         },
-
         "vehicle_status": {
             "available": "Disponible",
             "reserved": "Réservé",
             "maintenance": "Maintenance"
         },
-
         "categories": {
             "category_electric": "Électrique",
             "category_suv": "SUV",
             "category_urban_suv": "SUV Urbain",
             "category_sedan": "Berline"
         },
-
         "view_mode": {
             "cards_tooltip": "Vue cartes",
             "table_tooltip": "Vue tableau"
         },
-
         "depots": {
             "casablanca": "Casablanca",
-            "rabat": "Rabat", 
+            "rabat": "Rabat",
             "marrakech": "Marrakech",
             "tanger": "Tanger",
             "fes": "Fès",
@@ -295,17 +305,14 @@
             "agence_medina": "Agence Médina",
             "agence_city": "Agence City"
         },
-
         "auto_reject_message": "Votre réservation a été refusée car le véhicule n'est plus disponible pour cette période."
     },
-
     "admin_vehicle_detail": {
         "title": "Détail du véhicule",
         "back_to_vehicles": "Retour aux véhicules",
         "back_to_home": "Retour à l'accueil",
         "access_denied": "Accès refusé",
         "admin_required": "Vous devez être administrateur pour accéder à cette page.",
-        
         "tabs": {
             "availability": "Disponibilité aujourd'hui",
             "vehicles": "Véhicules individuels",
@@ -313,14 +320,12 @@
             "reservations": "Toutes les réservations",
             "calendar": "Calendrier (30j)"
         },
-        
         "vehicle_info": {
             "price_per_day": "Prix:",
             "total_stock": "Stock total",
             "auto_sync": "Synchronisé automatiquement:",
             "vehicles_active": "véhicule(s) actif(s)"
         },
-        
         "availability": {
             "vehicles_available": "Véhicules disponibles",
             "ready_to_rent": "Prêts à être réservés",
@@ -329,7 +334,6 @@
             "under_maintenance": "En maintenance",
             "temporarily_unavailable": "Indisponibles temporairement"
         },
-        
         "vehicles_management": {
             "individual_vehicles": "Véhicules individuels",
             "add_vehicle": "Ajouter un véhicule",
@@ -350,7 +354,6 @@
             "depot": "Dépôt",
             "no_depot_assigned": "Aucun dépôt assigné"
         },
-        
         "offers_management": {
             "special_offers": "Offres spéciales",
             "add_offer": "Ajouter une offre",
@@ -360,12 +363,11 @@
             "no_offers": "Aucune offre spéciale pour ce modèle",
             "create_first_offer": "Créer la première offre"
         },
-        
         "reservations": {
             "all_reservations": "Toutes les réservations",
             "client": "Client",
             "period": "Période",
-            "status":"Statut",
+            "status": "Statut",
             "localisations": "Localisations",
             "registered_user": "Utilisateur enregistré",
             "guest": "Invité",
@@ -376,7 +378,6 @@
             "vehicle_not_loaded": "Véhicule non chargé",
             "no_vehicle_assigned": "Aucun véhicule"
         },
-        
         "calendar": {
             "availability_calendar": "Calendrier de disponibilité - 30 jours",
             "days_availability": "Disponibilité sur",
@@ -399,7 +400,6 @@
             "how_to_read": "Comment lire le calendrier :",
             "calendar_explanation": "Le nombre indique les véhicules disponibles sur le stock total. La barre montre le taux de disponibilité."
         },
-        
         "modals": {
             "add_vehicle": "Ajouter un véhicule",
             "license_plate_required": "Matricule *",
@@ -411,7 +411,6 @@
             "cancel": "Annuler",
             "add_vehicle_button": "Ajouter le véhicule",
             "creating": "Création...",
-            
             "add_offer": "Ajouter une offre spéciale",
             "period_required": "Période *",
             "price_required": "Prix (MAD) *",
@@ -420,16 +419,14 @@
             "creating_offer": "Création...",
             "period_label": "Période",
             "period_placeholder": "Saisir la période",
-            "day":"Jour",
-            "price_label":"Label de prix"
+            "day": "Jour",
+            "price_label": "Label de prix"
         },
-        
         "status": {
             "available": "Disponible",
             "reserved": "Réservé",
             "maintenance": "En Maintenance"
         },
-        
         "messages": {
             "vehicle_created": "Véhicule créé",
             "vehicle_archived": "Véhicule archivé",
@@ -461,61 +458,51 @@
             "no_image": "No image",
             "loading": "Chargement..."
         },
-
         "categories": {
             "category_electric": "Électrique",
             "category_suv": "SUV",
             "category_urban_suv": "SUV Urbain",
             "category_sedan": "Berline"
         },
-
         "fuel_types": {
             "fuel_gasoline": "Essence",
             "fuel_electric": "Électrique",
             "fuel_diesel": "Diesel",
             "fuel_hybrid": "Hybride"
         },
-
         "periods": {
             "period_1_3_days": "1-3 jours",
             "period_4_10_days": "4-10 jours",
             "period_11_20_days": "11-20 jours",
             "period_21_29_days": "21-29 jours",
             "period_1_month": "1 mois (30j)",
-            "period_week_end":"Week-end (Vendredi 14h - Dimanche 20h)"
+            "period_week_end": "Week-end (Vendredi 14h - Dimanche 20h)"
         }
     },
-
     "admin_users": {
         "title": "Gestion des Utilisateurs",
         "access_denied": "Accès refusé",
         "admin_required": "Vous devez être administrateur pour accéder à cette page.",
         "back_to_home": "Retour à l'accueil",
-        
         "tabs": {
             "admins": "Administrateurs",
             "clients": "Clients"
         },
-        
         "search": {
             "placeholder": "Rechercher par email, nom ou téléphone..."
         },
-        
         "roles": {
             "admin": "Admin",
             "client": "Client"
         },
-        
         "actions": {
             "add_admin": "Ajouter un admin",
             "view_reservations": "Voir les réservations",
             "delete_user": "Supprimer",
             "remove_admin_rights": "Retirer les droits administrateur"
         },
-        
         "admin_count": "admin(s)",
         "client_count": "client(s)",
-        
         "table": {
             "name": "Nom",
             "email": "Email",
@@ -524,7 +511,6 @@
             "registration_date": "Date d'inscription",
             "actions": "Actions"
         },
-        
         "modals": {
             "add_admin": {
                 "title": "Promouvoir un client en administrateur",
@@ -543,7 +529,6 @@
                 "no_clients_found": "Aucun client trouvé"
             }
         },
-        
         "messages": {
             "checking_permissions": "Vérification des permissions...",
             "cannot_load_users": "Impossible de charger les utilisateurs.",
@@ -571,11 +556,9 @@
             "registered_on": "Inscrit le:"
         }
     },
-
     "admin_dashboard": {
         "title": "Tableau de Bord",
         "subtitle": "Vue d'ensemble de votre activité de location",
-        
         "stats": {
             "total_vehicles": "Véhicules Total",
             "in_fleet": "Dans la flotte",
@@ -586,7 +569,6 @@
             "active_reservations": "Réservations Actives",
             "currently_ongoing": "En cours actuellement"
         },
-        
         "charts": {
             "revenue": {
                 "title": "Revenus Mensuels",
@@ -609,13 +591,12 @@
             },
             "month": "Mois: {{month}}"
         },
-        
         "recent_reservations": {
             "title": "Réservations Récentes",
             "subtitle": "7 derniers jours",
             "status": {
                 "pending": "En attente",
-                "accepted": "Acceptée", 
+                "accepted": "Acceptée",
                 "confirmed": "Confirmée",
                 "active": "Active",
                 "completed": "Terminée",
@@ -624,21 +605,17 @@
                 "expired": "Expirée"
             }
         },
-        
         "actions": {
             "see_all": "Voir tout"
         },
-        
         "messages": {
             "cannot_load_data": "Impossible de charger les données du tableau de bord",
             "no_recent_reservations": "Aucune réservation récente"
         }
     },
-
     "admin_vehicles": {
         "title": "Gestion des véhicules",
         "subtitle": "Surveillez les performances de votre flotte automobile",
-        
         "stats": {
             "total_vehicles": "Véhicules Total",
             "available_vehicles": "Véhicules Disponibles",
@@ -654,43 +631,36 @@
             "this_month": "Ce mois",
             "currently_ongoing": "En cours actuellement"
         },
-        
         "vehicle_models": {
             "title": "Modèles de Véhicules",
             "subtitle": "Cliquez pour gérer chaque modèle",
             "model_count": "modèles"
         },
-        
         "recent_reservations": {
             "title": "Réservations Récentes",
             "subtitle": "7 derniers jours"
         },
-        
         "status": {
-            "available": "Disponible",
+            "available": "Véhicules disponibles",
             "unavailable": "Indisponible",
             "fully_booked": "Non disponible"
         },
-        
         "fuel_types": {
             "fuel_gasoline": "Essence",
             "fuel_electric": "Électrique",
             "fuel_diesel": "Diesel",
             "fuel_hybrid": "Hybride"
         },
-        
         "transmission_types": {
             "transmission_manual": "Manuelle",
             "transmission_automatic": "Automatique"
         },
-
         "categories": {
             "category_electric": "Électrique",
             "category_suv": "SUV",
             "category_urban_suv": "SUV Urbain",
             "category_sedan": "Berline"
         },
-        
         "actions": {
             "add_vehicle": "Ajouter un véhicule",
             "see_all": "Voir tout",
@@ -698,7 +668,6 @@
             "edit": "Modifier",
             "delete": "Supprimer"
         },
-        
         "modals": {
             "create_vehicle": {
                 "title": "Nouveau Modèle de Véhicule",
@@ -727,14 +696,12 @@
                 "image_preview_alt": "Aperçu du véhicule",
                 "reset": "Réinitialiser"
             },
-
             "edit_vehicle": {
                 "title": "Modifier le modèle",
                 "updating": "Modification...",
                 "update_model": "Modifier le modèle"
             }
         },
-
         "table": {
             "vehicle": "Véhicule",
             "category": "Catégorie",
@@ -744,16 +711,13 @@
             "fuel": "Carburant",
             "actions": "Actions"
         },
-        
         "search": {
             "placeholder": "Rechercher par nom, catégorie...",
             "reset": "Réinitialiser"
         },
-        
         "filters": {
             "all_categories": "Toutes les catégories"
         },
-        
         "messages": {
             "cannot_load_data": "Impossible de charger les données",
             "loading": "Chargement des véhicules...",
@@ -765,7 +729,7 @@
             "model_created_success": "Le modèle {{name}} a été créé avec succès.",
             "model_updated": "Modèle modifié",
             "model_updated_success": "Le modèle {{name}} a été modifié avec succès",
-            "model_deleted": "Modèle supprimé", 
+            "model_deleted": "Modèle supprimé",
             "model_deleted_success": "Le modèle {{name}} a été supprimé avec succès",
             "cannot_create_model": "Impossible de créer le modèle.",
             "no_vehicles": "Aucun véhicule",
@@ -793,38 +757,32 @@
             "invalid_seats_description": "Le nombre de sièges doit être entre 1 et 9"
         }
     },
-
     "auth": {
         "brand_name": "CarRental",
         "subtitle": "Connectez-vous pour réserver votre véhicule",
         "title": "Authentification",
         "description": "Connectez-vous ou créez un nouveau compte",
-        
         "tabs": {
             "login": "Connexion",
             "signup": "Inscription"
         },
-        
         "fields": {
             "email": "Email",
             "password": "Mot de passe",
             "full_name": "Nom complet"
         },
-        
         "placeholders": {
             "email": "votre@email.com",
             "password": "••••••••",
             "password_min_length": "Au moins 6 caractères",
             "full_name": "Votre nom complet"
         },
-        
         "buttons": {
             "login": "Se connecter",
             "logging_in": "Connexion...",
             "signup": "S'inscrire",
             "signing_up": "Inscription..."
         },
-        
         "messages": {
             "missing_field": "Champ manquant",
             "enter_full_name": "Veuillez saisir votre nom complet.",
@@ -851,13 +809,11 @@
             "login_success": "Connexion réussie !",
             "welcome": "Bienvenue {{name}}"
         },
-        
         "admin_link": {
             "text": "Vous êtes administrateur ?",
             "button": "Accéder au panneau admin"
         }
     },
-
     "index": {
         "messages": {
             "cannot_load_vehicles": "Impossible de charger les véhicules",
@@ -878,10 +834,11 @@
             "try_different_dates": "Essayez des dates différentes",
             "expand_search_categories": "Élargissez votre recherche à d'autres catégories",
             "check_other_locations": "Vérifiez d'autres lieux de retrait",
-            "start_search_placeholder": "Commencez par effectuer une recherche pour voir les véhicules disponibles."
+            "start_search_placeholder": "Commencez par effectuer une recherche pour voir les véhicules disponibles.",
+            "available_vehicles": "Véhicules disponibles",
+            "our_vehicles": "Parmi nos véhicules"
         }
     },
-
     "dashboard": {
         "loading": "Chargement...",
         "login_prompt": "Veuillez vous connecter",
@@ -889,15 +846,14 @@
         "change_vehicle_availability": "Changer la disponibilité d’un véhicule",
         "user_can_reserve": "Vous pouvez réserver une voiture"
     },
-
     "ma_reservation": {
         "title": "Mes Réservations",
-        "currency": "Dhs",
+        "currency": "MAD",
         "total_price": "Prix total",
         "pickup": "Retrait",
         "return": "Retour",
         "client_info": "Informations client",
-        
+        "booking_id": "N° de réservation",
         "status": {
             "pending": "En attente",
             "accepted": "Confirmée",
@@ -906,7 +862,6 @@
             "refused": "Refusée",
             "cancelled": "Annulée"
         },
-
         "table": {
             "vehicle": "Véhicule",
             "dates": "Dates",
@@ -916,7 +871,6 @@
             "price": "Prix",
             "actions": "Actions"
         },
-        
         "actions": {
             "view_vehicles": "Voir les véhicules",
             "cancel_reservation": "Annuler la réservation",
@@ -924,7 +878,6 @@
             "view_details": "Voir détails",
             "cancel": "Annuler"
         },
-        
         "messages": {
             "loading_reservations": "Chargement de vos réservations...",
             "cannot_load_reservations": "Impossible de récupérer vos réservations",
@@ -943,7 +896,6 @@
             "from_date": "Du {date}",
             "to_date": "Au {date}"
         },
-
         "categories": {
             "category_electric": "Électrique",
             "category_suv": "SUV",
@@ -951,17 +903,19 @@
             "category_sedan": "Berline"
         }
     },
-
     "offers_page": {
         "loadingOffers": "Chargement des offres...",
         "title": "Nos Véhicules et Offres",
         "subtitle": "Découvrez notre flotte complète et profitez de nos offres spéciales pour une expérience de location exceptionnelle",
         "offer": "offre",
-        "offers_plural": "offres",
+        "special_offers": "Offres spéciales",
         "defaultFuel": "Essence",
         "seats": "places",
         "startFrom": "À partir de",
         "perDay": "Jour",
+        "day": "Jour",
+        "startingFrom": "À partir de",
+        "standardRate": "Tarif standard",
         "view": "Voir",
         "noCarsTitle": "Aucun véhicule disponible",
         "noCarsSubtitle": "Tous nos véhicules sont actuellement en location.",
@@ -972,7 +926,6 @@
         "noSpecialOffers": "Aucune offre spéciale disponible",
         "checkStandardRates": "Consultez nos tarifs standards",
         "bookNow": "Réserver",
-
         "vehicle": "Véhicule",
         "category": "Catégorie",
         "specifications": "Spécifications",
@@ -982,35 +935,30 @@
         "offers_available": "offre(s) spéciale(s)",
         "from": "À partir de",
         "noOffers": "Aucune offre",
-
         "periods": {
             "period_1_3_days": "1-3 jours",
             "period_4_10_days": "4-10 jours",
             "period_11_20_days": "11-20 jours",
             "period_21_29_days": "21-29 jours",
             "period_1_month": "1 mois (30j)",
-            "period_week_end":"Week-end (Vendredi 14h - Dimanche 20h)"
+            "period_week_end": "Week-end (Vendredi 14h - Dimanche 20h)"
         },
-
         "categories": {
             "category_electric": "Électrique",
             "category_suv": "SUV",
             "category_urban_suv": "SUV Urbain",
             "category_sedan": "Berline"
         },
-
         "fuel_types": {
             "fuel_gasoline": "Essence",
-            "fuel_electric": "Électrique", 
+            "fuel_electric": "Électrique",
             "fuel_diesel": "Diesel",
             "fuel_hybrid": "Hybride"
         }
     },
-
     "mon_compte": {
         "title": "Mon Compte",
         "personal_info": "Informations personnelles",
-        
         "fields": {
             "full_name": "Nom complet",
             "birth_date": "Date de naissance",
@@ -1018,21 +966,19 @@
             "email": "Email",
             "phone": "Téléphone"
         },
-        
         "placeholders": {
             "full_name": "Votre nom complet",
+            "birth_date": "Votre date de naissance",
             "address": "Votre adresse complète",
             "email": "votre@email.com",
             "phone": "+212 6 00 00 00 00"
         },
-        
         "actions": {
             "edit": "Modifier",
             "cancel": "Annuler",
             "save": "Sauvegarder",
             "saving": "Sauvegarde..."
         },
-        
         "messages": {
             "loading_profile": "Chargement de votre profil...",
             "access_denied": "Accès non autorisé",
@@ -1046,13 +992,17 @@
             "not_configured": "NC"
         }
     },
-
     "searchForm": {
         "title": "Rechercher une voiture",
+        "live_availablity": "Disponibilité en temps réel",
+        "pickupDatePlaceholder": "Date et heure de départ",
+        "returnDatePlaceholder": "Date et heure de retour",
         "pickupPlaceholder": "Lieu de prise en charge",
         "returnPlaceholder": "Lieu de retour",
-        "pickupDate": "Date de départ",
-        "returnDate": "Date de retour",
+        "pickupDate": "Départ",
+        "returnDate": "Retour",
+        "pickup_date": "Date de départ",
+        "return_date": "Date de retour",
         "pickupTime": "Heure de départ",
         "returnTime": "Heure de retour",
         "search": "Rechercher",
@@ -1063,7 +1013,7 @@
         "fuel": "Carburant",
         "all": "Toutes",
         "allFuel": "Tous",
-        "resetFilters": "Réinitialiser les filtres",
+        "resetFilters": "Effacer les filtres",
         "select": "Sélectionner",
         "selectTime": "Sélectionner l'heure",
         "hours": "Heure",
@@ -1071,19 +1021,24 @@
         "noLocations": "Aucune location trouvée",
         "loadingLocations": "Chargement...",
         "errorRequired": "Veuillez remplir tous les champs obligatoires",
-
+        "error": "Erreur",
+        "invalidPickup": "Heure de récupération invalide",
+        "pickupTooSoon": "La récupération doit être au moins 2 heures après maintenant.",
+        "invalidReturn": "Heure de retour invalide",
+        "returnBeforePickup": "Le retour doit être après la récupération.",
+        "invalidDuration": "Durée de location invalide",
+        "rentalTooShort": "La durée minimale de location est de 1 heure.",
+        "time": "Heure",
         "fuel_types": {
             "fuel_gasoline": "Essence",
             "fuel_electric": "Électrique",
             "fuel_diesel": "Diesel",
             "fuel_hybrid": "Hybride"
         },
-        
         "transmission_types": {
             "transmission_manual": "Manuelle",
             "transmission_automatic": "Automatique"
         },
-
         "categories": {
             "category_electric": "Électrique",
             "category_suv": "SUV",
@@ -1091,7 +1046,6 @@
             "category_sedan": "Berline"
         }
     },
-
     "reservation_modal": {
         "title": "Réserver {carName}",
         "currency": "MAD",
@@ -1099,7 +1053,6 @@
         "total_price": "Prix total",
         "at_time": "à",
         "reservation_confirmation_note": "Votre réservation sera confirmée après validation par notre équipe.",
-        
         "fields": {
             "pickup_location": "Lieu de prise",
             "return_location": "Lieu de retour",
@@ -1109,24 +1062,20 @@
             "email": "Email",
             "phone": "Téléphone"
         },
-        
         "placeholders": {
             "full_name": "Votre nom complet",
             "email": "votre@email.com",
             "phone": "Votre numéro de téléphone"
         },
-        
         "user_info": {
             "title": "Vos informations"
         },
-        
         "actions": {
             "cancel": "Annuler",
             "reserving": "Réservation...",
             "unavailable": "Indisponible",
             "confirm_reservation": "Confirmer la réservation"
         },
-        
         "messages": {
             "missing_information": "Information manquante",
             "enter_full_name": "Veuillez saisir votre nom complet.",
@@ -1144,7 +1093,6 @@
             "authentication_required": "Authentification requise",
             "please_login_to_reserve": "Veuillez vous connecter pour effectuer une réservation"
         },
-
         "categories": {
             "category_electric": "Électrique",
             "category_suv": "SUV",
@@ -1152,7 +1100,6 @@
             "category_sedan": "Berline"
         }
     },
-
     "hero": {
         "title": {
             "line1": "Louez la voiture",
@@ -1161,39 +1108,33 @@
         "subtitle": "Des véhicules de qualité disponibles partout au Maroc. Réservation simple et rapide.",
         "image_alt": "Voiture de luxe"
     },
-
     "car_card": {
-        "currency": "Dhs",
+        "from": "À partir de",
+        "currency": "MAD",
         "per_day": "Jour",
         "seats": "places",
-        
         "status": {
             "unavailable": "Non disponible"
         },
-        
         "fuel_types": {
             "fuel_gasoline": "Essence",
             "fuel_electric": "Électrique",
             "fuel_diesel": "Diesel",
             "fuel_hybrid": "Hybride"
         },
-        
         "transmission_types": {
             "transmission_manual": "Manuelle",
             "transmission_automatic": "Automatique"
         },
-        
         "actions": {
             "reserve_now": "Réserver maintenant",
             "unavailable": "Indisponible"
         },
-        
         "messages": {
             "not_specified": "Non spécifié",
             "not_available": "N/A",
             "complete_search_to_reserve": "Complétez la recherche pour réserver"
         },
-
         "categories": {
             "category_electric": "Électrique",
             "category_suv": "SUV",
@@ -1201,45 +1142,37 @@
             "category_sedan": "Berline"
         }
     },
-
     "car_grid": {
         "title": "Véhicules disponibles",
         "available_count": "{available} véhicules disponibles sur {total}",
-        
         "filter": {
             "placeholder": "Filtrer par...",
             "all_vehicles": "Tous les véhicules",
             "available_only": "Disponibles uniquement"
         },
-        
         "sort": {
             "placeholder": "Trier par...",
             "price_asc": "Prix croissant",
             "price_desc": "Prix décroissant",
             "name_asc": "Nom A-Z"
         },
-        
         "quick_filters": {
             "all": "Tous",
             "available": "Disponibles"
         },
-        
         "categories": {
             "sedan": "Berline",
             "electric": "Electrique",
             "suv": "SUV",
             "suv_urban": "SUV Urbain"
         },
-        
         "messages": {
             "no_vehicles_match": "Aucun véhicule ne correspond à vos critères"
         }
     },
-
     "loadingSpinner": {
         "message": "Chargement..."
     },
-
     "protected_route": {
         "messages": {
             "checking_session": "Vérification de votre session...",
@@ -1253,27 +1186,22 @@
             "go_to_dashboard": "Aller au tableau de bord"
         }
     },
-
     "admin_depots": {
         "title": "Gestion des Dépôts",
         "subtitle": "{{total}} dépôt(s) au total • {{active}} actif(s) • {{inactive}} inactif(s)",
-        
         "search": {
             "placeholder": "Rechercher par nom, ville, adresse..."
         },
-        
         "filters": {
             "all": "Tous les statuts",
             "active": "Actifs",
             "inactive": "Inactifs",
             "reset": "Réinitialiser"
         },
-        
         "status": {
             "active": "Actif",
             "inactive": "Inactif"
         },
-        
         "actions": {
             "create": "Nouveau dépôt",
             "edit": "Modifier",
@@ -1290,12 +1218,10 @@
             "switch_table": "Mode tableau",
             "switch_cards": "Mode cartes"
         },
-        
         "depot": {
             "address": "Adresse",
             "created": "Créé le"
         },
-        
         "messages": {
             "loading": "Chargement des dépôts...",
             "no_results": "Aucun résultat trouvé",
@@ -1305,12 +1231,10 @@
             "confirm_delete": "Êtes-vous sûr de vouloir supprimer ce dépôt ?",
             "confirm_remove_vehicle": "Êtes-vous sûr de vouloir retirer ce véhicule du dépôt ?"
         },
-        
         "modal": {
             "create_title": "Créer un nouveau dépôt",
             "edit_title": "Modifier le dépôt"
         },
-        
         "form": {
             "name": "Nom du dépôt *",
             "name_placeholder": "Ex: Agence Principale Casablanca",
@@ -1324,7 +1248,6 @@
             "email_placeholder": "Ex: agence@location.ma",
             "active": "Dépôt actif"
         },
-        
         "toast": {
             "depot_created": "✅ Dépôt créé",
             "depot_created_desc": "Le dépôt a été créé avec succès.",
@@ -1354,7 +1277,6 @@
             "depot_deleted_desc": "Le dépôt a été supprimé définitivement avec succès.",
             "depot_has_vehicles": "Impossible de supprimer le dépôt car il contient des véhicules. Veuillez d'abord retirer tous les véhicules."
         },
-
         "assign_modal": {
             "title": "Assigner des véhicules au dépôt",
             "selected": "sélectionné(s)",
@@ -1362,23 +1284,20 @@
             "no_available_vehicles": "Aucun véhicule disponible",
             "no_available_vehicles_desc": "Tous les véhicules sont déjà assignés à des dépôts."
         },
-
         "vehicles_modal": {
             "title": "Véhicules du dépôt",
             "vehicles_count": "véhicule(s)",
             "no_vehicles": "Aucun véhicule",
             "no_vehicles_desc": "Aucun véhicule n'est assigné à ce dépôt."
         },
-        
         "vehicle_status": {
             "available": "Disponible",
             "reserved": "Réservé",
             "maintenance": "Maintenance"
         },
-
         "table": {
             "name": "Nom",
-            "city": "Ville", 
+            "city": "Ville",
             "address": "Adresse",
             "phone": "Téléphone",
             "email": "Email",
@@ -1386,38 +1305,31 @@
             "actions": "Actions"
         }
     },
-
     "admin_localisations": {
         "title": "Gestion des Localisations",
         "subtitle": "Sélectionnez les localisations qui apparaîtront dans la recherche de la page d'accueil",
-        
         "stats": {
             "total": "Total",
             "active": "Actives",
             "airports": "Aéroports",
             "stations": "Gares"
         },
-        
         "search": {
             "placeholder": "Rechercher une localisation..."
         },
-        
         "filters": {
             "all_types": "Tous les types",
             "airports": "Aéroports",
             "stations": "Gares"
         },
-        
         "types": {
             "airport": "Aéroport",
             "station": "Gare"
         },
-        
         "status": {
             "active": "Active",
             "inactive": "Inactive"
         },
-        
         "actions": {
             "add_localisation": "Ajouter une localisation",
             "activate": "Activer",
@@ -1426,7 +1338,6 @@
             "add": "Ajouter",
             "delete": "Supprimer"
         },
-        
         "table": {
             "localisation": "Localisation",
             "type": "Type",
@@ -1434,11 +1345,10 @@
             "status": "Statut",
             "action": "Action"
         },
-        
         "add_form": {
             "title": "Ajouter une nouvelle localisation",
             "type": "Type",
-            "name":"Nom en ",
+            "name": "Nom en ",
             "display_name": "Nom d'affichage",
             "display_name_placeholder": "ex: Nouvel Aéroport",
             "display_name_help": "Le nom qui sera affiché aux utilisateurs",
@@ -1451,7 +1361,6 @@
             "display_name_label": "Nom affiché",
             "technical_value_label": "Valeur technique"
         },
-        
         "messages": {
             "loading": "Chargement des localisations...",
             "no_localisations": "Aucune localisation trouvée",
@@ -1473,7 +1382,6 @@
             "deleted_success": "Localisation supprimée avec succès",
             "cannot_delete": "Impossible de supprimer"
         },
-        
         "validation": {
             "duplicate": "Cette valeur existe déjà dans le système",
             "generated_automatically": "Généré automatiquement"

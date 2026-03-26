@@ -1,31 +1,36 @@
 // src/components/SearchForm.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { 
-  CalendarIcon, 
-  MapPinIcon, 
-  ClockIcon, 
-  Check, 
+import {
+  CalendarIcon,
+  MapPinIcon,
+  ClockIcon,
+  Check,
+  ChevronDown,
   ChevronsUpDown,
   Search,
   ArrowRightLeft,
   Car,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Repeat,
+  RotateCcw,
+  X
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 // --- Types ---
 export interface SearchData {
-  pickupLocation: string;
-  returnLocation: string;
+  pickupLocation: string; // uuid
+  returnLocation: string; // uuid
   sameLocation: boolean;
   pickupDate: Date | undefined;
   returnDate: Date | undefined;
@@ -42,23 +47,40 @@ interface SearchFormProps {
   onSearch: (searchData: SearchData) => void;
 }
 
+const MIN_BOOKING_DELAY_HOURS = 2;
+const MIN_RENTAL_DURATION_MINUTES = 60;
+
 // --- Autocomplete Input ---
 const AutoCompleteInput = ({
   items,
   placeholder,
   value,
   onSelect,
-  icon
+  icon,
+  color = "blue"
 }: {
   items: { value: string; label: string }[];
   placeholder: string;
   value: string;
   onSelect: (value: string) => void;
   icon?: React.ReactNode;
+  color?: "blue" | "green";
 }) => {
   const [open, setOpen] = useState(false);
   const selectedItem = items.find((item) => item.value === value);
   const { t } = useTranslation();
+  const listRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (open) {
+      setTimeout(() => {
+        const selectedEl = listRef.current?.querySelector('[data-selected="true"]') as HTMLElement;
+        if (selectedEl) {
+          selectedEl.scrollIntoView({ block: "nearest" });
+        }
+      }, 0);
+    }
+  }, [open]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -67,28 +89,40 @@ const AutoCompleteInput = ({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between h-12 border-gray-300 hover:border-blue-500 transition-colors min-w-0"
+          className={cn(
+            "group w-full justify-between h-8 px-1 border-transparent shadow-none transition-all bg-transparent overflow-hidden max-w-full hover:bg-transparent focus:ring-0",
+            color === "blue"
+              ? "hover:text-blue-700 text-gray-900"
+              : "hover:text-green-700 text-gray-900"
+          )}
         >
-          <div className="flex items-center gap-2 flex-1 text-left min-w-0">
-            {icon}
-            <span className={cn("truncate", !selectedItem && "text-muted-foreground")}>
+          <div className="flex items-center gap-2 flex-1 text-left min-w-0 pr-2">
+            <span
+              className={cn(
+                "block truncate transition-colors text-xs font-semibold w-full",
+                !selectedItem && "text-slate-400 font-medium"
+              )}
+            >
               {selectedItem ? selectedItem.label : placeholder}
             </span>
           </div>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-40 group-hover:opacity-70" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent 
-        className="w-[var(--radix-popover-trigger-width)] p-0 max-h-[60vh] overflow-y-auto" 
+      <PopoverContent
+        className="w-[var(--radix-popover-trigger-width)] p-0 max-h-[60vh] overflow-y-auto"
         align="start"
         side="bottom"
       >
         <Command>
-          <CommandInput placeholder={placeholder} />
-          <CommandEmpty className="py-6 text-center text-sm text-muted-foreground">
+          <CommandInput 
+            placeholder={placeholder} 
+            className="focus-visible:ring-0 focus-visible:ring-offset-0 border-none focus-visible:bg-slate-50/50 transition-colors"
+          />
+          <CommandEmpty className="py-6 text-center text-xs text-muted-foreground">
             {t("searchForm.noLocations")}
           </CommandEmpty>
-          <CommandGroup className="max-h-60 overflow-y-auto">
+          <CommandGroup className="max-h-60 overflow-y-auto" ref={listRef}>
             {items.map((item) => (
               <CommandItem
                 key={item.value}
@@ -97,7 +131,13 @@ const AutoCompleteInput = ({
                   onSelect(item.value);
                   setOpen(false);
                 }}
-                className="flex items-center gap-2"
+                className={cn(
+                  "flex items-center gap-2 text-xs",
+                  color === "blue"
+                    ? "data-[selected=true]:bg-blue-600 data-[selected=true]:text-white"
+                    : "data-[selected=true]:bg-green-600 data-[selected=true]:text-white"
+                )}
+                data-selected={value === item.value}
               >
                 <Check
                   className={cn(
@@ -105,7 +145,6 @@ const AutoCompleteInput = ({
                     value === item.value ? "opacity-100" : "opacity-0"
                   )}
                 />
-                <MapPinIcon className="h-4 w-4 text-muted-foreground" />
                 {item.label}
               </CommandItem>
             ))}
@@ -116,155 +155,140 @@ const AutoCompleteInput = ({
   );
 };
 
-// --- Date Picker ---
-const DatePickerField = ({
-  label,
+const DateTimeField = ({
   date,
+  time,
   onDateChange,
-  icon,
+  onTimeChange,
   color = "blue",
-  disabledCondition
+  disabledDates,
+  minTime,
+  placeholder,
+  colorScheme = "default"
 }: {
-  label: string;
-  date: Date | undefined;
-  onDateChange: (date: Date | undefined) => void;
-  icon: React.ReactNode;
-  color?: "blue" | "green";
-  disabledCondition?: (date: Date) => boolean;
+  date?: Date
+  time: string
+  onDateChange: (d?: Date) => void
+  onTimeChange: (t: string) => void
+  color?: "blue" | "green"
+  disabledDates?: (date: Date) => boolean
+  minTime?: string
+  placeholder?: string
+  colorScheme?: "blue" | "green" | "default"
 }) => {
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const { t } = useTranslation();
+  const [open, setOpen] = useState(false)
+  const timeListRef = useRef<HTMLDivElement>(null);
+
+  // Generate 24hr time slots (every 30 mins)
+  const TIME_SLOTS = Array.from({ length: 48 }).map((_, i) => {
+    const hours = Math.floor(i / 2).toString().padStart(2, "0");
+    const mins = (i % 2 === 0 ? "00" : "30");
+    return `${hours}:${mins}`;
+  });
+
+  // Scroll to selected time when opening
+  useEffect(() => {
+    if (open) {
+      setTimeout(() => {
+        const selectedEl = timeListRef.current?.querySelector('[data-selected="true"]') as HTMLElement;
+        if (selectedEl) {
+          selectedEl.scrollIntoView({ block: "center" });
+        }
+      }, 0);
+    }
+  }, [open]);
 
   return (
-    <div className="space-y-3">
-      <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-        {icon}
-        {label}
-      </Label>
-      <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            className={cn(
-              "w-full justify-start text-left font-normal h-12 border-gray-300 text-sm relative",
-              color === "blue" 
-                ? "hover:border-blue-500 focus:border-blue-500" 
-                : "hover:border-green-500 focus:border-green-500",
-              !date && "text-muted-foreground"
-            )}
-          >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {date ? format(date, "dd/MM/yy") : t("searchForm.select")}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent 
-          className="w-auto p-0 mx-4 sm:mx-0" 
-          align="center"
-          side="bottom"
-          avoidCollisions
-          collisionPadding={16}
+    <Popover open={open} onOpenChange={setOpen}>
+
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          className={cn(
+            "h-8 w-full justify-start text-xs px-1 font-semibold border-transparent shadow-none transition-all bg-transparent hover:bg-transparent focus:ring-0",
+            color === "blue"
+              ? "hover:text-blue-700 text-slate-900"
+              : "hover:text-green-700 text-slate-900",
+            !date && "text-slate-400 font-medium"
+          )}
         >
-          <div className="max-h-[80vh] overflow-y-auto">
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={(selectedDate) => {
-                onDateChange(selectedDate);
-                setIsCalendarOpen(false);
-              }}
-              disabled={disabledCondition}
-              initialFocus
-              className="pointer-events-auto"
-            />
-          </div>
-        </PopoverContent>
-      </Popover>
-    </div>
-  );
-};
+          {date
+            ? `${format(date, "dd MMM")} • ${time}`
+            : placeholder || t("searchForm.selectDateTime")}
+        </Button>
+      </PopoverTrigger>
 
-// --- Time Picker ---
-const TimePickerField = ({
-  label,
-  value,
-  onChange,
-  color = "blue",
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  color?: string;
-}) => {
-  const [open, setOpen] = useState(false);
-  const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, "0"));
-  const minutes = ["00","05","10","15","20","25","30","35","40","45","50","55"];
-  const { t } = useTranslation();
+      <PopoverContent
+        className="w-[290px] p-2"
+        align="start"
+        side="bottom"
+      >
 
-  return (
-    <div className="space-y-3 ml-20">
-      <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-        <ClockIcon className={`h-4 w-4 ${color === 'blue' ? 'text-blue-600' : 'text-green-600'}`} />
-        {label}
-      </Label>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            className={`h-12 w-32 justify-start text-left text-gray-800 border-gray-300 focus:border-${color}-500 cursor-pointer`}
-          >
-            {value || t("searchForm.selectTime")}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-56 p-3">
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <p className="text-xs font-semibold text-gray-500 mb-1">{t("searchForm.hours")}</p>
-              <div className="max-h-40 overflow-y-auto space-y-1">
-                {hours.map((h) => (
-                  <Button
-                    key={h}
-                    variant={value.startsWith(h) ? "default" : "ghost"}
-                    className="w-full justify-start"
-                    onClick={() => {
-                      const m = value.split(":")[1] || "00";
-                      onChange(`${h}:${m}`);
-                    }}
-                  >
-                    {h}
-                  </Button>
-                ))}
-              </div>
+        <Calendar
+          mode="single"
+          selected={date}
+          onSelect={(d) => {
+            onDateChange(d)
+          }}
+          disabled={disabledDates}
+          captionLayout="dropdown-buttons"
+          fromYear={new Date().getFullYear()}
+          toYear={new Date().getFullYear() + 2}
+          className="p-2 text-xs"
+          colorScheme={colorScheme}
+        />
+
+        {date && (
+          <>
+            <div className="mt-2 text-center text-xs text-gray-700 font-medium mb-1 pt-2 border-t border-slate-100">
+              {t("searchForm.time")}
             </div>
-            <div>
-              <p className="text-xs font-semibold text-gray-500 mb-1">{t("searchForm.minutes")}</p>
-              <div className="max-h-40 overflow-y-auto space-y-1">
-                {minutes.map((m) => (
-                  <Button
-                    key={m}
-                    variant={value.endsWith(m) ? "default" : "ghost"}
-                    className="w-full justify-start"
+            <div 
+              className="px-2 pb-2 h-32 overflow-y-auto grid grid-cols-4 gap-1"
+              ref={timeListRef}
+            >
+              {TIME_SLOTS.map((slot) => {
+                const isDisabled = minTime && slot < minTime;
+                const isSelected = slot === time;
+                return (
+                  <button
+                    key={slot}
+                    type="button"
+                    data-selected={isSelected}
+                    disabled={isDisabled}
                     onClick={() => {
-                      const h = value.split(":")[0] || "00";
-                      onChange(`${h}:${m}`);
-                      setOpen(false);
+                        onTimeChange(slot);
+                        setOpen(false); // OPTIONAL: Fermer après selection heure ? 
                     }}
+                    className={cn(
+                      "text-[10px] py-1.5 rounded-md transition-all text-center border font-medium",
+                      isDisabled && "opacity-30 pointer-events-none cursor-not-allowed border-transparent bg-transparent text-gray-400",
+                      !isDisabled && !isSelected && colorScheme === "blue" && "hover:bg-blue-100 hover:text-blue-600 border-gray-100 text-gray-700",
+                      !isDisabled && !isSelected && colorScheme === "green" && "hover:bg-green-100 hover:text-green-600 border-gray-100 text-gray-700",
+                      !isDisabled && !isSelected && colorScheme === "default" && "hover:bg-slate-100 border-gray-100 text-gray-700",
+                      isSelected && colorScheme === "blue" && "bg-blue-400 text-white border-blue-400 shadow-sm hover:bg-blue-500 hover:text-white",
+                      isSelected && colorScheme === "green" && "bg-green-400 text-white border-green-400 shadow-sm hover:bg-green-500 hover:text-white",
+                      isSelected && colorScheme === "default" && "bg-blue-400 text-white border-blue-400 shadow-sm hover:bg-blue-500 hover:text-white"
+                    )}
                   >
-                    {m}
-                  </Button>
-                ))}
-              </div>
+                    {slot}
+                  </button>
+                )
+              })}
             </div>
-          </div>
-        </PopoverContent>
-      </Popover>
-    </div>
-  );
-};
+          </>
+        )}
+
+      </PopoverContent>
+
+    </Popover>
+  )
+}
 
 // --- Search Form ---
 export const SearchForm = ({ onSearch }: SearchFormProps) => {
   const { t, i18n } = useTranslation();
-
   const [pickupLocation, setPickupLocation] = useState("");
   const [returnLocation, setReturnLocation] = useState("");
   const [sameLocation, setSameLocation] = useState(false);
@@ -274,28 +298,125 @@ export const SearchForm = ({ onSearch }: SearchFormProps) => {
   const [returnTime, setReturnTime] = useState("09:00");
   const [activeLocations, setActiveLocations] = useState<{ value: string; label: string; type: string }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
+  const { toast } = useToast();
   const [filters, setFilters] = useState({
     category: "",
     transmission: "",
     fuel: ""
   });
 
-  const activeFilterCount = Object.values(filters).filter(Boolean).length;
+  const activeFilterCount = Object.values(filters).filter((v) => v !== "").length;
 
   const [filterOptions, setFilterOptions] = useState({
     category: [] as string[],
-    transmission: [] as string[],
     fuel: [] as string[]
   });
 
-  useEffect(() => { fetchFilters(); fetchActiveLocations(); }, []);
+  useEffect(() => {
+    fetchActiveLocations();
+  }, [i18n.language]);
+
+  useEffect(() => {
+    fetchFilters();
+  }, []);
 
   const fetchFilters = async () => {
-    const { data, error } = await supabase.from("cars").select("category, transmission, fuel");
+    const { data, error } = await supabase.from("cars").select("category, fuel");
     if (error || !data) return;
-    const unique = (key: string) => [...new Set(data.map((car) => car[key]).filter(Boolean))];
-    setFilterOptions({ category: unique("category"), transmission: unique("transmission"), fuel: unique("fuel") });
+    const unique = (key: keyof typeof data[0]) =>
+      [...new Set(data.map((car) => car[key]).filter(Boolean))];
+    setFilterOptions({ category: unique("category"), fuel: unique("fuel") });
+  };
+
+  const buildDateTime = (date?: Date, time?: string) => {
+    if (!date || !time) return null;
+
+    const [h, m] = time.split(":");
+    const d = new Date(date);
+    d.setHours(parseInt(h), parseInt(m), 0, 0);
+
+    return d;
+  };
+
+  const getMinPickupTime = () => {
+    if (!pickupDate) return undefined;
+    
+    // Si la date choisie est aujourd'hui (ou avant -> bloqué de toute facon par disableDates), on impose +2h
+    const now = new Date();
+    if (startOfDay(pickupDate).getTime() === startOfDay(now).getTime()) {
+       now.setHours(now.getHours() + MIN_BOOKING_DELAY_HOURS);
+       const h = now.getHours().toString().padStart(2, "0");
+       const m = now.getMinutes().toString().padStart(2, "0");
+       return `${h}:${m}`;
+    }
+    
+    return undefined;
+  };
+
+  const getMinReturnTime = () => {
+    if (!pickupDate || !returnDate || !pickupTime) return undefined;
+
+    // Si la date de retour est la même que la date de pickup, on force pickupTime + 1h
+    if (startOfDay(pickupDate).getTime() === startOfDay(returnDate).getTime()) {
+      const pTimeStr = pickupTime.split(":");
+      const pDateWithTime = new Date(pickupDate);
+      pDateWithTime.setHours(parseInt(pTimeStr[0]), parseInt(pTimeStr[1]), 0, 0);
+      
+      const minReturn = new Date(pDateWithTime.getTime() + MIN_RENTAL_DURATION_MINUTES * 60000);
+      
+      const h = minReturn.getHours().toString().padStart(2, "0");
+      const m = minReturn.getMinutes().toString().padStart(2, "0");
+      return `${h}:${m}`;
+    }
+
+    return undefined;
+  };
+
+  useEffect(() => {
+    const pickupDateTime = buildDateTime(pickupDate, pickupTime);
+    const returnDateTime = buildDateTime(returnDate, returnTime);
+
+    if (!pickupDateTime || !returnDateTime) return;
+
+    const minReturn = new Date(
+      pickupDateTime.getTime() + MIN_RENTAL_DURATION_MINUTES * 60000
+    );
+
+    if (returnDateTime < minReturn) {
+      const h = minReturn.getHours().toString().padStart(2, "0");
+      const m = minReturn.getMinutes().toString().padStart(2, "0");
+
+      setReturnDate(minReturn);
+      setReturnTime(`${h}:${m}`);
+    }
+  }, [pickupDate, pickupTime]);
+
+  const isPickupTimeValid = () => {
+    if (!pickupDate) return true;
+
+    const now = new Date();
+
+    const pickupDateTime = new Date(pickupDate);
+    const [h, m] = pickupTime.split(":");
+    pickupDateTime.setHours(parseInt(h), parseInt(m), 0, 0);
+
+    const minPickup = new Date(now.getTime() + MIN_BOOKING_DELAY_HOURS * 60 * 60 * 1000);
+
+    return pickupDateTime >= minPickup;
+  };
+
+  const isReturnAfterPickup = () => {
+    if (!pickupDate || !returnDate) return true;
+
+    const pickup = new Date(pickupDate);
+    const [ph, pm] = pickupTime.split(":");
+    pickup.setHours(parseInt(ph), parseInt(pm), 0, 0);
+
+    const ret = new Date(returnDate);
+    const [rh, rm] = returnTime.split(":");
+    ret.setHours(parseInt(rh), parseInt(rm), 0, 0);
+
+    return ret > pickup;
   };
 
   const fetchActiveLocations = async () => {
@@ -320,47 +441,76 @@ export const SearchForm = ({ onSearch }: SearchFormProps) => {
       if (transError) throw transError;
 
       // Fusion localisation + traduction
-      const formatted = locations.map((loc: any) => {
-        const tr = translations.find((t: any) => t.localisation_id === loc.id);
-        const label = tr ? tr.display_name : loc.localisation_value;
-        return {
-          value: loc.localisation_value,
-          label,
-          type: loc.localisation_type
-        };
-      });
+      const translationMap = new Map(
+        translations.map((t: any) => [t.localisation_id, t.display_name])
+      );
+
+      const formatted = locations.map((loc: any) => ({
+        value: loc.id,
+        label: translationMap.get(loc.id) ?? loc.localisation_value,
+        type: loc.localisation_type
+      }));
 
       setActiveLocations(formatted);
 
     } catch (err) {
       console.error("Erreur chargement locations:", err);
-      setActiveLocations(getFallbackLocations());
     } finally {
       setIsLoading(false);
     }
   };
 
-
-  const getFallbackLocations = () => {
-    const airports = ["agadir","casablanca","marrakech","rabat","tanger"].map(a => ({
-      value: `airport_${a}`,
-      label: t(`airports.${a}`),
-      type: "airport"
-    }));
-    const stations = ["casa_voyageurs","rabat_agdal","marrakech"].map(s => ({
-      value: `station_${s}`,
-      label: t(`stations.${s}`),
-      type: "station"
-    }));
-    return [...airports, ...stations];
-  };
-
-
-
-  const getLocationLabel = (value: string) => activeLocations.find(item => item.value === value)?.label || value;
+  const getLocationLabel = (value: string) =>
+    activeLocations.find((l) => l.value === value)?.label ?? value;
 
   const handleSearch = () => {
-    if (!pickupLocation || !pickupDate || !returnDate) return console.error(t("searchForm.errorRequired"));
+    if (!pickupLocation || !pickupDate || !returnDate) {
+      toast({
+        title: t("searchForm.error"),
+        description: t("searchForm.errorRequired"),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!isPickupTimeValid()) {
+      toast({
+        title: t("searchForm.invalidPickup"),
+        description: t("searchForm.pickupTooSoon"),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!isReturnAfterPickup()) {
+      toast({
+        title: t("searchForm.invalidReturn"),
+        description: t("searchForm.returnBeforePickup"),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const pickupDateTime = buildDateTime(pickupDate, pickupTime);
+    const returnDateTime = buildDateTime(returnDate, returnTime);
+
+    if (pickupDateTime && returnDateTime) {
+      const diffMinutes = (returnDateTime.getTime() - pickupDateTime.getTime()) / 60000;
+
+      if (diffMinutes < MIN_RENTAL_DURATION_MINUTES) {
+        toast({
+          title: t("searchForm.invalidDuration"),
+          description: t("searchForm.rentalTooShort"),
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+
     onSearch({
       pickupLocation,
       returnLocation: sameLocation ? pickupLocation : returnLocation,
@@ -374,226 +524,255 @@ export const SearchForm = ({ onSearch }: SearchFormProps) => {
   };
 
   return (
-    <div className="bg-white/95 backdrop-blur-sm border border-gray-200/80 rounded-2xl p-4 sm:p-6 shadow-xl shadow-blue-500/5 relative overflow-visible">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-6 sm:mb-8">
-        <div className="p-2 bg-blue-100 rounded-lg">
-          <Car className="h-5 w-5 text-blue-600" />
+    <div className="bg-white/60 backdrop-blur-xl border border-white/20 rounded-2xl p-3 sm:p-4 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.08)] relative z-10 w-full max-w-6xl mx-auto transition-all">
+      {/* Header & Style Pills */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-6 px-2">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 bg-blue-600 rounded-xl border border-slate-100 flex items-center justify-center shadow-sm">
+            <Car className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-slate-900 tracking-tight uppercase">{t("searchForm.title")}</h2>
+            <div className="flex items-center gap-2">
+               <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{t("searchForm.live_availablity")}</span>
+            </div>
+          </div>
         </div>
-        <div>
-          <h2 className="text-lg sm:text-xl font-bold text-gray-900">{t("searchForm.title")}</h2>
-        </div>
-      </div>
 
-      {/* Filters */}
-      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-10">
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className="flex items-center gap-2">
-              <SlidersHorizontal className="h-4 w-4" />
-              {t("searchForm.filters")}
-              {activeFilterCount > 0 && (
-                <span className="bg-blue-600 text-white text-xs py-0.5 px-2 rounded-full">
-                  {activeFilterCount}
-                </span>
-              )}
-            </Button>
-          </PopoverTrigger>
+          <div className="flex items-center gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "bg-slate-50 hover:bg-blue-600 border-none text-xs font-semibold h-11 px-4 rounded-full transition-all shadow-sm flex items-center gap-2 w-36 justify-center overflow-hidden no-focus-ring",
+                    activeFilterCount > 0 && "bg-blue-600 text-white hover:bg-blue-700"
+                  )}
+                >
+                  <SlidersHorizontal className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">{t("searchForm.filters")}</span>
+                  {activeFilterCount > 0 && (
+                    <span className="shrink-0 bg-blue-600 text-white text-[10px] h-4 w-4 rounded-full flex items-center justify-center font-bold">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                  <ChevronDown className="h-3.5 w-3.5 opacity-40 shrink-0" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-56 p-4 rounded-2xl shadow-2xl border-slate-100" align="end">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-slate-900 uppercase tracking-widest">{t("searchForm.filters")}</h3>
+                  </div>
 
-          <PopoverContent className="p-4 w-72 space-y-4">
-            {/* Catégorie */}
-            <div>
-              <Label className="font-medium text-sm mb-1 block">
-                {t("searchForm.category")}
-              </Label>
-              <select
-                className="w-full border p-2 rounded"
-                value={filters.category}
-                onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-              >
-                <option value="">{t("searchForm.all")}</option>
-                {filterOptions.category.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {t(`searchForm.categories.${cat.toLowerCase()}`)}
-                  </option>
-                ))}
-              </select>
-            </div>
+                  <div className="space-y-3">
+                    {/* Categorie */}
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">{t("searchForm.category")}</Label>
+                      <div className="relative group">
+                        <select
+                          className="w-full appearance-none bg-slate-50 hover:bg-slate-100 border border-slate-100 text-slate-700 text-xs font-semibold py-2 pl-3 pr-8 rounded-xl cursor-pointer focus-subtle font-sans"
+                          value={filters.category}
+                          onChange={(e) => setFilters({ ...filters, category: e.target.value })}
+                        >
+                          <option value="">{t("searchForm.all")}</option>
+                          {filterOptions.category.map((cat) => (
+                            <option key={cat} value={cat}>
+                              {t(`searchForm.categories.${cat.toLowerCase()}`)}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                          <ChevronDown className="h-4 w-4 text-slate-400" />
+                        </div>
+                      </div>
+                    </div>
 
-            {/* Transmission */}
-            <div>
-              <Label className="font-medium text-sm mb-1 block">
-                {t("searchForm.transmission")}
-              </Label>
-              <select
-                className="w-full border p-2 rounded"
-                value={filters.transmission}
-                onChange={(e) => setFilters({ ...filters, transmission: e.target.value })}
-              >
-                <option value="">{t("searchForm.all")}</option>
-                {filterOptions.transmission.map((tr) => (
-                  <option key={tr} value={tr}>
-                    {t(`searchForm.transmission_types.${tr.toLowerCase()}`)}
-                  </option>
-                ))}
-              </select>
-            </div>
+                    {/* Transmission */}
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">{t("searchForm.transmission")}</Label>
+                      <div className="relative group">
+                        <select
+                          className="w-full appearance-none bg-slate-50 hover:bg-slate-100 border border-slate-100 text-slate-700 text-xs font-semibold py-2 pl-3 pr-8 rounded-xl cursor-pointer focus-subtle font-sans"
+                          value={filters.transmission}
+                          onChange={(e) => setFilters({ ...filters, transmission: e.target.value })}
+                        >
+                          <option value="">{t("searchForm.all")}</option>
+                          <option value="automatic">{t("transmission.automatic")}</option>
+                          <option value="manual">{t("transmission.manual")}</option>
+                        </select>
+                        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                          <ChevronDown className="h-4 w-4 text-slate-400" />
+                        </div>
+                      </div>
+                    </div>
 
-            {/* Carburant */}
-            <div>
-              <Label className="font-medium text-sm mb-1 block">
-                {t("searchForm.fuel")}
-              </Label>
-              <select
-                className="w-full border p-2 rounded"
-                value={filters.fuel}
-                onChange={(e) => setFilters({ ...filters, fuel: e.target.value })}
-              >
-                <option value="">{t("searchForm.allFuel")}</option>
-                {filterOptions.fuel.map((f) => (
-                  <option key={f} value={f}>
-                    {t(`searchForm.fuel_types.${f.toLowerCase()}`)}
-                  </option>
-                ))}
-              </select>
-            </div>
+                    {/* Carburant */}
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">{t("searchForm.fuel")}</Label>
+                      <div className="relative group">
+                        <select
+                          className="w-full appearance-none bg-slate-50 hover:bg-slate-100 border border-slate-100 text-slate-700 text-xs font-semibold py-2 pl-3 pr-8 rounded-xl cursor-pointer focus-subtle font-sans"
+                          value={filters.fuel}
+                          onChange={(e) => setFilters({ ...filters, fuel: e.target.value })}
+                        >
+                          <option value="">{t("searchForm.allFuel")}</option>
+                          {filterOptions.fuel.map((f) => (
+                            <option key={f} value={f}>
+                              {t(`searchForm.fuel_types.${f.toLowerCase()}`)}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                          <ChevronDown className="h-4 w-4 text-slate-400" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
 
-            {/* Reset filters */}
             {activeFilterCount > 0 && (
               <Button
                 variant="ghost"
-                className="w-full text-red-500"
+                size="sm"
+                className="h-8 px-3 text-[10px] font-bold text-slate-500 hover:text-red-500 hover:bg-red-50 rounded-full uppercase tracking-widest no-focus-ring flex items-center gap-1.5 transition-all border border-transparent hover:border-red-100"
                 onClick={() => setFilters({ category: "", transmission: "", fuel: "" })}
               >
+                <RotateCcw className="h-3 w-3" />
                 {t("searchForm.resetFilters")}
               </Button>
             )}
-          </PopoverContent>
-        </Popover>
-      </div>
-
-      {/* Locations */}
-      <div className="space-y-4 sm:space-y-0 sm:flex sm:items-end sm:gap-4 mb-6 sm:mb-8">
-        <div className="flex-1 space-y-3 min-w-0">
-          <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-            <MapPinIcon className="h-4 w-4 text-blue-600" />
-            {t("searchForm.pickupPlaceholder")}
-          </Label>
-          <AutoCompleteInput
-            items={activeLocations}
-            placeholder={isLoading ? t("searchForm.loadingLocations") : t("searchForm.pickupPlaceholder")}
-            value={pickupLocation}
-            onSelect={setPickupLocation}
-            icon={<MapPinIcon className="h-4 w-4 text-blue-600" />}
-          />
+          </div>
         </div>
 
-        <div className="flex justify-center sm:justify-start sm:pb-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setSameLocation(!sameLocation)}
-            className={cn(
-              "rounded-full p-3 border-2 transition-all duration-300",
-              sameLocation
-                ? "bg-green-50 border-green-200 text-green-600"
-                : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600"
-            )}
-            title={t("searchForm.swap")}
-          >
-            <ArrowRightLeft className="h-4 w-4" />
-          </Button>
-        </div>
 
-        <div className="flex-1 space-y-3 min-w-0">
-          <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-            <MapPinIcon className="h-4 w-4 text-green-600" />
-            {t("searchForm.returnPlaceholder")}
-          </Label>
-          {sameLocation ? (
-            <div className="relative">
-              <Input
-                value={getLocationLabel(pickupLocation)}
-                readOnly
-                className="bg-green-50 border-green-200 cursor-not-allowed h-12"
-              />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-xs sm:text-sm text-green-700 bg-green-50/80 px-2 sm:px-3 py-1 rounded-full font-medium">
-                  {t("searchForm.swap")}
-                </span>
-              </div>
-            </div>
-          ) : (
+      {/* Main Search Row - Hyper-Clean Container */}
+      <div className="bg-white rounded-xl p-1.5 border border-slate-200 shadow-sm">
+        <div className="flex flex-col lg:flex-row items-center lg:divide-x lg:divide-slate-100">
+          
+          {/* Pickup Section */}
+          <div className="flex-[1.4] w-full min-w-0 bg-white lg:bg-transparent rounded-xl lg:rounded-none border border-slate-200 lg:border-none p-3 lg:px-6 lg:py-2.5 transition-all hover:bg-slate-50/50">
+            <Label className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5 flex flex-row items-center gap-2">
+              <MapPinIcon className="h-3.5 w-3.5 text-blue-600/70" />
+              {t("searchForm.pickupPlaceholder")}
+            </Label>
             <AutoCompleteInput
               items={activeLocations}
-              placeholder={isLoading ? t("searchForm.loadingLocations") : t("searchForm.returnPlaceholder")}
-              value={returnLocation}
-              onSelect={setReturnLocation}
-              icon={<MapPinIcon className="h-4 w-4 text-green-600" />}
+              placeholder={isLoading ? t("searchForm.loadingLocations") : t("searchForm.pickupPlaceholder")}
+              value={pickupLocation}
+              onSelect={setPickupLocation}
+              icon={<MapPinIcon className="h-4 w-4 text-blue-600" />}
+              color="blue"
             />
-          )}
-        </div>
-      </div>
-
-      {/* Dates & Times */}
-      <div className="space-y-6 sm:space-y-0 sm:grid sm:grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mb-6 sm:mb-8">
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-2 h-6 bg-blue-600 rounded-full"></div>
-            <h3 className="font-semibold text-gray-900">{t("searchForm.pickupDate")}</h3>
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
-            <DatePickerField
-              label={t("searchForm.pickupDate")}
+
+          {/* Date & Time Pickup */}
+          <div className="flex-[1.2] w-full min-w-0 bg-white lg:bg-transparent rounded-xl lg:rounded-none border border-slate-200 lg:border-none p-3 lg:px-6 lg:py-2.5 transition-all hover:bg-slate-50/50">
+            <Label className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5 flex flex-row items-center gap-2">
+              <CalendarIcon className="h-3.5 w-3.5 text-blue-600/70" />
+              {t("searchForm.pickupDate")}
+            </Label>
+            <DateTimeField
               date={pickupDate}
+              time={pickupTime}
               onDateChange={setPickupDate}
-              icon={<CalendarIcon className="h-4 w-4 text-blue-600" />}
+              onTimeChange={setPickupTime}
               color="blue"
-              disabledCondition={(date) => date < new Date()}
-            />
-            <TimePickerField
-              label={t("searchForm.pickupTime")}
-              value={pickupTime}
-              onChange={setPickupTime}
-              color="blue"
+              disabledDates={(date) => date < startOfDay(new Date())}
+              minTime={getMinPickupTime()}
+              placeholder={t("searchForm.pickupDatePlaceholder")}
+              colorScheme="blue"
             />
           </div>
-        </div>
 
-        <div className="space-y-4 ml-6">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-2 h-6 bg-green-600 rounded-full"></div>
-            <h3 className="font-semibold text-gray-900">{t("searchForm.returnDate")}</h3>
+          {/* Same Location Button (Swap) */}
+          <div className="flex shrink-0 w-full lg:w-14 items-center justify-center lg:py-0">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setSameLocation(!sameLocation)}
+              className={cn(
+                "h-9 w-full lg:w-9 rounded-xl border-slate-200 transition-all bg-white shadow-sm z-10",
+                "hover:scale-110 active:scale-95",
+                sameLocation
+                  ? "bg-green-50/80 text-green-600 border-green-200 hover:bg-green-100 hover:text-green-700"
+                  : "text-slate-400 hover:bg-blue-50/80 hover:text-blue-600 hover:border-blue-200"
+              )}
+              title={t("searchForm.swap")}
+            >
+              <ArrowRightLeft className={cn("h-3.5 w-3.5 transition-transform duration-500", sameLocation && "rotate-180")} />
+              <span className="inline-block lg:hidden text-xs font-semibold ml-2">
+                {sameLocation ? t("searchForm.sameLocation") : t("searchForm.differentLocation")}
+              </span>
+            </Button>
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
-            <DatePickerField
-              label={t("searchForm.returnDate")}
+
+          {/* Return Section */}
+          <div className="flex-[1.4] w-full min-w-0 bg-white lg:bg-transparent rounded-xl lg:rounded-none border border-slate-200 lg:border-none p-3 lg:px-6 lg:py-2.5 transition-all hover:bg-slate-50/50">
+            <Label className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5 flex flex-row items-center gap-2">
+              <MapPinIcon className="h-3.5 w-3.5 text-green-600/70" />
+              {t("searchForm.returnPlaceholder")}
+            </Label>
+            {sameLocation ? (
+              <div className="relative">
+                <Input
+                  disabled
+                  className={cn(
+                    "bg-slate-50/50 border-slate-200 h-8 w-full shadow-none truncate pr-2 cursor-not-allowed opacity-60 text-xs px-1",
+                    pickupLocation ? "text-slate-900 font-semibold" : "text-slate-400 font-medium"
+                  )}
+                  value={getLocationLabel(pickupLocation) || t("searchForm.pickupPlaceholder")}
+                  readOnly
+                />
+              </div>
+            ) : (
+              <AutoCompleteInput
+                items={activeLocations}
+                placeholder={isLoading ? t("searchForm.loadingLocations") : t("searchForm.returnPlaceholder")}
+                value={returnLocation}
+                onSelect={setReturnLocation}
+                icon={<MapPinIcon className="h-4 w-4 text-green-600" />}
+                color="green"
+              />
+            )}
+          </div>
+
+          {/* Date & Time Return */}
+          <div className="flex-[1.2] w-full min-w-0 bg-white lg:bg-transparent rounded-xl lg:rounded-none border border-slate-200 lg:border-none p-3 lg:px-6 lg:py-2.5 transition-all hover:bg-slate-50/50">
+            <Label className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1.5 flex flex-row items-center gap-2">
+              <CalendarIcon className="h-3.5 w-3.5 text-green-600/70" />
+              {t("searchForm.returnDate")}
+            </Label>
+            <DateTimeField
               date={returnDate}
+              time={returnTime}
               onDateChange={setReturnDate}
-              icon={<CalendarIcon className="h-4 w-4 text-green-600" />}
+              onTimeChange={setReturnTime}
               color="green"
-              disabledCondition={(date) => date < (pickupDate || new Date())}
-            />
-            <TimePickerField
-              label={t("searchForm.returnTime")}
-              value={returnTime}
-              onChange={setReturnTime}
-              color="green"
+              disabledDates={(date) => {
+                const today = startOfDay(new Date());
+                return date < today || (pickupDate ? date < startOfDay(pickupDate) : false);
+              }}
+              minTime={getMinReturnTime()}
+              placeholder={t("searchForm.returnDatePlaceholder")}
+              colorScheme="green"
             />
           </div>
-        </div>
-      </div>
 
-      {/* Search Button */}
-      <div className="mt-4">
-        <Button
-          onClick={handleSearch}
-          className="w-full bg-blue-600 text-white h-12 text-lg"
-          disabled={!pickupLocation || !pickupDate}
-        >
-          <Search className="mr-2 h-5 w-5" />
-          {t("searchForm.search")}
-        </Button>
+          {/* Final Search Action */}
+          <div className="shrink-0 lg:px-4">
+            <Button
+              onClick={handleSearch}
+              className="bg-blue-600 text-white h-12 w-full lg:w-16 rounded-xl transition-all hover:bg-blue-700 shadow-lg shadow-blue-600/20 hover:scale-105 active:scale-95 disabled:opacity-40"
+              disabled={!pickupLocation || (!sameLocation && !returnLocation) || !pickupDate || !returnDate}
+            >
+              <Search className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );

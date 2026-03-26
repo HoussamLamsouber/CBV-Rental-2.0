@@ -97,10 +97,10 @@ export const AdminHeader = () => {
       <Link
         to={item.path}
         className={cn(
-          "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-sm font-medium",
+          "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-[14px] font-medium",
           isActive
-            ? "bg-blue-600 text-white shadow-sm"
-            : "text-gray-700 hover:bg-gray-100 hover:text-blue-600"
+            ? "bg-blue-600 text-white shadow-md shadow-blue-200"
+            : "text-slate-600 hover:bg-slate-50 hover:text-blue-600"
         )}
       >
         <Icon className="h-5 w-5" />
@@ -110,7 +110,7 @@ export const AdminHeader = () => {
   };
 
   return (
-    <div className="w-64 bg-white border-r border-gray-200 h-screen fixed left-0 top-0 flex flex-col">
+    <div className="w-64 bg-white border-r border-slate-200 h-screen fixed left-0 top-0 flex flex-col shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">
       {/* En-tête du sidebar */}
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center gap-3">
@@ -120,8 +120,8 @@ export const AdminHeader = () => {
             className="h-8 md:h-10"
           />
           <div>
-            <h1 className="font-bold text-gray-900">Administration</h1>
-            <p className="text-xs text-gray-500">Panel de gestion</p>
+            <h1 className="text-[18px] font-bold text-slate-900">Administration</h1>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Panel de gestion</p>
           </div>
         </div>
       </div>
@@ -138,11 +138,8 @@ export const AdminHeader = () => {
         {/* Dropdown utilisateur */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button 
-              variant="outline" 
-              className="w-full justify-start gap-3 h-11"
-            >
-              <Avatar className="h-6 w-6">
+            <button className="flex w-full items-center gap-2 p-2 rounded-xl text-sm text-gray-900 hover:bg-gray-100 transition font-bold no-focus-ring">
+              <Avatar className="h-9 w-9 border-2 border-white shadow-sm">
                 <AvatarImage
                   src={
                     user?.user_metadata?.avatar_url ||
@@ -150,7 +147,7 @@ export const AdminHeader = () => {
                   }
                   alt="Profil"
                 />
-                <AvatarFallback>
+                <AvatarFallback className="bg-blue-600 text-white font-bold">
                   {(
                     user?.user_metadata?.full_name?.[0] ||
                     user?.email?.[0] ||
@@ -162,16 +159,16 @@ export const AdminHeader = () => {
                 {user?.user_metadata?.full_name || user?.email || t("my_account")}
               </span>
               <ChevronDown className="h-4 w-4 opacity-50" />
-            </Button>
+            </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-56">
-            <DropdownMenuItem asChild>
+          <DropdownMenuContent align="start" className="w-56 p-1.5 rounded-xl shadow-xl border-slate-100">
+            <DropdownMenuItem asChild className="rounded-lg focus:bg-blue-50 focus:text-blue-700 py-2.5 no-focus-ring">
               <Link to="/mon-compte" className="flex items-center gap-2">
                 <User className="h-4 w-4" />
                 {t("profile")}
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem asChild>
+            <DropdownMenuItem asChild className="rounded-lg focus:bg-blue-50 focus:text-blue-700 py-2.5 no-focus-ring">
               <Link to="/changer-mot-de-passe" className="flex items-center gap-2">
                 <Key className="h-4 w-4" />
                 {t("change_password")}

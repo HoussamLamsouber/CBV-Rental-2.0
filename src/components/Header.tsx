@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/utils";
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -44,42 +45,41 @@ export const Header = () => {
   const navLink = (path: string, label: string) => (
     <Link
       to={path}
-      className={
+      className={cn(
+        "text-sm font-bold uppercase tracking-wider transition-all duration-300",
         location.pathname === path
-          ? "text-white font-semibold"
-          : "text-blue-200 hover:text-white transition"
-      }
+          ? "text-blue-600"
+          : "text-gray-500 hover:text-blue-600"
+      )}
     >
       {label}
     </Link>
   );
 
   return (
-    <header className="bg-gradient-to-br from-blue-900 to-blue-800 text-white sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+    <header className="fixed top-0 left-0 w-full z-50 bg-white border-b border-slate-100">
+      <div className="container mx-auto px-6 py-4 flex items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center space-x-2">
-          <img src="/logo-white.webp" alt="Logo" className="h-8 md:h-16" />
+        <Link to="/" className="flex items-center space-x-2 transition-transform hover:scale-105 active:scale-95 duration-300">
+          <img src="/logo-dark.webp" alt="Logo" className="h-8 md:h-12" />
         </Link>
 
-        {/* Navigation principale - Uniquement pour les pages publiques */}
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden md:flex items-center gap-10">
           {navLink("/", t("home"))}
           {navLink("/offres", t("offers"))}
           {navLink("/about", t("about"))}
-          {navLink("/contact", t("contact"))}
+          {navLink("/contact", t("contact.label"))}
         </nav>
 
         {/* Espace utilisateur + bouton langue */}
         <div className="flex items-center gap-3">
-          {/* Zone utilisateur desktop */}
           {!authLoading && (
             <div className="hidden md:flex items-center">
               {isAuthenticated ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="flex items-center gap-2 p-2 rounded-md text-sm text-white hover:text-blue-200 transition font-medium">
-                      <Avatar className="h-8 w-8 border text-gray-700 border-gray-700">
+                    <button className="flex items-center gap-2 p-2 rounded-xl text-sm text-gray-900 hover:bg-gray-100 transition font-bold no-focus-ring">
+                      <Avatar className="h-9 w-9 border-2 border-white shadow-sm">
                         <AvatarImage
                           src={
                             user?.user_metadata?.avatar_url ||
@@ -87,7 +87,7 @@ export const Header = () => {
                           }
                           alt="Profil"
                         />
-                        <AvatarFallback>
+                        <AvatarFallback className="bg-blue-600 text-white font-bold">
                           {(
                             user?.user_metadata?.full_name?.[0] ||
                             user?.email?.[0] ||
@@ -95,134 +95,92 @@ export const Header = () => {
                           ).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
-                      {user?.user_metadata?.full_name ||
-                        user?.email ||
-                        t("my_account")}
-                      <ChevronDown className="h-4 w-4" />
+                      <span className="max-w-[120px] truncate">
+                        {user?.user_metadata?.full_name || user?.email || t("my_account")}
+                      </span>
+                      <ChevronDown className="h-4 w-4 opacity-50" />
                     </button>
                   </DropdownMenuTrigger>
 
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem asChild>
+                  <DropdownMenuContent align="end" className="w-56 p-1.5 rounded-xl shadow-xl border-slate-100">
+                    <DropdownMenuItem asChild className="rounded-lg focus:bg-blue-50 focus:text-blue-700 py-2.5 no-focus-ring">
                       <Link to="/mon-compte">{t("profile")}</Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
+                    <DropdownMenuItem asChild className="rounded-lg focus:bg-blue-50 focus:text-blue-700 py-2.5 no-focus-ring">
                       <Link to="/ma-reservation">{t("my_reservations")}</Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
+                    <DropdownMenuItem asChild className="rounded-lg focus:bg-blue-50 focus:text-blue-700 py-2.5 no-focus-ring">
                       <Link to="/changer-mot-de-passe">{t("change_password")}</Link>
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
+                    <DropdownMenuSeparator className="my-2" />
                     <DropdownMenuItem
                       onClick={handleSignOut}
-                      className="text-red-400 hover:bg-red-600 hover:text-white focus:bg-red-600 focus:text-white transition-colors"
+                      className="rounded-xl text-red-500 hover:bg-red-50 hover:text-red-600 focus:bg-red-50 focus:text-red-700 transition-colors py-3 no-focus-ring"
                     >
                       <LogOut className="h-4 w-4 mr-2" /> {t("logout")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Button asChild variant="default" size="sm">
+                <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 rounded-xl shadow-lg shadow-blue-600/20">
                   <Link to="/auth">{t("login")}</Link>
                 </Button>
               )}
             </div>
           )}
 
-          {/* Bouton de langue */}
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={toggleLanguage}
-            className="flex items-center gap-2 text-blue-800 border-white hover:bg-white hover:text-blue-900 transition"
+            className="flex items-center gap-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50/50 transition-all rounded-full px-4"
           >
-            <Globe size={16} />
-            {i18n.language === "fr" ? "English" : "Français"}
+            <Globe size={18} className="opacity-70" />
+            <span className="hidden sm:inline-block font-semibold text-xs uppercase tracking-widest">{i18n.language === "fr" ? "EN" : "FR"}</span>
           </Button>
 
           {/* Bouton menu mobile */}
           <Button
             variant="ghost"
             size="sm"
-            className="md:hidden text-white hover:bg-transparent hover:text-white"
+            className="md:hidden text-gray-900 hover:bg-gray-100"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
-            {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </Button>
         </div>
       </div>
 
       {/* Menu mobile */}
       {isMenuOpen && (
-        <div className="md:hidden border-t border-blue-700 bg-gradient-to-br from-blue-900 to-blue-800 text-white">
-          <div className="flex flex-col space-y-3 px-4 py-3">
-            {navLink("/", t("home"))}
-            {navLink("/offres", t("offers"))}
-            {navLink("/about", t("about"))}
+        <div className="absolute top-16 left-0 w-full md:hidden px-4 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="bg-white/95 backdrop-blur-xl border border-slate-100 rounded-2xl shadow-xl p-6 space-y-4">
+            <div className="flex flex-col space-y-1">
+              {navLink("/", t("home"))}
+              {navLink("/offres", t("offers"))}
+              {navLink("/about", t("about"))}
+              {navLink("/contact", t("contact.label"))}
+            </div>
 
-            {isUserAdmin && (
-              <Link 
-                to="/admin/dashboard" 
-                onClick={() => setIsMenuOpen(false)}
-                className="text-blue-200 hover:text-white"
-              >
-                {t("admin")}
-              </Link>
-            )}
+            <div className="h-px bg-slate-100 w-full" />
 
             {!authLoading && isAuthenticated ? (
-              <>
-                <Link
-                  to="/mon-compte"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  {t("profile")}
-                </Link>
-                <Link 
-                  to="/ma-reservation"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  {t("my_reservations")}
-                </Link>
-                <Link 
-                  to="/changer-mot-de-passe"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  {t("change_password")}
-                </Link>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSignOut}
-                  className="text-white border-white hover:bg-white hover:text-blue-900"
-                >
-                  <LogOut className="h-4 w-4" /> {t("logout")}
+              <div className="space-y-3">
+                <Link to="/mon-compte" className="block text-sm font-semibold text-slate-600" onClick={() => setIsMenuOpen(false)}>{t("profile")}</Link>
+                <Link to="/ma-reservation" className="block text-sm font-semibold text-slate-600" onClick={() => setIsMenuOpen(false)}>{t("my_reservations")}</Link>
+                <Button variant="ghost" className="w-full justify-start text-red-500 hover:bg-red-50 hover:text-red-600 p-0 h-auto" onClick={handleSignOut}>
+                  <LogOut className="h-4 w-4 mr-2" /> {t("logout")}
                 </Button>
-              </>
+              </div>
             ) : (
-              <Button
-                asChild
-                variant="default"
-                size="sm"
-                onClick={() => setIsMenuOpen(false)}
-              >
+              <Button asChild className="w-full bg-blue-600 rounded-xl" onClick={() => setIsMenuOpen(false)}>
                 <Link to="/auth">{t("login")}</Link>
               </Button>
             )}
-
-            {/* Bouton langue mobile */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={toggleLanguage}
-              className="flex items-center gap-2 text-blue-800 border-white hover:bg-white hover:text-blue-900 transition"
-            >
-              <Globe size={16} />
-              {i18n.language === "fr" ? "English" : "Français"}
-            </Button>
           </div>
         </div>
       )}
     </header>
+
   );
 };

@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Manrope:wght@600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,63 +10,56 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 210 25% 98%;
-    --foreground: 220 20% 15%;
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 20% 15%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 15%;
+    --popover-foreground: 222 47% 11%;
 
-    --primary: 220 95% 15%;
+    --primary: 221 83% 53%; /* Electric Blue */
     --primary-foreground: 210 40% 98%;
-    --primary-glow: 220 100% 60%;
+    --primary-glow: 221 83% 53%;
 
-    --secondary: 210 15% 92%;
-    --secondary-foreground: 220 20% 15%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
 
-    --muted: 210 15% 95%;
-    --muted-foreground: 220 10% 45%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 240 100% 50%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 221 83% 53%;
+    --accent-foreground: 210 40% 98%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 210 20% 90%;
-    --input: 205 22% 80%;
-    --ring: 220 95% 15%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221 83% 53%;
     
-    /* Custom automotive design tokens */
-    --hero-bg: linear-gradient(135deg, hsl(220 95% 15%) 0%, hsl(220 85% 25%) 50%, hsl(220 75% 35%) 100%);
-    --accent-gradient: hsl(216 100% 60%);
-    --accent-gradient-to: hsl(240 100% 50%);
-    --card-shadow: 0 4px 20px -2px hsl(220 95% 15% / 0.1);
-    --hero-shadow: 0 25px 50px -12px hsl(220 95% 15% / 0.4);
-    --glow-shadow: 0 0 30px hsl(240 100% 50% / 0.3);
+    /* Premium Design Tokens */
+    --hero-bg: radial-gradient(circle at top right, hsl(221 83% 53% / 0.15), transparent), hsl(210 40% 98%);
+    --accent-gradient: linear-gradient(135deg, hsl(221 83% 53%) 0%, hsl(262 83% 58%) 100%);
+    --card-shadow: 0 10px 30px -10px rgba(0,0,0,0.08);
+    --hero-shadow: 0 25px 50px -12px hsl(220 95% 15% / 0.4); /* Kept from original, not in instruction */
+    --glow-shadow: 0 0 30px hsl(240 100% 50% / 0.3); /* Kept from original, not in instruction */
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.5);
     
-    /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-bounce: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    --transition-bounce: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
@@ -78,7 +73,7 @@ All colors MUST be HSL.
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
     --primary-foreground: 222.2 47.4% 11.2%;
 
     --secondary: 217.2 32.6% 17.5%;
@@ -95,7 +90,7 @@ All colors MUST be HSL.
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --ring: 224.3 76.3% 48%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -112,7 +107,86 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  *:focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
+  html {
+    overflow-x: hidden;
+    width: 100%;
+  }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased text-[14px] leading-relaxed font-normal;
+    scroll-behavior: smooth;
+    width: 100%;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+
+  h1 {
+    @apply text-[32px] font-bold leading-tight;
+  }
+
+  h2 {
+    @apply text-[24px] font-semibold leading-snug;
+  }
+
+  h3 {
+    @apply text-[20px] font-semibold leading-snug;
+  }
+
+  label {
+    @apply text-[14px] font-medium leading-normal;
+  }
+
+  input, textarea, select {
+    @apply text-[14px] font-normal leading-normal;
+  }
+
+  button {
+    @apply text-[14px] font-medium leading-normal;
+  }
+
+  small {
+    @apply text-[12px] font-normal leading-normal;
+  }
+
+  /* Custom scrollbar for a cleaner look */
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 10px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #cbd5e1;
+    background-clip: content-box;
+  }
+  /* Custom Focus Utilities */
+  .no-focus-ring {
+    outline: none !important;
+    box-shadow: none !important;
+    ring: 0 !important;
+    --tw-ring-offset-width: 0px !important;
+    --tw-ring-width: 0px !important;
+  }
+
+  .focus-subtle {
+    outline: none !important;
+    @apply focus:border-slate-400 focus-visible:border-slate-400 transition-all !important;
+    box-shadow: none !important;
+    --tw-ring-width: 0px !important;
+  }
+
+  .input-base {
+    @apply flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-400 focus-subtle disabled:cursor-not-allowed disabled:opacity-50 transition-all;
   }
 }

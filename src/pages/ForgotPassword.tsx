@@ -4,12 +4,14 @@ import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Mail } from "lucide-react";
+import { Mail, ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 
 export default function ForgotPassword() {
   const { toast } = useToast();
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -43,13 +45,33 @@ export default function ForgotPassword() {
 
   return (
     <>
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
-        <Card className="w-full max-w-md bg-[#e8f1ff] shadow-md border border-blue-100 rounded-2xl">
-          <CardHeader className="text-center space-y-1">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-12">
+        <Card className="w-full max-w-md bg-white shadow-2xl shadow-slate-900/5 border border-slate-200 rounded-2xl overflow-hidden relative">
+          <button
+            type="button"
+            onClick={() => navigate("/auth")}
+            className="
+              absolute left-4 top-4
+              h-9 w-9
+              flex items-center justify-center
+              rounded-full
+              bg-slate-900
+              text-white
+              hover:bg-blue-600
+              outline-none
+              shadow-lg shadow-slate-900/10
+              transition-all duration-300 hover:scale-110
+              z-10
+            "
+            aria-label={t("back")}
+          >
+            <ArrowLeft size={18} />
+          </button>
+          <CardHeader className="text-center space-y-1 relative">
             <div className="flex justify-center mb-2">
-              <Mail className="h-10 w-10 text-blue-700" />
+              <Mail className="h-10 w-10 text-blue-600" />
             </div>
-            <CardTitle className="text-2xl font-semibold text-blue-900">
+            <CardTitle className="text-2xl font-bold text-slate-900 uppercase italic tracking-tight">
               {t("forgotpassword")}
             </CardTitle>
           </CardHeader>
@@ -57,7 +79,7 @@ export default function ForgotPassword() {
           <CardContent>
             <form onSubmit={handleResetPassword} className="space-y-5">
               <div>
-                <label className="block mb-1 text-sm font-medium text-blue-900">
+                <label className="block mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">
                   {t("email")}
                 </label>
                 <Input
@@ -65,13 +87,14 @@ export default function ForgotPassword() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="bg-white border border-gray-300 text-gray-900"
+                  placeholder="votre@email.com"
+                  className="h-12 bg-slate-50 border-slate-200 text-slate-900 focus:ring-4 focus:ring-blue-500/10 rounded-xl transition-all"
                 />
               </div>
 
               <Button
                 type="submit"
-                className="w-full bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2 rounded-lg transition-all"
+                className="w-full h-12 bg-slate-900 hover:bg-blue-600 text-white font-bold text-xs uppercase tracking-[0.2em] rounded-xl shadow-lg shadow-slate-900/10 hover:shadow-blue-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
                 disabled={loading}
               >
                 {loading ? t("sending") + "..." : t("send_reset_link")}

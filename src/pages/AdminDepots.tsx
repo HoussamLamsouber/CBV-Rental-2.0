@@ -47,7 +47,7 @@ export default function AdminDepots() {
   const [availableVehicles, setAvailableVehicles] = useState<Vehicle[]>([]);
   const [selectedVehicles, setSelectedVehicles] = useState<string[]>([]);
   const [filterActive, setFilterActive] = useState<"all" | "active" | "inactive">("all");
-  
+
   const { t, i18n } = useTranslation();
 
 
@@ -318,7 +318,7 @@ export default function AdminDepots() {
       // Soft delete - marquer comme supprimé avec un timestamp
       const { error } = await supabase
         .from('depots')
-        .update({ 
+        .update({
           deleted_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
@@ -334,7 +334,7 @@ export default function AdminDepots() {
       });
 
       await fetchDepots();
-      
+
     } catch (error: any) {
       console.error('Erreur suppression dépôt:', error);
       toast({
@@ -370,12 +370,12 @@ export default function AdminDepots() {
 
       setSelectedVehicles([]);
       setShowAssignVehicleModal(false);
-      
+
       if (selectedDepot) {
         await fetchDepotVehicles(selectedDepot.id);
         await fetchAvailableVehicles();
       }
-      
+
     } catch (error: any) {
       console.error('Erreur assignation véhicules:', error);
       toast({
@@ -410,7 +410,7 @@ export default function AdminDepots() {
         await fetchDepotVehicles(selectedDepot.id);
         await fetchAvailableVehicles();
       }
-      
+
     } catch (error: any) {
       console.error('Erreur retrait véhicule:', error);
       toast({
@@ -543,10 +543,10 @@ export default function AdminDepots() {
                 <Building2 className="h-8 w-8 text-blue-600" />
               </div>
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                <h1 className="text-[24px] font-semibold text-slate-900 mb-2">
                   {t('admin_depots.title')}
                 </h1>
-                <p className="text-gray-600 text-sm sm:text-base">
+                <p className="text-slate-600 text-sm sm:text-base font-medium">
                   {t('admin_depots.subtitle', {
                     total: depots.length,
                     active: activeDepotsCount,
@@ -555,7 +555,7 @@ export default function AdminDepots() {
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-3">
               <button
                 onClick={openCreateModal}
@@ -572,23 +572,23 @@ export default function AdminDepots() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
               <input
                 type="text"
                 placeholder={t('admin_depots.search.placeholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-gray-50/50 transition-colors"
+                className="pl-10 input-base"
               />
             </div>
 
             <div className="flex gap-3">
               <div className="relative">
-                <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
                 <select
                   value={filterActive}
                   onChange={(e) => setFilterActive(e.target.value as "all" | "active" | "inactive")}
-                  className="pl-10 pr-8 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-gray-50/50 appearance-none cursor-pointer"
+                  className="pl-10 input-base w-[180px]"
                 >
                   <option value="all">{t('admin_depots.filters.all')}</option>
                   <option value="active">{t('admin_depots.filters.active')}</option>
@@ -617,7 +617,7 @@ export default function AdminDepots() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
             <div className="text-gray-300 text-6xl mb-4">🏢</div>
             <h3 className="text-lg font-semibold text-gray-900 mb-3">
-              {searchTerm || filterActive !== "all" 
+              {searchTerm || filterActive !== "all"
                 ? t('admin_depots.messages.no_results')
                 : t('admin_depots.messages.no_depots')
               }
@@ -652,27 +652,27 @@ export default function AdminDepots() {
           // Vue tableau uniquement
           <div className="overflow-hidden bg-white rounded-xl shadow-sm border border-gray-100">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+              <thead className="bg-slate-50/80 border-b border-slate-200">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
                     {t('admin_depots.table.name')}
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
                     {t('admin_depots.table.city')}
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
                     {t('admin_depots.table.address')}
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
                     {t('admin_depots.table.phone')}
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
                     {t('admin_depots.table.email')}
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
                     {t('admin_depots.table.status')}
                   </th>
-                  <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-center text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
                     {t('admin_depots.table.actions')}
                   </th>
                 </tr>
@@ -685,9 +685,8 @@ export default function AdminDepots() {
                     <tr key={depot.id} className="hover:bg-gray-50/50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-lg ${
-                            depot.is_active ? 'bg-blue-50 text-blue-600' : 'bg-gray-50 text-gray-400'
-                          }`}>
+                          <div className={`p-2 rounded-lg ${depot.is_active ? 'bg-blue-50 text-blue-600' : 'bg-slate-50 text-slate-400'
+                            }`}>
                             <Building2 className="h-4 w-4" />
                           </div>
                           <span className="text-sm font-medium text-gray-900">
@@ -713,12 +712,11 @@ export default function AdminDepots() {
                       </td>
 
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          depot.is_active 
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${depot.is_active
                             ? 'bg-green-50 text-green-700 border border-green-200'
                             : 'bg-gray-50 text-gray-600 border border-gray-200'
-                        }`}>
-                          {depot.is_active 
+                          }`}>
+                          {depot.is_active
                             ? t('admin_depots.status.active')
                             : t('admin_depots.status.inactive')}
                         </span>
@@ -728,7 +726,7 @@ export default function AdminDepots() {
                         <div className="flex justify-center gap-1">
                           <button
                             onClick={() => openEditModal(depot)}
-                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                           >
                             <Edit className="h-4 w-4" />
                           </button>
@@ -842,11 +840,10 @@ function DepotModal({ title, formData, setFormData, onSubmit, onClose, submitTex
               key={lang}
               type="button"
               onClick={() => setActiveLang(lang as any)}
-              className={`px-3 py-1 rounded-lg text-sm font-medium transition ${
-                activeLang === lang
+              className={`px-3 py-1 rounded-lg text-sm font-medium transition ${activeLang === lang
                   ? "bg-blue-600 text-white"
                   : "bg-gray-100 text-gray-700"
-              }`}
+                }`}
             >
               {lang.toUpperCase()}
             </button>
@@ -1019,20 +1016,19 @@ function VehiclesModal({ depot, vehicles, onRemoveVehicle, onClose, onAddVehicle
                       <div className="text-sm text-gray-600">
                         {vehicle.cars?.name}
                       </div>
-                      <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1 ${
-                        vehicle.status === 'available' 
+                      <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1 ${vehicle.status === 'available'
                           ? 'bg-green-50 text-green-700 border border-green-200'
                           : vehicle.status === 'reserved'
-                          ? 'bg-orange-50 text-orange-700 border border-orange-200'
-                          : 'bg-gray-50 text-gray-600 border border-gray-200'
-                      }`}>
+                            ? 'bg-orange-50 text-orange-700 border border-orange-200'
+                            : 'bg-gray-50 text-gray-600 border border-gray-200'
+                        }`}>
                         {vehicle.status === 'available' && t('admin_depots.vehicle_status.available')}
                         {vehicle.status === 'reserved' && t('admin_depots.vehicle_status.reserved')}
                         {vehicle.status === 'maintenance' && t('admin_depots.vehicle_status.maintenance')}
                       </div>
                     </div>
                   </div>
-                  
+
                   <button
                     onClick={() => onRemoveVehicle(vehicle.id)}
                     className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
@@ -1062,14 +1058,14 @@ function VehiclesModal({ depot, vehicles, onRemoveVehicle, onClose, onAddVehicle
 }
 
 // Composant modal pour l'assignation de véhicules avec sélection multiple et design amélioré
-function AssignVehicleModal({ 
-  depot, 
-  availableVehicles, 
-  selectedVehicles, 
-  onSelectVehicle, 
-  onSelectAll, 
-  onAssignVehicles, 
-  onClose 
+function AssignVehicleModal({
+  depot,
+  availableVehicles,
+  selectedVehicles,
+  onSelectVehicle,
+  onSelectAll,
+  onAssignVehicles,
+  onClose
 }: any) {
   const { t } = useTranslation();
 
@@ -1105,7 +1101,7 @@ function AssignVehicleModal({
                   className="flex items-center gap-2 bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg text-sm hover:bg-gray-200 transition-colors"
                 >
                   <Check className={`h-4 w-4 ${allSelected ? 'text-green-600' : 'text-gray-400'}`} />
-                  {allSelected 
+                  {allSelected
                     ? t('admin_depots.actions.deselect_all')
                     : t('admin_depots.actions.select_all')
                   }
@@ -1132,23 +1128,21 @@ function AssignVehicleModal({
                 <div
                   key={vehicle.id}
                   onClick={() => onSelectVehicle(vehicle.id)}
-                  className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                    selectedVehicles.includes(vehicle.id)
+                  className={`p-4 border rounded-lg cursor-pointer transition-all ${selectedVehicles.includes(vehicle.id)
                       ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
                       : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/50'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-                      selectedVehicles.includes(vehicle.id)
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${selectedVehicles.includes(vehicle.id)
                         ? 'bg-blue-500 border-blue-500'
                         : 'border-gray-300'
-                    }`}>
+                      }`}>
                       {selectedVehicles.includes(vehicle.id) && (
                         <Check className="h-3 w-3 text-white" />
                       )}
                     </div>
-                    
+
                     {vehicle.cars?.image_url ? (
                       <img
                         src={vehicle.cars.image_url}
@@ -1160,7 +1154,7 @@ function AssignVehicleModal({
                         <Car className="h-6 w-6 text-gray-400" />
                       </div>
                     )}
-                    
+
                     <div className="flex-1">
                       <div className="font-medium text-gray-900">
                         {vehicle.matricule}
@@ -1168,13 +1162,12 @@ function AssignVehicleModal({
                       <div className="text-sm text-gray-600">
                         {vehicle.cars?.name}
                       </div>
-                      <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1 ${
-                        vehicle.status === 'available' 
+                      <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1 ${vehicle.status === 'available'
                           ? 'bg-green-50 text-green-700 border border-green-200'
                           : vehicle.status === 'reserved'
-                          ? 'bg-orange-50 text-orange-700 border border-orange-200'
-                          : 'bg-gray-50 text-gray-600 border border-gray-200'
-                      }`}>
+                            ? 'bg-orange-50 text-orange-700 border border-orange-200'
+                            : 'bg-gray-50 text-gray-600 border border-gray-200'
+                        }`}>
                         {vehicle.status === 'available' && t('admin_depots.vehicle_status.available')}
                         {vehicle.status === 'reserved' && t('admin_depots.vehicle_status.reserved')}
                         {vehicle.status === 'maintenance' && t('admin_depots.vehicle_status.maintenance')}

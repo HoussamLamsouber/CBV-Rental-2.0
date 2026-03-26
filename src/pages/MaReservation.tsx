@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/utils";
 
 type ReservationRow = Database["public"]["Tables"]["reservations"]["Row"];
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
@@ -222,17 +223,30 @@ const MaReservation = () => {
     }
   };
 
-  const isReservationPassed = (res: ReservationWithProfile): boolean => {
+  // const isReservationPassed = (res: ReservationWithProfile): boolean => {
+  //   const now = new Date();
+    
+  //   // Combiner la date de retour et l'heure de retour
+  //   const time = res.return_time || "23:59";
+  //   const [returnHours, returnMinutes] = time.split(":").map(Number);
+  //   const returnDateTime = new Date(res.return_date);
+  //   // Vérifier si la date/heure de retour est passée
+  //   return now > returnDateTime;
+  // };
+
+  const canCancelReservation = (res: ReservationWithProfile): boolean => {
     const now = new Date();
+
+    const pickupDateTime = new Date(res.pickup_date);
     
-    // Combiner la date de retour et l'heure de retour
-    const time = res.return_time || "23:59";
-    const [returnHours, returnMinutes] = time.split(":").map(Number);
-    const returnDateTime = new Date(res.return_date);
-    returnDateTime.setHours(returnHours, returnMinutes, 0, 0);
-    
-    // Vérifier si la date/heure de retour est passée
-    return now > returnDateTime;
+    if (res.pickup_time) {
+      const [hours, minutes] = res.pickup_time.split(":").map(Number);
+      pickupDateTime.setHours(hours, minutes, 0, 0);
+    } else {
+      pickupDateTime.setHours(0, 0, 0, 0);
+    }
+
+    return now < pickupDateTime;
   };
 
   const getTranslatedCategory = (category: string) => {
@@ -274,7 +288,7 @@ const MaReservation = () => {
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
     
     return (
-      <Badge variant="secondary" className={config.color}>
+      <Badge variant="secondary" className={cn("px-3 py-1 rounded-lg text-[12px] font-bold uppercase tracking-widest border-none transition-colors", config.color)}>
         {config.label}
       </Badge>
     );
@@ -291,13 +305,13 @@ const MaReservation = () => {
 
     if (!reservations.length) {
       return (
-        <div className="flex-1 text-center py-12">
+        <div className="flex-1 overflow-y-auto w-full pt-32">
           <div className="max-w-md mx-auto">
-            <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            <Calendar className="h-16 w-16 text-slate-300 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-slate-900 mb-2">
               {t('ma_reservation.messages.no_reservations')}
             </h1>
-            <p className="text-gray-600 mb-6">
+            <p className="text-slate-500 mb-6">
               {t('ma_reservation.messages.no_reservations_user')}
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -317,180 +331,133 @@ const MaReservation = () => {
 
     return (
       <div className="flex-1">
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-center gap-4 mb-8">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            <h1 className="text-[32px] font-bold text-slate-900 tracking-tight">
               {t('ma_reservation.title')}
             </h1>
-            <p className="text-gray-600 text-sm sm:text-base mt-1">
+            <p className="text-slate-500 text-[14px] font-normal mt-1">
               {t('ma_reservation.messages.reservations_found').replace('{count}', reservations.length.toString())}
             </p>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-  <div className="overflow-x-auto">
-    <table className="w-full">
-      <thead className="bg-gray-50 border-b border-gray-200">
-        <tr>
-          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            {t('ma_reservation.table.vehicle', 'Véhicule')}
-          </th>
-          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            {t('ma_reservation.table.dates', 'Dates')}
-          </th>
-          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            {t('ma_reservation.table.locations', 'Lieux')}
-          </th>
-          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            {t('ma_reservation.table.client', 'Client')}
-          </th>
-          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            {t('ma_reservation.table.status', 'Statut')}
-          </th>
-          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            {t('ma_reservation.table.price', 'Prix')}
-          </th>
-          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            {t('ma_reservation.table.actions', 'Actions')}
-          </th>
-        </tr>
-      </thead>
-      <tbody className="divide-y divide-gray-200">
-        {reservations.map(res => (
-          <tr key={res.id} className="hover:bg-gray-50/50 transition-colors">
-            {/* Colonne Véhicule */}
-            <td className="px-4 py-4">
-              <div className="flex items-center gap-3">
-                <img 
-                  src={res.car_image || "/placeholder-car.jpg"} 
-                  alt={res.car_name} 
-                  className="w-16 h-12 object-cover rounded-lg"
-                />
-                <div>
-                  <div className="font-semibold text-gray-900 text-sm">{res.car_name}</div>
-                  <Badge variant="outline" className="text-xs mt-1">
-                    {t(`offers_page.categories.${res.car_category}`)}
-                  </Badge>
-                </div>
-              </div>
-            </td>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {reservations.map(res => (
+            <Card key={res.id} className="group overflow-hidden border-slate-200 hover:shadow-xl hover:shadow-blue-600/5 transition-all duration-500 rounded-2xl bg-white">
+               <CardContent className="p-0">
+                  <div className="flex flex-col sm:flex-row h-full">
+                     {/* Car Image Section */}
+                     <div className="sm:w-2/5 relative overflow-hidden bg-slate-100 aspect-video sm:aspect-auto">
+                        <img 
+                          src={res.car_image || "/placeholder-car.jpg"} 
+                          alt={res.car_name} 
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        />
+                        <div className="absolute top-4 left-4">
+                           {getStatusBadge(res.status)}
+                        </div>
+                     </div>
 
-            {/* Colonne Dates */}
-            <td className="px-4 py-4">
-              <div className="space-y-1 text-sm">
-                <div>
-                  <div className="font-medium text-gray-900">
-                    {formatDisplayDate(res.pickup_date)}
-                  </div>
-                  <div className="text-gray-600 text-xs">{res.pickup_time}</div>
-                </div>
-                <div>
-                  <div className="font-medium text-gray-900">
-                    {formatDisplayDate(res.return_date)}
-                  </div>
-                  <div className="text-gray-600 text-xs">{res.return_time}</div>
-                </div>
-              </div>
-            </td>
+                     {/* Info Section */}
+                     <div className="sm:w-3/5 p-6 flex flex-col justify-between">
+                        <div>
+                           <div className="flex justify-between items-start mb-4">
+                              <div>
+                                 <h3 className="text-[18px] font-semibold text-slate-900 uppercase italic tracking-tight">{res.car_name}</h3>
+                                 <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-widest mt-1 border-slate-200 text-slate-500">
+                                   {t(`offers_page.categories.${res.car_category}`)}
+                                 </Badge>
+                              </div>
+                              <div className="text-right">
+                                 <p className="text-[24px] font-semibold text-blue-600 leading-none">{res.total_price} <span className="text-[12px]">{t('ma_reservation.currency')}</span></p>
+                                 <p className="text-[12px] font-normal text-slate-400 uppercase tracking-widest mt-1">{t('ma_reservation.total_price')}</p>
+                              </div>
+                           </div>
 
-            {/* Colonne Lieux */}
-            <td className="px-4 py-4">
-              <div className="space-y-1 text-sm">
-                <div>
-                  <div className="font-medium text-gray-900 text-xs">
-                    {t('ma_reservation.pickup')}
-                  </div>
-                  <div className="text-gray-600 text-xs">
-                    {res.pickup_location_name}
-                  </div>
-                </div>
-                <div>
-                  <div className="font-medium text-gray-900 text-xs">
-                    {t('ma_reservation.return')}
-                  </div>
-                  <div className="text-gray-600 text-xs">
-                    {res.return_location_name}
-                  </div>
-                </div>
-              </div>
-            </td>
+                           <div className="grid grid-cols-2 gap-6 py-4 border-y border-slate-50">
+                              <div className="space-y-3">
+                                 <div className="flex items-start gap-2.5">
+                                    <div className="mt-0.5 p-1 bg-blue-50 rounded-md">
+                                       <Calendar className="h-3 w-3 text-blue-600" />
+                                    </div>
+                                    <div>
+                                       <p className="text-[14px] font-medium text-slate-400 uppercase tracking-wider">{t('ma_reservation.pickup')}</p>
+                                       <p className="text-[14px] font-normal text-slate-900 mt-0.5">{formatDisplayDate(res.pickup_date)}</p>
+                                       <p className="text-[12px] text-slate-500">{res.pickup_time}</p>
+                                    </div>
+                                 </div>
+                                 <div className="flex items-start gap-2.5">
+                                    <div className="mt-0.5 p-1 bg-slate-50 rounded-md">
+                                       <MapPin className="h-3 w-3 text-slate-400" />
+                                    </div>
+                                    <p className="text-[14px] font-normal text-slate-600 leading-tight">{res.pickup_location_name}</p>
+                                 </div>
+                              </div>
 
-            {/* Colonne Client */}
-            <td className="px-4 py-4">
-              <div className="space-y-1 text-sm">
-                <div className="text-gray-900">{res.client_name}</div>
-                <div className="text-gray-600 text-xs">{res.client_email}</div>
-                {res.client_phone && (
-                  <div className="text-gray-600 text-xs">{res.client_phone}</div>
-                )}
-              </div>
-            </td>
+                              <div className="space-y-3">
+                                 <div className="flex items-start gap-2.5">
+                                    <div className="mt-0.5 p-1 bg-blue-50 rounded-md">
+                                       <Calendar className="h-3 w-3 text-blue-600" />
+                                    </div>
+                                    <div>
+                                       <p className="text-[14px] font-medium text-slate-400 uppercase tracking-wider">{t('ma_reservation.return')}</p>
+                                       <p className="text-[14px] font-normal text-slate-900 mt-0.5">{formatDisplayDate(res.return_date)}</p>
+                                       <p className="text-[12px] text-slate-500">{res.return_time}</p>
+                                    </div>
+                                 </div>
+                                 <div className="flex items-start gap-2.5">
+                                    <div className="mt-0.5 p-1 bg-slate-50 rounded-md">
+                                       <MapPin className="h-3 w-3 text-slate-400" />
+                                    </div>
+                                    <p className="text-[14px] font-normal text-slate-600 leading-tight">{res.return_location_name}</p>
+                                 </div>
+                              </div>
+                           </div>
+                        </div>
 
-            {/* Colonne Statut */}
-            <td className="px-4 py-4">
-              {getStatusBadge(res.status)}
-            </td>
-
-            {/* Colonne Prix */}
-            <td className="px-4 py-4">
-              <div className="text-right">
-                <div className="font-bold text-primary text-lg">
-                  {res.total_price} {t('ma_reservation.currency')}
-                </div>
-                <div className="text-gray-500 text-xs">
-                  {t('ma_reservation.total_price')}
-                </div>
-              </div>
-            </td>
-
-            {/* Colonne Actions */}
-            <td className="px-4 py-4">
-              <div className="flex flex-col gap-2">
-                {/* Bouton Annuler */}
-                {(res.status === 'pending' || res.status === 'accepted') && !isReservationPassed(res) ? (
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleCancelReservation(res)}
-                    disabled={cancellingId === res.id}
-                    className="flex items-center gap-1 w-full"
-                  >
-                    {cancellingId === res.id ? (
-                      <>
-                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
-                        {t('ma_reservation.actions.cancelling')}
-                      </>
-                    ) : (
-                      <>
-                        <Trash2 className="h-3 w-3" />
-                        {t('ma_reservation.actions.cancel')}
-                      </>
-                    )}
-                  </Button>
-                ) : (
-                  <div className="text-xs text-gray-500 text-center">
-                    {isReservationPassed(res) 
-                      ? t('ma_reservation.messages.cannot_cancel_passed')
-                      : t('ma_reservation.messages.cannot_cancel')
-                    }
+                        <div className="mt-6">
+                          {(res.status === 'pending' || res.status === 'accepted') && canCancelReservation(res) ? (
+                            <Button
+                              variant="ghost"
+                              className="w-full h-11 rounded-xl text-red-500 hover:text-red-600 hover:bg-red-50 font-bold text-[10px] uppercase tracking-wider border border-red-100 transition-all"
+                              onClick={() => handleCancelReservation(res)}
+                              disabled={cancellingId === res.id}
+                            >
+                              {cancellingId === res.id ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-red-500 mr-2"></div>
+                                  {t('ma_reservation.actions.cancelling')}
+                                </>
+                              ) : (
+                                <>
+                                  <Trash2 className="h-3.5 w-3.5 mr-2" />
+                                  {t('ma_reservation.actions.cancel')}
+                                </>
+                              )}
+                            </Button>
+                          ) : (
+                            <div className="flex items-center justify-center h-11 bg-slate-50 rounded-xl border border-slate-100 italic text-[10px] text-slate-400 font-bold uppercase tracking-widest px-4 text-center">
+                              {!canCancelReservation(res)
+                                ? t('ma_reservation.messages.cannot_cancel_passed')
+                                : t('ma_reservation.messages.cannot_cancel')
+                              }
+                            </div>
+                          )}
+                        </div>
+                     </div>
                   </div>
-                )}
-              </div>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-</div>
+               </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     );
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <main className="container mx-auto px-4 py-6 sm:py-8 flex-1">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      <main className="container mx-auto px-4 pt-32 pb-6 sm:pb-8 flex-1">
         {renderContent()}
       </main>
       <Footer />

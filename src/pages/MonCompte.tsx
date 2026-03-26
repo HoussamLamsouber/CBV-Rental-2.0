@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { User, Mail, Phone, MapPin, Calendar, Shield } from "lucide-react";
+import { User, Mail, Phone, MapPin, Shield, Calendar as CalendarIcon } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,10 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { AdminLayout } from "@/components/AdminLayout";
 import { Header } from '@/components/Header';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 
 interface UserProfile {
   id: string;
@@ -39,7 +43,7 @@ const initialUserInfo: UserProfile = {
 const MonCompte = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { isUserAdmin } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [userInfo, setUserInfo] = useState<UserProfile>(initialUserInfo);
@@ -157,7 +161,7 @@ const MonCompte = () => {
   const ProfileContent = () => {
     if (loading && !userInfo.id) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] p-4">
           <LoadingSpinner message={t('mon_compte.messages.loading_profile')} />
         </div>
       );
@@ -167,186 +171,164 @@ const MonCompte = () => {
     const avatarFallbackText = `${firstName?.[0] || ''}${lastName?.[0] || ''}`;
 
     return (
-      <div className={isUserAdmin ? "p-6" : "min-h-screen bg-gray-50"}>
-        <div className={isUserAdmin ? "max-w-4xl mx-auto space-y-6" : "container mx-auto px-4 py-6 max-w-4xl space-y-6"}>
+      <div className={isUserAdmin ? "p-4 lg:p-10" : "min-h-screen bg-[#f8fafc] pt-32"}>
+        <div className={isUserAdmin ? "max-w-5xl mx-auto space-y-10" : "container mx-auto px-6 max-w-5xl space-y-10"}>
           
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <Avatar className="h-12 w-12 sm:h-16 sm:w-16">
-                <AvatarFallback className="bg-primary text-primary-foreground text-sm sm:text-lg">
-                  {avatarFallbackText || t('mon_compte.messages.not_configured')}
-                </AvatarFallback>
-              </Avatar>
+          {/* Header Section */}
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="flex items-center gap-8">
+              <div className="relative group">
+                <div className="absolute -inset-1 bg-blue-600/20 rounded-2xl blur-lg transition duration-700"></div>
+                <Avatar className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl relative overflow-hidden">
+                  <AvatarFallback className="bg-slate-50 text-blue-600 font-bold text-xl sm:text-2xl italic">
+                    <User className="w-10 h-10" />
+                  </AvatarFallback>
+                </Avatar>
+              </div>
               
-              <div className="min-w-0 flex-1">
+              <div className="space-y-2">
                 <div className="flex items-center gap-3">
-                  <h1 className="text-xl sm:text-3xl font-bold text-gray-900 truncate">
-                    {t('mon_compte.title')}
-                  </h1>
-                  {userInfo.role === 'admin' && (
-                    <Badge variant="default" className="flex items-center gap-1">
-                      <Shield className="h-3 w-3" />
-                      {t('admin_users.roles.admin')}
-                    </Badge>
-                  )}
+                   <h1 className="text-[32px] font-bold text-slate-900 tracking-tight uppercase">
+                     {userInfo.full_name || "Utilisateur"}
+                   </h1>
+                   {userInfo.role === 'admin' && (
+                     <Badge className="bg-slate-900 border-none text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-lg">
+                       Admin
+                     </Badge>
+                   )}
                 </div>
-                <p className="text-gray-600 text-sm sm:text-base truncate">
-                  {userInfo.full_name || t('mon_compte.messages.full_name_not_provided')}
-                </p>
+                 <div className="flex flex-wrap items-center gap-4 text-slate-600">
+                     <div className="flex items-center gap-2 text-[12px] font-normal uppercase tracking-wider bg-slate-100 px-3 py-1 rounded-md">
+                        <Mail className="w-3 h-3 text-blue-600" />
+                        {userInfo.email}
+                     </div>
+                </div>
               </div>
             </div>
             
-            <Button 
-              onClick={() => {
-                if(isEditing) {
-                  getProfile(); 
-                }
-                setIsEditing(!isEditing)
-              }}
-              variant={isEditing ? "default" : "outline"}
-              disabled={loading || saving}
-              size="sm"
-              className="w-full sm:w-auto mt-4 sm:mt-0"
-            >
-              {isEditing ? t('mon_compte.actions.cancel') : t('mon_compte.actions.edit')}
-            </Button>
-          </div>
-
-          <Card>
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-                <User className="h-4 w-4 sm:h-5 sm:w-5" />
-                {t('mon_compte.personal_info')}
-              </CardTitle>
-            </CardHeader>
-            
-            <CardContent className="space-y-6 sm:space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Colonne de gauche */}
-                <div className="space-y-4">
-                  {/* Nom complet */}
-                  <div className="space-y-1.5">
-                    <Label htmlFor="full_name" className="text-sm font-medium">
-                      {t('mon_compte.fields.full_name')}
-                    </Label>
-                    <Input
-                      id="full_name"
-                      value={userInfo.full_name}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                      placeholder={t('mon_compte.placeholders.full_name')}
-                      className="text-sm h-10"
-                    />
-                  </div>
-
-                  {/* Date de naissance */}
-                  <div className="space-y-1.5">
-                    <Label htmlFor="dateNaissance" className="text-sm font-medium">
-                      {t('mon_compte.fields.birth_date')}
-                    </Label>
-                    <div className="relative">
-                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="dateNaissance"
-                        type="date"
-                        value={userInfo.dateNaissance}
-                        onChange={handleChange}
-                        disabled={!isEditing}
-                        className="pl-9 text-sm h-10 appearance-none [color-scheme:light]"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Adresse */}
-                  <div className="space-y-1.5">
-                    <Label htmlFor="adresse" className="text-sm font-medium">
-                      {t('mon_compte.fields.address')}
-                    </Label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="adresse"
-                        value={userInfo.adresse}
-                        onChange={handleChange}
-                        disabled={!isEditing}
-                        className="pl-9 text-sm h-10"
-                        placeholder={t('mon_compte.placeholders.address')}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Colonne de droite */}
-                <div className="space-y-4">
-                  {/* Email */}
-                  <div className="space-y-1.5">
-                    <Label htmlFor="email" className="text-sm font-medium">
-                      {t('mon_compte.fields.email')}
-                    </Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="email"
-                        type="email"
-                        value={userInfo.email}
-                        onChange={handleChange}
-                        disabled={!isEditing}
-                        className="pl-9 text-sm h-10"
-                        placeholder={t('mon_compte.placeholders.email')}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Téléphone */}
-                  <div className="space-y-1.5">
-                    <Label htmlFor="telephone" className="text-sm font-medium">
-                      {t('mon_compte.fields.phone')}
-                    </Label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="telephone"
-                        value={userInfo.telephone}
-                        onChange={handleChange}
-                        disabled={!isEditing}
-                        className="pl-9 text-sm h-10"
-                        placeholder={t('mon_compte.placeholders.phone')}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Boutons (affichés uniquement en édition) */}
-              {isEditing && (
-                <div className="flex flex-col sm:flex-row gap-2.5 pt-4 border-t border-gray-200 mt-2">
+            <div className="flex gap-3">
+               <Button 
+                 onClick={() => {
+                   if(isEditing) getProfile();
+                   setIsEditing(!isEditing);
+                 }}
+                 variant={isEditing ? "ghost" : "outline"}
+                 className="h-11 px-6 rounded-xl font-bold text-[10px] uppercase tracking-wider border-slate-200 hover:bg-slate-50 hover:text-slate-900 transition-all"
+               >
+                 {isEditing ? t('mon_compte.actions.cancel') : t('mon_compte.actions.edit')}
+               </Button>
+               {isEditing && (
                   <Button 
                     onClick={handleSave} 
                     disabled={saving}
-                    className="flex-1 flex items-center justify-center gap-2 h-10"
+                    className="h-11 px-6 rounded-xl bg-blue-600 text-white font-bold text-[14px] uppercase tracking-wider shadow-lg shadow-blue-600/10 hover:bg-blue-700 transition-all"
                   >
-                    {saving ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        {t('mon_compte.actions.saving')}
-                      </>
-                    ) : (
-                      t('mon_compte.actions.save')
-                    )}
+                    {saving ? t('mon_compte.actions.saving') : t('mon_compte.actions.save')}
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setIsEditing(false)}
-                    className="flex-1 h-10"
-                  >
-                    {t('mon_compte.actions.cancel')}
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+               )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
+            {/* Main Info Card */}
+            <div className="lg:col-span-2 space-y-8">
+               <Card className="rounded-2xl border-slate-200 shadow-sm overflow-hidden bg-white">
+                 <CardHeader className="p-8 pb-0">
+                    <div className="flex items-center gap-3">
+                       <div className="w-1 h-5 bg-blue-600 rounded-full" />
+                       <CardTitle className="text-[18px] font-semibold uppercase tracking-wider text-slate-900">
+                         {t('mon_compte.personal_info')}
+                       </CardTitle>
+                    </div>
+                 </CardHeader>
+                 <CardContent className="p-8 pt-6 space-y-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                        <div className="space-y-2">
+                           <Label className="text-[14px] font-medium uppercase tracking-wider text-slate-600 ml-1">{t('mon_compte.fields.full_name')}</Label>
+                           <div className="relative group">
+                              <Input
+                                 id="full_name"
+                                 value={userInfo.full_name}
+                                 onChange={handleChange}
+                                 disabled={!isEditing}
+                                 placeholder={t('mon_compte.placeholders.full_name') || "Votre nom complet"}
+                                 className="h-11 bg-slate-50/50 border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all pl-10 disabled:opacity-100 disabled:cursor-default text-black"
+                              />
+                              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                           </div>
+                        </div>
+
+                        <div className="space-y-2">
+                           <Label className="text-[14px] font-medium uppercase tracking-wider text-slate-600 ml-1">{t('mon_compte.fields.birth_date')}</Label>
+                           <div className="relative group">
+                             <Popover>
+                               <PopoverTrigger asChild>
+                                 <Button
+                                   disabled={!isEditing}
+                                   variant="outline"
+                                   className={cn(
+                                     "h-11 w-full justify-start text-[14px] font-normal rounded-xl bg-slate-50/50 transition-all pl-10 hover:bg-white hover:text-gray-400 focus:ring-4 focus:ring-blue-500/5 transition-all focus-visible:ring-4 focus-visible:ring-blue-500/5 focus:bg-white disabled:opacity-100 disabled:cursor-default border-none text-black",
+                                     !userInfo.dateNaissance && "text-slate-400"
+                                   )}
+                                 >
+                                   {userInfo.dateNaissance ? format(new Date(userInfo.dateNaissance), "dd/MM/yyyy") : (t('mon_compte.placeholders.birth_date') || (i18n.language === 'fr' ? "Date de naissance" : "Birth Date"))}
+                                 </Button>
+                               </PopoverTrigger>
+                               <PopoverContent className="w-auto p-0 rounded-2xl shadow-xl border-slate-100" align="start">
+                                 <Calendar
+                                   mode="single"
+                                   selected={userInfo.dateNaissance ? new Date(userInfo.dateNaissance) : undefined}
+                                   onSelect={(date) => {
+                                     setUserInfo(prev => ({ ...prev, dateNaissance: date ? date.toISOString().split('T')[0] : '' }));
+                                   }}
+                                   disabled={(date) => date > new Date()}
+                                   captionLayout="dropdown-buttons"
+                                   fromYear={1934}
+                                   toYear={new Date().getFullYear()}
+                                   initialFocus
+                                 />
+                               </PopoverContent>
+                             </Popover>
+                             <CalendarIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                           </div>
+                        </div>
+
+                        <div className="space-y-2">
+                           <Label className="text-[14px] font-medium uppercase tracking-wider text-slate-600 ml-1">{t('mon_compte.fields.phone')}</Label>
+                          <div className="relative group">
+                             <Input
+                                id="telephone"
+                                value={userInfo.telephone}
+                                onChange={handleChange}
+                                disabled={!isEditing}
+                                placeholder={t('mon_compte.placeholders.phone')}
+                                className="h-11 bg-slate-50/50 border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all pl-10 text-black"
+                             />
+                             <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                          </div>
+                       </div>
+
+                        <div className="space-y-2 md:col-span-2">
+                           <Label className="text-[14px] font-medium uppercase tracking-wider text-slate-600 ml-1">{t('mon_compte.fields.address')}</Label>
+                          <div className="relative group">
+                             <Input
+                                id="adresse"
+                                value={userInfo.adresse}
+                                onChange={handleChange}
+                                disabled={!isEditing}
+                                placeholder={t('mon_compte.placeholders.address')}
+                                className="h-11 bg-slate-50/50 border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all pl-10 text-black"
+                             />
+                             <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                          </div>
+                       </div>
+                    </div>
+                 </CardContent>
+               </Card>
+            </div>
+
+          </div>
         </div>
-        {/* Footer seulement pour les clients */}
         {!isUserAdmin && <Footer />}
       </div>
     );

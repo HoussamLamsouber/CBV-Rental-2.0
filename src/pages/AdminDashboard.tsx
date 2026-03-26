@@ -4,16 +4,17 @@ import { format, subDays, startOfMonth, endOfMonth, isWithinInterval } from "dat
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Car, 
-  Calendar, 
+import {
+  Car,
+  Calendar,
   Users,
   DollarSign,
   ChevronRight,
   MapPin,
   Clock,
   Zap,
-  TrendingUp
+  TrendingUp,
+  LayoutDashboard
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
@@ -172,11 +173,26 @@ export default function AdminDashboard() {
   };
 
   const calculateStats = (vehicles: any[], allReservations: Reservation[]) => {
-    const totalVehicles = vehicles.length;
-    const availableVehicles = vehicles.filter(v => v.available).length;
+    // SOURCE OF TRUTH: sum of quantities from cars table
+    const totalVehicles = vehicles.reduce((sum, v) => sum + Number(v.quantity || 0), 0);
+    
+    const activeRentals = allReservations.filter(r => {
+      const today = new Date();
+      const pickup = new Date(r.pickup_date);
+      const returnDate = new Date(r.return_date);
+      return r.status === "accepted" && today >= pickup && today <= returnDate;
+    }).length;
+
+    // Available is theoretical: total stock minus active rentals
+    const availableVehicles = Math.max(0, totalVehicles - activeRentals);
 
     const currentMonthStart = startOfMonth(new Date());
     const currentMonthEnd = endOfMonth(new Date());
+
+    const totalReservationsThisMonth = allReservations.filter(reservation => {
+      const reservationDate = new Date(reservation.created_at);
+      return isWithinInterval(reservationDate, { start: currentMonthStart, end: currentMonthEnd });
+    }).length;
 
     const monthlyReservations = allReservations.filter(reservation => {
       const reservationDate = new Date(reservation.created_at);
@@ -200,17 +216,8 @@ export default function AdminDashboard() {
       }
     }, 0);
 
-    const activeRentals = allReservations.filter(r => {
-      const today = new Date();
-      const pickup = new Date(r.pickup_date);
-      const returnDate = new Date(r.return_date);
-      return r.status === "accepted" && today >= pickup && today <= returnDate;
-    }).length;
-
     const performanceRate =
       totalVehicles > 0 ? Math.round((monthlyReservations.length / totalVehicles) * 100) : 0;
-
-    const totalActiveReservations = activeRentals;
 
     setStats({
       totalVehicles,
@@ -218,7 +225,7 @@ export default function AdminDashboard() {
       totalRevenue,
       activeRentals,
       monthlyGrowth: 12.5,
-      totalReservations: totalActiveReservations,
+      totalReservations: totalReservationsThisMonth,
       performanceRate,
     });
   };
@@ -238,7 +245,7 @@ export default function AdminDashboard() {
       refused: "bg-red-100 text-red-800",
       expired: "bg-orange-100 text-orange-800"
     };
-    
+
     return statusColors[status.toLowerCase()] || "bg-gray-100 text-gray-800";
   };
 
@@ -248,24 +255,24 @@ export default function AdminDashboard() {
       const category = vehicle.category;
       categoryStats[category] = (categoryStats[category] || 0) + 1;
     });
-  
+
     const categoryChartData = Object.keys(categoryStats).map(category => ({
       name: t(`admin_vehicles.categories.${category}`),
       value: categoryStats[category],
     }));
     setCategoryData(categoryChartData);
-  
+
     const monthlyRevenue: { [key: string]: number } = {};
     const last6Months = Array.from({ length: 6 }, (_, i) => {
       const date = new Date();
       date.setMonth(date.getMonth() - i);
       return date.toISOString().slice(0, 7);
     }).reverse();
-  
+
     last6Months.forEach(month => {
       monthlyRevenue[month] = 0;
     });
-  
+
     allReservations
       .filter(res => {
         const state = getReservationState(res);
@@ -287,28 +294,28 @@ export default function AdminDashboard() {
           monthlyRevenue[reservationMonth] += revenue;
         }
       });
-  
+
     // FONCTION POUR TRADUIRE LES MOIS
     const formatMonthForChart = (monthString: string) => {
       const [year, month] = monthString.split('-');
       const monthIndex = parseInt(month) - 1;
-      
+
       const monthTranslations = [
         t("common.months.jan"), t("common.months.feb"), t("common.months.mar"),
         t("common.months.apr"), t("common.months.may"), t("common.months.jun"),
         t("common.months.jul"), t("common.months.aug"), t("common.months.sep"),
         t("common.months.oct"), t("common.months.nov"), t("common.months.dec")
       ];
-      
+
       return `${monthTranslations[monthIndex]} ${year}`;
     };
-  
+
     const revenueChartData = last6Months.map(month => ({
       name: formatMonthForChart(month), // ← Utiliser la nouvelle fonction
       value: Math.round(monthlyRevenue[month] / 100) * 100,
     }));
     setRevenueData(revenueChartData);
-  
+
     const reservationTrend = last6Months.map(month => ({
       name: formatMonthForChart(month), // ← Utiliser la nouvelle fonction
       value: allReservations.filter(
@@ -335,10 +342,19 @@ export default function AdminDashboard() {
             transition={{ duration: 0.5 }}
             className="mb-8"
           >
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              {t("admin_dashboard.title")}
-            </h1>
-            <p className="text-gray-600">{t("admin_dashboard.subtitle")}</p>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-white rounded-xl shadow-sm border border-gray-100">
+                  <LayoutDashboard className="h-8 w-8 text-blue-600" />
+                </div>
+                <div>
+                  <h1 className="text-[24px] font-semibold text-gray-900 mb-2">
+                    {t("admin_dashboard.title")}
+                  </h1>
+                  <p className="text-gray-600 font-medium">{t("admin_dashboard.subtitle")}</p>
+                </div>
+              </div>
+            </div>
           </motion.div>
 
           {isLoading ? (
@@ -355,32 +371,31 @@ export default function AdminDashboard() {
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
               >
                 <StatCard
-                  title={t("admin_dashboard.stats.total_vehicles")}
-                  value={stats.totalVehicles}
-                  subtitle={t("admin_dashboard.stats.in_fleet")}
-                  icon={Car}
+                  title={t("admin_reservations.total_reservations", "Réservations ce mois") || "Réservations ce mois"}
+                  value={stats.totalReservations}
+                  subtitle={t("admin_dashboard.stats.this_month", "Ce mois-ci") || "Ce mois-ci"}
+                  icon={Calendar}
                   color="blue"
                 />
                 <StatCard
-                  title={t("admin_dashboard.stats.performance")}
-                  value={`${stats.performanceRate}%`}
-                  subtitle={t("admin_dashboard.stats.reservation_ratio")}
-                  icon={Zap}
-                  trend={stats.monthlyGrowth}
+                  title={t("admin_dashboard.stats.total_vehicles", "Total véhicules") || "Total véhicules"}
+                  value={stats.totalVehicles}
+                  subtitle={t("admin_dashboard.stats.in_fleet", "Dans la flotte") || "Dans la flotte"}
+                  icon={Car}
                   color="green"
                 />
                 <StatCard
-                  title={t("admin_dashboard.stats.total_revenue")}
-                  value={`${stats.totalRevenue.toLocaleString()} MAD`}
-                  subtitle={t("admin_dashboard.stats.this_month")}
-                  icon={DollarSign}
+                  title={t("admin_dashboard.stats.active_reservations", "Réservations actives") || "Réservations actives"}
+                  value={stats.activeRentals}
+                  subtitle={t("admin_dashboard.stats.currently_ongoing", "En cours") || "En cours"}
+                  icon={Clock}
                   color="purple"
                 />
                 <StatCard
-                  title={t("admin_dashboard.stats.active_reservations")}
-                  value={stats.totalReservations}
-                  subtitle={t("admin_dashboard.stats.currently_ongoing")}
-                  icon={Users}
+                  title={t("admin_vehicles.status.available", "Véhicules disponibles") || "Véhicules disponibles"}
+                  value={stats.availableVehicles}
+                  subtitle={t("admin_dashboard.stats.ready_to_rent", "Prêts à louer") || "Prêts à louer"}
+                  icon={Zap}
                   color="orange"
                 />
               </motion.div>
@@ -402,23 +417,23 @@ export default function AdminDashboard() {
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={revenueData}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
+                      <XAxis
                         dataKey="name"
                         tick={{ fontSize: 12 }}
                       />
-                      <YAxis 
+                      <YAxis
                         tick={{ fontSize: 12 }}
                         tickFormatter={(value) => `${value} MAD`}
                       />
-                      <Tooltip 
+                      <Tooltip
                         formatter={(value: number) => [
-                          `${value.toLocaleString()} MAD`, 
+                          `${value.toLocaleString()} MAD`,
                           t("admin_dashboard.charts.revenue.tooltip")
-                        ]} 
+                        ]}
                       />
-                      <Bar 
-                        dataKey="value" 
-                        fill="#2563EB" 
+                      <Bar
+                        dataKey="value"
+                        fill="#2563EB"
                         name={t("admin_dashboard.charts.revenue.tooltip")}
                       />
                     </BarChart>
@@ -450,11 +465,11 @@ export default function AdminDashboard() {
                           />
                         ))}
                       </Pie>
-                      <Tooltip 
+                      <Tooltip
                         formatter={(value: number) => [
-                          value, 
+                          value,
                           t("admin_dashboard.charts.categories.tooltip")
-                        ]} 
+                        ]}
                       />
                     </PieChart>
                   </ResponsiveContainer>
@@ -528,9 +543,9 @@ function StatCard({ title, value, subtitle, icon: Icon, color }: any) {
     <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md border transition-all">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-gray-600">{title}</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
-          <p className="text-xs text-gray-500 mt-1">{subtitle}</p>
+          <p className="text-sm font-medium text-slate-600">{title}</p>
+          <p className="text-2xl font-bold text-slate-900 mt-1">{value}</p>
+          <p className="text-xs font-semibold text-slate-500 mt-1">{subtitle}</p>
         </div>
         <div className={`p-3 rounded-xl ${colorClasses[color]}`}>
           <Icon className={`h-6 w-6 ${colorClasses[color].split(" ")[0]}`} />
@@ -554,8 +569,8 @@ function ChartCard({ title, subtitle, icon: Icon, color, children, className }: 
           <Icon className={`h-5 w-5 ${colorMap[color].split(" ")[0]}`} />
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-          <p className="text-sm text-gray-600">{subtitle}</p>
+          <h3 className="text-lg font-bold text-slate-900">{title}</h3>
+          <p className="text-sm font-medium text-slate-600">{subtitle}</p>
         </div>
       </div>
       {children}

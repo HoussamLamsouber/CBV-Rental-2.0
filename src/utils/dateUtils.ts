@@ -16,8 +16,8 @@ export const formatDisplayDate = (dateString: string): string => {
       const [year, month, day] = dateString.split('-').map(Number);
       
       const monthNames = [
-        'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
-        'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'
+        'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+        'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
       ];
       
       return `${day} ${monthNames[month - 1]} ${year}`;

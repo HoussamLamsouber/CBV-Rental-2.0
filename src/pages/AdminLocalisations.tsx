@@ -166,7 +166,7 @@ export default function AdminLocalisations() {
       filtered = filtered.filter(localisation => {
         const displayName = getDisplayName(localisation);
         return displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-               localisation.localisation_value.toLowerCase().includes(searchTerm.toLowerCase());
+          localisation.localisation_value.toLowerCase().includes(searchTerm.toLowerCase());
       });
     }
 
@@ -184,13 +184,13 @@ export default function AdminLocalisations() {
         .from("active_localisations")
         .update({ is_active: !localisation.is_active })
         .eq("id", localisation.id);
-  
+
       if (error) throw error;
-  
+
       // Mise à jour locale sans toast
-      setLocalisations(prevLocalisations => 
-        prevLocalisations.map(loc => 
-          loc.id === localisation.id 
+      setLocalisations(prevLocalisations =>
+        prevLocalisations.map(loc =>
+          loc.id === localisation.id
             ? { ...loc, is_active: !localisation.is_active }
             : loc
         )
@@ -294,8 +294,8 @@ export default function AdminLocalisations() {
   if (isLoading) {
     return (
       <>
-        <div className="min-h-screen bg-gray-50 p-6">
-          <div className="max-w-6xl mx-auto">
+        <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-50 p-6">
+          <div className="max-w-7xl mx-auto">
             <div className="text-center py-24">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
               <p className="text-gray-600">{t('admin_localisations.messages.loading')}</p>
@@ -309,7 +309,7 @@ export default function AdminLocalisations() {
   // Fonction pour générer le localisation_value à partir du display_name
   const generateLocalisationValue = (displayName: string, type: string) => {
     if (!displayName) return "";
-    
+
     // Nettoyer le nom : minuscules, remplacer espaces par underscores, supprimer accents
     const cleanName = displayName
       .toLowerCase()
@@ -321,14 +321,14 @@ export default function AdminLocalisations() {
 
     // Ajouter le préfixe selon le type
     const prefix = type === 'airport' ? 'airport_' : 'station_';
-    
+
     return prefix + cleanName;
   };
 
   // Fonction pour vérifier si un localisation_value existe déjà
   const checkLocalisationValueExists = async (localisationValue: string): Promise<boolean> => {
     if (!localisationValue) return false;
-    
+
     try {
       const { data, error } = await supabase
         .from("active_localisations")
@@ -352,7 +352,7 @@ export default function AdminLocalisations() {
     const isDuplicate = localisationValue ? await checkLocalisationValueExists(localisationValue) : false;
 
     setNewLocalisation(prev => ({
-      ...prev, 
+      ...prev,
       localisation_type: type,
       localisation_value: localisationValue
     }));
@@ -366,35 +366,44 @@ export default function AdminLocalisations() {
   return (
     <>
       <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-50 p-6">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           {/* En-tête */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              {t('admin_localisations.title')}
-            </h1>
-            <p className="text-gray-600">
-              {t('admin_localisations.subtitle')}
-            </p>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-white rounded-xl shadow-sm border border-gray-100">
+                  <MapPin className="h-8 w-8 text-blue-600" />
+                </div>
+                <div>
+                  <h1 className="text-[24px] font-semibold text-slate-900 mb-2">
+                    {t('admin_localisations.title')}
+                  </h1>
+                  <p className="text-slate-600 font-medium">
+                    {t('admin_localisations.subtitle')}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Barre de recherche et filtres */}
           <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
             <div className="flex flex-col lg:flex-row gap-4 mb-4">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
                 <Input
                   type="text"
                   placeholder={t('admin_localisations.search.placeholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 input-base"
                 />
               </div>
 
               <select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="input-base w-[200px]"
               >
                 <option value="all">{t('admin_localisations.filters.all_types')}</option>
                 <option value="airport">{t('admin_localisations.filters.airports')}</option>
@@ -423,7 +432,7 @@ export default function AdminLocalisations() {
           {showAddForm && (
             <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
               <h3 className="text-lg font-semibold mb-6">{t('admin_localisations.add_form.title')}</h3>
-              
+
               {/* Grid pour aligner les inputs */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4 mb-6 items-start">
 
@@ -436,7 +445,7 @@ export default function AdminLocalisations() {
                     id="localisation_type"
                     value={newLocalisation.localisation_type}
                     onChange={(e) => handleLocalisationTypeChange(e.target.value)}
-                    className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="input-base mt-1"
                   >
                     <option value="airport">{t('admin_localisations.types.airport')}</option>
                     <option value="station">{t('admin_localisations.types.station')}</option>
@@ -456,11 +465,10 @@ export default function AdminLocalisations() {
                         key={lang}
                         type="button"
                         onClick={() => setActiveLang(lang as "fr" | "en")}
-                        className={`px-3 py-1 rounded-md text-sm font-medium transition ${
-                          activeLang === lang
-                            ? "bg-blue-600 text-white"
-                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                        }`}
+                        className={`px-3 py-1 rounded-md text-sm font-medium transition ${activeLang === lang
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                          }`}
                       >
                         {lang.toUpperCase()}
                       </button>
@@ -468,7 +476,7 @@ export default function AdminLocalisations() {
                   </div>
 
                   <Input
-                    className="mt-1"
+                    className="mt-1 input-base"
                     value={newLocalisation.translations[activeLang]}
                     onChange={(e) =>
                       setNewLocalisation((prev) => ({
@@ -494,10 +502,10 @@ export default function AdminLocalisations() {
                       value={newLocalisation.localisation_value}
                       readOnly
                       className={cn(
-                        "mt-1 pr-10",
-                        validation.isDuplicate 
-                          ? "bg-red-50 border-red-300 text-red-900" 
-                          : "bg-gray-50 border-gray-200 text-gray-700"
+                        "mt-1 pr-10 input-base",
+                        validation.isDuplicate
+                          ? "bg-red-50 border-red-300 text-red-900"
+                          : "bg-gray-50 border-gray-200 text-gray-700 font-mono text-xs"
                       )}
                       placeholder={t('admin_localisations.add_form.technical_value_placeholder')}
                     />
@@ -508,7 +516,7 @@ export default function AdminLocalisations() {
                     )}
                   </div>
                   <p className="text-xs text-gray-500 mt-1">
-                    {validation.isDuplicate 
+                    {validation.isDuplicate
                       ? t('admin_localisations.validation.duplicate')
                       : t('admin_localisations.add_form.technical_value_help')
                     }
@@ -521,15 +529,15 @@ export default function AdminLocalisations() {
               {newLocalisation.translations.fr && (
                 <div className={cn(
                   "border rounded-lg p-4 mb-4",
-                  validation.isDuplicate 
-                    ? "bg-red-50 border-red-200" 
+                  validation.isDuplicate
+                    ? "bg-red-50 border-red-200"
                     : "bg-blue-50 border-blue-200"
                 )}>
                   <h4 className={cn(
                     "text-sm font-medium mb-2",
                     validation.isDuplicate ? "text-red-900" : "text-blue-900"
                   )}>
-                    {validation.isDuplicate 
+                    {validation.isDuplicate
                       ? t('admin_localisations.add_form.conflict_detected')
                       : t('admin_localisations.add_form.preview')
                     }
@@ -548,8 +556,8 @@ export default function AdminLocalisations() {
                       <span className="font-medium">Valeur technique :</span>
                       <div className={cn(
                         "font-mono text-xs mt-1 px-2 py-1 rounded",
-                        validation.isDuplicate 
-                          ? "bg-red-100 text-red-700" 
+                        validation.isDuplicate
+                          ? "bg-red-100 text-red-700"
                           : "bg-blue-100 text-blue-700"
                       )}>
                         {newLocalisation.localisation_value}
@@ -566,8 +574,8 @@ export default function AdminLocalisations() {
 
               {/* Actions */}
               <div className="flex flex-wrap gap-3">
-                <Button 
-                  onClick={handleAddLocalisation} 
+                <Button
+                  onClick={handleAddLocalisation}
                   className="bg-green-600 hover:bg-green-700"
                   disabled={
                     !newLocalisation.translations.fr ||
@@ -603,21 +611,21 @@ export default function AdminLocalisations() {
           <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b">
+                <thead className="bg-slate-50/80 border-b border-slate-200">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
                       {t('admin_localisations.table.localisation')}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
                       {t('admin_localisations.table.type')}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
                       {t('admin_localisations.table.technical_value')}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-center text-[11px] font-semibold text-slate-500 uppercase tracking-widest w-[120px]">
                       {t('admin_localisations.table.status')}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
                       {t('admin_localisations.table.action')}
                     </th>
                   </tr>
@@ -625,7 +633,7 @@ export default function AdminLocalisations() {
                 <tbody className="divide-y divide-gray-200">
                   {filteredLocalisations.map((localisation) => {
                     const displayName = getDisplayName(localisation);
-                    
+
                     return (
                       <tr key={localisation.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4">
@@ -637,11 +645,10 @@ export default function AdminLocalisations() {
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            localisation.localisation_type === 'airport' 
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-green-100 text-green-800'
-                          }`}>
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${localisation.localisation_type === 'airport'
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-green-100 text-green-800'
+                            }`}>
                             {t(`admin_localisations.types.${localisation.localisation_type}`)}
                           </span>
                         </td>
@@ -649,48 +656,42 @@ export default function AdminLocalisations() {
                           {localisation.localisation_value}
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            localisation.is_active 
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}>
-                            {localisation.is_active 
-                              ? t('admin_localisations.status.active')
-                              : t('admin_localisations.status.inactive')
-                            }
-                          </span>
+                          <div className="w-full flex justify-center min-w-[100px]">
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${localisation.is_active
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-red-100 text-red-700'
+                              }`}>
+                              {localisation.is_active
+                                ? t('status.active')
+                                : t('status.inactive')
+                              }
+                            </span>
+                          </div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                          <div className="flex items-center gap-2">
                             {/* Bouton Activer/Désactiver */}
                             <button
                               onClick={() => toggleLocalisationActive(localisation)}
-                              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                localisation.is_active
-                                  ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                                  : 'bg-green-100 text-green-700 hover:bg-green-200'
+                              title={localisation.is_active ? t('admin_localisations.actions.deactivate') : t('admin_localisations.actions.activate')}
+                              className={`flex items-center justify-center w-8 h-8 rounded-md transition hover:bg-gray-100 no-focus-ring ${
+                                localisation.is_active ? 'text-green-600' : 'text-red-500'
                               }`}
                             >
                               {localisation.is_active ? (
-                                <>
-                                  <ToggleLeft className="h-4 w-4" />
-                                  {t('admin_localisations.actions.deactivate')}
-                                </>
+                                <ToggleLeft className="h-4 w-4" />
                               ) : (
-                                <>
-                                  <ToggleRight className="h-4 w-4" />
-                                  {t('admin_localisations.actions.activate')}
-                                </>
+                                <ToggleRight className="h-4 w-4" />
                               )}
                             </button>
 
                             {/* Bouton Supprimer */}
                             <button
                               onClick={() => deleteLocalisation(localisation)}
-                              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-red-100 text-red-700 hover:bg-red-200"
+                              title={t('admin_localisations.actions.delete')}
+                              className="flex items-center justify-center w-8 h-8 rounded-md transition hover:bg-gray-100 text-red-500 hover:text-red-600 no-focus-ring"
                             >
                               <X className="h-4 w-4" />
-                              {t('admin_localisations.actions.delete')}
                             </button>
                           </div>
                         </td>
@@ -702,10 +703,10 @@ export default function AdminLocalisations() {
 
               {filteredLocalisations.length === 0 && (
                 <div className="text-center py-12">
-                  <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <MapPin className="h-12 w-12 text-slate-400 mx-auto mb-4" />
                   <p className="text-gray-500">{t('admin_localisations.messages.no_localisations')}</p>
                   {searchTerm && (
-                    <p className="text-gray-400 text-sm mt-2">
+                    <p className="text-slate-400 text-sm mt-2">
                       {t('admin_localisations.messages.no_results', { searchTerm })}
                     </p>
                   )}

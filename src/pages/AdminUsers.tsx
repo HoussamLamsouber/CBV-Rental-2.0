@@ -8,11 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { 
-  ArrowLeft, 
-  Search,  
-  Mail, 
-  Phone, 
+import {
+  ArrowLeft,
+  Search,
+  Mail,
+  Phone,
   Calendar,
   Users,
   UserCog,
@@ -47,7 +47,7 @@ export default function AdminUsers() {
   const [filteredProfiles, setFilteredProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [allEmails, setAllEmails] = useState<{email: string, full_name: string | null}[]>([]);
+  const [allEmails, setAllEmails] = useState<{ email: string, full_name: string | null }[]>([]);
   const [selectedEmail, setSelectedEmail] = useState("");
 
   // Vérification des permissions admin
@@ -77,7 +77,7 @@ export default function AdminUsers() {
   // Filtrer les profils
   useEffect(() => {
     const filtered = profiles.filter(profile => {
-      const matchesSearch = 
+      const matchesSearch =
         profile.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (profile.full_name && profile.full_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (profile.telephone && profile.telephone.includes(searchTerm));
@@ -96,7 +96,7 @@ export default function AdminUsers() {
     try {
       setLoading(true);
       console.log("🔄 Chargement de tous les profils...");
-      
+
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
         .select("*")
@@ -134,16 +134,16 @@ export default function AdminUsers() {
       const { error: rpcError } = await supabase.rpc('delete_user_profile', {
         target_user_id: profileId
       });
-    
+
       if (rpcError) throw rpcError;
-    
+
       toast({
         title: t('admin_users.messages.user_deleted'),
         description: t('admin_users.messages.user_deleted_permanently', { email }),
       });
-    
+
       await loadProfiles();
-    
+
     } catch (rpcError: any) {
       toast({
         title: t("error"),
@@ -168,14 +168,17 @@ export default function AdminUsers() {
   const clientsCount = profiles.filter(p => p.role === 'client').length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-50">
-      <main className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-50 p-6">
+      <div className="max-w-7xl mx-auto">
         {/* En-tête */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div className="flex items-center gap-4">
+            <div className="p-3 bg-white rounded-xl shadow-sm border border-gray-100">
+              <Users className="h-8 w-8 text-blue-600" />
+            </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">{t('admin_users.title')}</h1>
-              <p className="text-gray-600 mt-1">
+              <h1 className="text-[24px] font-semibold text-gray-900 mb-2">{t('admin_users.title')}</h1>
+              <p className="text-gray-600 font-medium">
                 {adminsCount} {t('admin_users.admin_count')} • {clientsCount} {t('admin_users.client_count')}
               </p>
             </div>
@@ -186,22 +189,20 @@ export default function AdminUsers() {
         <div className="border-b mb-6">
           <div className="flex space-x-8">
             <button
-              className={`py-2 px-1 font-medium text-sm border-b-2 transition-colors flex items-center gap-2 ${
-                activeTab === 'admins'
+              className={`py-2 px-1 font-medium text-sm border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'admins'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
+                }`}
               onClick={() => setActiveTab('admins')}
             >
               <UserCog className="h-4 w-4" />
               {t('admin_users.tabs.admins')} ({adminsCount})
             </button>
             <button
-              className={`py-2 px-1 font-medium text-sm border-b-2 transition-colors flex items-center gap-2 ${
-                activeTab === 'clients'
+              className={`py-2 px-1 font-medium text-sm border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'clients'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
+                }`}
               onClick={() => setActiveTab('clients')}
             >
               <Users className="h-4 w-4" />
@@ -214,12 +215,12 @@ export default function AdminUsers() {
         <Card className="mb-6">
           <CardContent className="p-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
               <Input
                 placeholder={t('admin_users.search.placeholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 input-base"
               />
             </div>
           </CardContent>
@@ -235,29 +236,29 @@ export default function AdminUsers() {
             <CardContent className="p-0">
               <div className="w-full overflow-x-auto">
                 <table className="w-full text-sm table-fixed">
-                  <thead className="bg-gray-50 border-b text-gray-600 text-xs uppercase tracking-wide">
+                  <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-500 text-[11px] uppercase tracking-widest">
                     <tr>
-                      <th className="text-left px-4 py-3 font-medium">
+                      <th className="text-left px-4 py-3 font-semibold">
                         {t('admin_users.table.name')}
                       </th>
 
-                      <th className="text-left px-4 py-3 font-medium">
+                      <th className="text-left px-4 py-3 font-semibold">
                         {t('admin_users.table.email')}
                       </th>
 
-                      <th className="text-left px-4 py-3 font-medium">
+                      <th className="text-left px-4 py-3 font-semibold">
                         {t('admin_users.table.phone')}
                       </th>
 
-                      <th className="text-left px-4 py-3 font-medium">
+                      <th className="text-left px-4 py-3 font-semibold">
                         {t('admin_users.table.role')}
                       </th>
 
-                      <th className="text-left px-4 py-3 font-medium">
+                      <th className="text-left px-4 py-3 font-semibold">
                         {t('admin_users.table.registration_date')}
                       </th>
 
-                      <th className="w-[120px] px-4 py-3 font-medium">
+                      <th className="w-[120px] px-4 py-3 font-semibold text-center">
                         {t('admin_users.table.actions')}
                       </th>
                     </tr>
@@ -275,7 +276,7 @@ export default function AdminUsers() {
                         {/* Email */}
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
-                            <Mail className="h-4 w-4 text-gray-400" />
+                            <Mail className="h-4 w-4 text-slate-400" />
                             <span className="truncate max-w-[200px]">
                               {profile.email}
                             </span>
@@ -286,11 +287,11 @@ export default function AdminUsers() {
                         <td className="px-4 py-3">
                           {profile.telephone ? (
                             <div className="flex items-center gap-2">
-                              <Phone className="h-4 w-4 text-gray-400" />
+                              <Phone className="h-4 w-4 text-slate-400" />
                               {profile.telephone}
                             </div>
                           ) : (
-                            <span className="text-gray-400">
+                            <span className="text-slate-400">
                               {t('admin_users.messages.not_provided')}
                             </span>
                           )}
@@ -307,7 +308,7 @@ export default function AdminUsers() {
                         {/* Date */}
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-gray-400" />
+                            <Calendar className="h-4 w-4 text-slate-400" />
                             {formatDateTime(profile.created_at)}
                           </div>
                         </td>
@@ -315,7 +316,7 @@ export default function AdminUsers() {
                         {/* Actions */}
                         <td className="w-[120px] px-4 py-3">
                           <div className="flex gap-2">
-                            
+
                             <Button
                               variant="ghost"
                               size="sm"
@@ -351,18 +352,18 @@ export default function AdminUsers() {
             <CardContent className="py-12 text-center">
               <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {t('admin_users.messages.no_results_title', { 
+                {t('admin_users.messages.no_results_title', {
                   type: activeTab === 'admins' ? t('admin_users.tabs.admins') : t('admin_users.tabs.clients')
                 })}
               </h3>
               <p className="text-gray-600 mb-4">
-                {searchTerm ? t('admin_users.messages.no_search_results') : 
-                 activeTab === 'admins' ? t('admin_users.messages.no_admins_yet') : t('admin_users.messages.no_clients_yet')}
+                {searchTerm ? t('admin_users.messages.no_search_results') :
+                  activeTab === 'admins' ? t('admin_users.messages.no_admins_yet') : t('admin_users.messages.no_clients_yet')}
               </p>
             </CardContent>
           </Card>
         )}
-      </main>
+      </div>
     </div>
   );
 }

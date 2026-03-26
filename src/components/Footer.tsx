@@ -21,142 +21,74 @@ export const Footer = () => {
   };
 
   return (
-    <footer className="bg-gradient-to-br from-blue-900 to-blue-800 text-white mt-auto">
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
-          {/* Logo et description */}
-          <div className="lg:col-span-1">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-                <span className="text-blue-900 font-bold text-lg">CBV</span>
+    <footer className="bg-slate-950 text-slate-400 mt-20 pt-20 pb-10 border-t border-slate-900 font-sans">
+      <div className="container mx-auto px-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 mb-16">
+          {/* Brand Section */}
+          <div className="space-y-6">
+            <Link to="/" className="flex items-center space-x-3 group">
+              <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center transition-transform group-hover:rotate-6">
+                <span className="text-white font-bold text-[10px]">CBV</span>
               </div>
-              <h3 className="text-2xl font-bold text-white">CBV Rental</h3>
-            </div>
-            <p className="text-blue-100 text-sm leading-relaxed mb-4">
+              <h3 className="text-lg font-bold text-white tracking-tight uppercase">CBV RENTAL</h3>
+            </Link>
+            <p className="text-sm leading-relaxed max-w-xs">
               {t("footer_description")}
             </p>
-
-            {/* Réseaux sociaux */}
-            <div className="flex items-center space-x-4 mt-4">
-              <a href="#" aria-label="Facebook" className="hover:text-blue-300">
-                <Facebook size={20} />
+            <div className="flex gap-4">
+              <a href="#" className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all">
+                <Facebook size={18} />
               </a>
-              <a href="#" aria-label="Instagram" className="hover:text-blue-300">
-                <Instagram size={20} />
+              <a href="#" className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all">
+                <Instagram size={18} />
+              </a>
+              <a href="#" className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all">
+                <Twitter size={18} />
               </a>
             </div>
           </div>
 
-          {/* Navigation rapide */}
+          {/* Navigation */}
           <div>
-            <h4 className="text-lg font-semibold mb-6 text-white border-l-4 border-blue-400 pl-3">
-              {t("navigation")}
-            </h4>
-            <ul className="space-y-3">
-              <li>
-                <Link
-                  to="/"
-                  className="text-blue-100 hover:text-white transition-colors duration-200 flex items-center group"
-                >
-                  <span className="w-2 h-2 bg-blue-400 rounded-full mr-3 group-hover:scale-125 transition-transform"></span>
-                  {t("home")}
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/offres"
-                  className="text-blue-100 hover:text-white transition-colors duration-200 flex items-center group"
-                >
-                  <span className="w-2 h-2 bg-blue-400 rounded-full mr-3 group-hover:scale-125 transition-transform"></span>
-                  {t("offers")}
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/about"
-                  className="text-blue-100 hover:text-white transition-colors duration-200 flex items-center group"
-                >
-                  <span className="w-2 h-2 bg-blue-400 rounded-full mr-3 group-hover:scale-125 transition-transform"></span>
-                  {t("about")}
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/contact"
-                  className="text-blue-100 hover:text-white transition-colors duration-200 flex items-center group"
-                >
-                  <span className="w-2 h-2 bg-blue-400 rounded-full mr-3 group-hover:scale-125 transition-transform"></span>
-                  {t("contact")}
-                </Link>
-              </li>
+            <h4 className="text-white font-semibold text-xs uppercase tracking-wider mb-6">{t("navigation")}</h4>
+            <ul className="space-y-4 text-sm font-medium">
+              <li><Link to="/" className="hover:text-blue-500 transition-colors">{t("home")}</Link></li>
+              <li><Link to="/offres" className="hover:text-blue-500 transition-colors">{t("offers")}</Link></li>
+              <li><Link to="/about" className="hover:text-blue-500 transition-colors">{t("about")}</Link></li>
+              <li><Link to="/contact" className="hover:text-blue-500 transition-colors">{t("contact.label")}</Link></li>
             </ul>
           </div>
 
-          {/* Contact */}
+          {/* Contact & Support */}
           <div>
-            <h4 className="text-lg font-semibold mb-6 text-white border-l-4 border-blue-400 pl-3">
-              {t("contact")}
-            </h4>
-            <div className="space-y-4">
-              <div className="flex items-start space-x-3">
-                <Phone size={18} className="text-blue-300 mt-1 flex-shrink-0" />
-                <div>
-                  <p className="text-blue-100 font-medium">{t("phone")}</p>
-                  <p className="text-white text-sm">+212 6 65 29 13 14</p>
-                </div>
-              </div>
-              <div className="flex items-start space-x-3">
-                <Mail size={18} className="text-blue-300 mt-1 flex-shrink-0" />
-                <div>
-                  <p className="text-blue-100 font-medium">Email</p>
-                  <p className="text-white text-sm">contact@cbvrental.com</p>
-                </div>
-              </div>
-              <div className="flex items-start space-x-3">
-                <MapPin
-                  size={18}
-                  className="text-blue-300 mt-1 flex-shrink-0"
-                />
-                <div>
-                  <p className="text-blue-100 font-medium">{t("address")}</p>
-                  <p className="text-white text-sm">Gare TGV, Tanger</p>
-                  <p className="text-blue-200 text-xs">{t("morocco")}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Horaires */}
-          <div>
-            <h4 className="text-lg font-semibold mb-6 text-white border-l-4 border-blue-400 pl-3">
-              {t("opening_hours")}
-            </h4>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between text-blue-100">
-                <span>{t("monday_friday")}</span>
-                <span className="text-white">08:00 - 20:00</span>
-              </div>
-              <div className="flex justify-between text-blue-100">
-                <span>{t("saturday")}</span>
-                <span className="text-white">09:00 - 18:00</span>
-              </div>
-              <div className="flex justify-between text-blue-100">
-                <span>{t("sunday")}</span>
-                <span className="text-white">09:00 - 16:00</span>
-              </div>
-            </div>
+            <h4 className="text-white font-semibold text-xs uppercase tracking-wider mb-6">Contact & Info</h4>
+            <ul className="space-y-4 text-sm">
+              <li className="flex items-center gap-3">
+                <Phone size={16} className="text-blue-500" />
+                <span className="text-white font-semibold">+212 6 65 29 13 14</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <Mail size={16} className="text-blue-500" />
+                <span>contact@cbvrental.com</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <MapPin size={16} className="text-blue-500 mt-1 shrink-0" />
+                <span>Gare TGV, Tanger, {t("morocco")}</span>
+              </li>
+            </ul>
           </div>
         </div>
 
-        {/* Section basse */}
-        <div className="mt-12 pt-8 border-t border-blue-700">
-          <div className="text-center">
-            <p className="text-blue-200 text-sm">
-              &copy; {currentYear} CBV Rental. {t("all_rights_reserved")}
-            </p>
+        {/* Bottom Bar */}
+        <div className="pt-8 border-t border-slate-900 flex flex-col md:flex-row justify-between items-center gap-4 text-xs">
+          <p>&copy; {currentYear} CBV RENTAL. All rights reserved.</p>
+          <div className="flex gap-6 uppercase tracking-widest font-bold">
+            <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
+            <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
           </div>
         </div>
       </div>
     </footer>
+
   );
 };

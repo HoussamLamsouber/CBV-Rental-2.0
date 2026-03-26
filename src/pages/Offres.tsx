@@ -36,6 +36,139 @@ interface OfferRecord {
   price_label_en: string;
 }
 
+const OffersModal = ({ 
+  isOpen, 
+  onClose, 
+  currentCar, 
+  currentCarOffers, 
+  getTranslatedPeriod, 
+  i18n, 
+  t 
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  currentCar: Car | null;
+  currentCarOffers: CarOffer[];
+  getTranslatedPeriod: (p: string) => string;
+  i18n: any;
+  t: any;
+}) => {
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // 1. ROBUST Scroll Lock & Shift Prevention
+    const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+    
+    // Save original styles
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalBodyPadding = document.body.style.paddingRight;
+
+    // Lock both html and body (ensures coverage for different browser/OS behaviors)
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+    document.body.style.paddingRight = `${scrollBarWidth}px`;
+
+    // Cleanup on Unmount or close
+    return () => {
+      document.documentElement.style.overflow = originalHtmlOverflow;
+      document.body.style.overflow = originalBodyOverflow;
+      document.body.style.paddingRight = originalBodyPadding;
+    };
+  }, [isOpen]);
+
+  if (!isOpen || !currentCar) return null;
+
+  return (
+    <div
+      className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl w-full max-w-lg shadow-[0_32px_128px_-16px_rgba(0,0,0,0.3)] overflow-hidden animate-in zoom-in-95 duration-300 max-h-[90vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="relative p-6 pb-2 shrink-0">
+           <Button variant="ghost" size="icon" onClick={onClose} className="absolute top-6 right-6 h-10 w-10 rounded-full bg-slate-50 hover:bg-slate-100">
+             <X className="h-5 w-5 text-slate-400" />
+           </Button>
+           
+           <div className="flex items-center gap-6">
+              <div className="w-20 h-20 rounded-xl overflow-hidden shadow-lg shadow-blue-600/10">
+                 <img src={currentCar.image_url} alt={currentCar.name} className="w-full h-full object-cover" />
+              </div>
+              <div>
+                 <p className="text-[10px] font-bold text-blue-600 uppercase tracking-[0.2em] mb-1">{t(`offers_page.categories.${currentCar.category}`)}</p>
+                 <h2 className="text-2xl font-bold text-slate-900 italic tracking-tight">{currentCar.name}</h2>
+              </div>
+           </div>
+        </div>
+
+        <div className="p-6 pt-2 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
+           <div className="bg-slate-50 rounded-xl p-6 border border-slate-100 flex items-center justify-between">
+              <div>
+                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{t("offers_page.standardRate")}</p>
+                 <p className="text-xs font-bold text-slate-900">{t("offers_page.dailyRental")}</p>
+              </div>
+              <div className="text-right">
+                 <p className="text-3xl font-bold text-slate-900 leading-none">{currentCar.price}</p>
+                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">MAD/{t("offers_page.day")}</p>
+              </div>
+           </div>
+
+           <div className="space-y-4">
+              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-[0.3em] flex items-center gap-2 mb-2">
+                 <div className="w-1.5 h-6 bg-blue-600 rounded-full" />
+                 {t("offers_page.specialOffers")}
+              </h3>
+
+              {currentCarOffers.length > 0 ? (
+                <div className="space-y-3">
+                  {currentCarOffers.map((offer, idx) => (
+                    <div key={idx} className="group flex items-center justify-between p-5 bg-white border border-slate-100 rounded-xl transition-all hover:border-blue-200 hover:shadow-lg hover:shadow-blue-600/5">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                          <Calendar className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <span className="block text-sm font-bold text-slate-900 uppercase tracking-tight">
+                            {getTranslatedPeriod(offer.period)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                         <span className="block text-xl font-bold text-blue-600">
+                           {offer.price.value}
+                         </span>
+                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                            MAD/
+                            {i18n.language === "fr"
+                              ? offer.price.fr || offer.price.en
+                              : offer.price.en || offer.price.fr}
+                          </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-12 text-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                  <Clock className="h-10 w-10 text-slate-300 mx-auto mb-3" />
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{t("offers_page.noSpecialOffers")}</p>
+                </div>
+              )}
+           </div>
+
+           <Button asChild className="w-full h-16 bg-slate-900 text-white font-bold text-xs uppercase tracking-[0.2em] rounded-xl shadow-xl hover:bg-blue-600 transition-all">
+              <Link to="/" onClick={onClose}>
+                 {t("offers_page.bookNow")}
+              </Link>
+           </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Offres = () => {
   const { t, i18n } = useTranslation();
   const [cars, setCars] = useState<Car[]>([]);
@@ -47,17 +180,24 @@ const Offres = () => {
     const fetchCars = async () => {
       try {
         setLoading(true);
-        const { data, error } = await supabase
+        // 1. Récupérer les modèles disponibles avec stock > 0
+        const { data: carsData, error: carsError } = await supabase
           .from("cars")
           .select("*")
           .is("is_deleted", false)
-          .eq("available", true);
+          .eq("available", true)
+          .gt("quantity", 0);
 
-        if (error) {
-          console.error("Erreur fetch cars:", error);
-          return;
-        }
-        setCars(data as Car[]);
+        if (carsError) throw carsError;
+
+        // 2. Double filtrage en JS par sécurité et logging
+        const filteredCars = (carsData || []).filter(v => {
+          const s = Number(v.quantity);
+          console.log(`Vehicle ${v.name} stock:`, s);
+          return s > 0;
+        });
+
+        setCars(filteredCars as Car[]);
       } catch (error) {
         console.error("Erreur lors du chargement des véhicules:", error);
       } finally {
@@ -86,7 +226,6 @@ const Offres = () => {
       records.forEach((o) => {
         if (!map[o.car_id]) map[o.car_id] = [];
 
-        // ⚠️ ON GARDE LA VALEUR BRUTE
         map[o.car_id].push({
           period: o.period,
           price: {
@@ -113,12 +252,8 @@ const Offres = () => {
     if (!periodJson) return "";
 
     try {
-      // Si periodJson est déjà un objet, on le garde
       const periodObj = typeof periodJson === "string" ? JSON.parse(periodJson) : periodJson;
-
-      // Récupérer la langue courante
       const lang = i18n.language || "fr";
-
       return periodObj[lang] || Object.values(periodObj)[0] || "";
     } catch (err) {
       console.warn("Erreur parsing period JSON:", periodJson, err);
@@ -126,253 +261,138 @@ const Offres = () => {
     }
   };
 
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">{t("offers_page.loadingOffers")}</p>
+      <div className="min-h-screen bg-slate-50 pt-32 pb-20">
+        <div className="container mx-auto px-6">
+          <div className="h-10 w-64 bg-slate-200 animate-pulse rounded-lg mb-4" />
+          <div className="h-4 w-96 bg-slate-100 animate-pulse rounded-lg mb-12" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="h-96 bg-white rounded-2xl border border-slate-100 animate-pulse" />
+            ))}
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <main className="container mx-auto px-4 py-6">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+    <div className="min-h-screen flex flex-col bg-slate-50 pt-32">
+      <main className="flex-1 container mx-auto px-6 pb-20">
+        <div className="mb-16 space-y-4">
+
+          <h1 className="text-[32px] font-bold text-slate-900 tracking-tight italic">
             {t("offers_page.title")}
           </h1>
-          <p className="text-gray-600 text-sm sm:text-base max-w-2xl mx-auto">
+          <p className="text-slate-500 text-[14px] font-normal max-w-2xl leading-relaxed">
             {t("offers_page.subtitle")}
           </p>
         </div>
 
-        <section className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-10">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t("offers_page.vehicle", "Véhicule")}
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t("offers_page.category", "Catégorie")}
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t("offers_page.specifications", "Spécifications")}
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t("offers_page.price", "Prix")}
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t("offers_page.offers", "Offres")}
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t("offers_page.actions", "Actions")}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {cars.map((car) => (
-                  <tr key={car.id} className="hover:bg-gray-50/50 transition-colors">
-                    {/* Colonne Véhicule */}
-                    <td className="px-4 py-4">
-                      <div className="flex items-center gap-3">
-                        <img 
-                          src={car.image_url} 
-                          alt={car.name} 
-                          className="w-16 h-12 object-cover rounded-lg"
-                        />
-                        <div>
-                          <h3 className="font-semibold text-gray-900 text-sm">{car.name}</h3>
-                          {offers[car.id] && offers[car.id].length > 0 && (
-                            <Badge className="bg-green-100 text-green-800 hover:bg-green-200 text-xs mt-1">
-                              <Tag className="h-3 w-3 mr-1" />
-                              {offers[car.id].length} {t("offers_page.offers_plural", { count: offers[car.id].length })}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Colonne Catégorie */}
-                    <td className="px-4 py-4">
-                      <Badge variant="secondary" className="text-xs">
+        {cars.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {cars.map((car) => (
+              <div key={car.id} className="group bg-white rounded-2xl border border-slate-100 p-4 transition-all duration-500 hover:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] hover:-translate-y-2 relative overflow-hidden">
+                {/* Car Image Container */}
+                <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-slate-50 mb-6">
+                  <img 
+                    src={car.image_url} 
+                    alt={car.name} 
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                  <div className="absolute top-4 right-4">
+                     <Badge className="bg-white/90 backdrop-blur-md text-slate-900 border-none shadow-sm font-bold text-[12px] px-3 py-1.5 rounded-full uppercase tracking-widest hover:bg-white/95">
                         {t(`offers_page.categories.${car.category}`)}
-                      </Badge>
-                    </td>
+                     </Badge>
+                  </div>
+                </div>
 
-                    {/* Colonne Spécifications */}
-                    <td className="px-4 py-4">
-                      <div className="space-y-1 text-sm text-gray-600">
-                        <div className="flex items-center gap-1">
-                          <span>⛽</span>
-                          <span>{t(`car_card.fuel_types.${car.fuel}`)}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <span>⚙️</span>
-                          <span>{t(`car_card.transmission_types.${car.transmission}`)}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <span>👤</span>
-                          <span>{car.seats || 5} {t("offers_page.seats")}</span>
-                        </div>
+                {/* Info Container */}
+                <div className="px-2 pb-2">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="text-[18px] font-semibold text-slate-900 group-hover:text-blue-600 transition-colors uppercase italic tracking-tight">{car.name}</h3>
+                      <div className="flex items-center gap-4 mt-2">
+                         <div className="flex items-center gap-1.5 text-[12px] font-normal text-slate-400 uppercase tracking-widest">
+                           <Car className="w-3 h-3 text-blue-500" />
+                           {t(`car_card.transmission_types.${car.transmission}`)}
+                         </div>
+                         <div className="flex items-center gap-1.5 text-[12px] font-normal text-slate-400 uppercase tracking-widest">
+                           <Tag className="w-3 h-3 text-blue-500" />
+                           {t(`car_card.fuel_types.${car.fuel}`)}
+                         </div>
                       </div>
-                    </td>
+                    </div>
+                  </div>
 
-                    {/* Colonne Prix */}
-                    <td className="px-4 py-4">
-                      <div>
-                        <p className="text-lg font-bold text-primary">
-                          {car.price} MAD
-                        </p>
-                        <p className="text-sm text-gray-500">{t("offers_page.perDay")}</p>
+                  <div className="h-px bg-slate-50 w-full mb-6" />
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col">
+                      <p className="text-[12px] font-normal text-slate-400 uppercase tracking-[0.2em] mb-1">{t("offers_page.startingFrom")}</p>
+                      <div className="flex flex-col">
+                        <span className="text-[24px] font-semibold text-slate-900 leading-none">{car.price}</span>
+                        <span className="text-[10px] font-normal text-slate-400 uppercase tracking-widest mt-1">MAD/{t("offers_page.day")}</span>
                       </div>
-                    </td>
+                    </div>
 
-                    {/* Colonne Offres */}
-                    <td className="px-4 py-4">
-                      {offers[car.id] && offers[car.id].length > 0 ? (
-                        <div className="text-sm text-gray-600">
-                          <p className="font-medium">{offers[car.id].length} {t("offers_page.offers_available", "offre(s) spéciale(s)")}</p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {t("offers_page.from", "À partir de")} {Math.min(...offers[car.id].map(o => o.price.value))}
-                          </p>
-                        </div>
-                      ) : (
-                        <p className="text-sm text-gray-400">{t("offers_page.noOffers", "Aucune offre")}</p>
-                      )}
-                    </td>
+                    <div className="flex gap-2">
+                       <Button 
+                         variant="ghost" 
+                         size="icon" 
+                         onClick={() => openOffersModal(car.id)}
+                         className="h-12 w-12 rounded-xl bg-slate-50 border border-slate-100 text-slate-400 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-100 transition-all"
+                       >
+                         <Tag className="h-5 w-5" />
+                       </Button>
+                       <Link
+                         to="/"
+                         className="h-12 px-6 flex items-center justify-center bg-blue-600 text-white font-bold text-[14px] uppercase tracking-widest rounded-xl shadow-[0_12px_24px_-8px_rgba(37,99,235,0.3)] hover:bg-blue-700 transition-all"
+                       >
+                         {t("offers_page.bookNow")}
+                       </Link>
+                    </div>
+                  </div>
+                </div>
 
-                    {/* Colonne Actions */}
-                    <td className="px-4 py-4">
-                      <div className="flex gap-2">
-                        <Button 
-                          onClick={() => openOffersModal(car.id)} 
-                          size="sm" 
-                          className="flex items-center gap-1"
-                        >
-                          <span>{t("offers_page.view")}</span>
-                          <ArrowRight className="h-4 w-4" />
-                        </Button>
-                        <Link
-                          to="/"
-                          className="inline-flex items-center justify-center px-3 py-2 bg-primary text-white text-sm font-medium rounded-md hover:bg-primary/90 transition-colors"
-                        >
-                          {t("offers_page.bookNow")}
-                        </Link>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                {/* Special Offer Indicator */}
+                {offers[car.id] && offers[car.id].length > 0 && (
+                  <div className="absolute top-6 left-6 animate-bounce">
+                    <div className="bg-green-500 text-white font-bold text-[9px] px-2 py-1 rounded-md uppercase tracking-tighter shadow-lg shadow-green-500/30">
+                      {offers[car.id].length} {t("offers_page.special_offers", { count: offers[car.id].length })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
-        </section>
-
-        {cars.length === 0 && (
-          <div className="text-center py-12">
-            <Car className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+        ) : (
+          <div className="text-center py-32 bg-white rounded-2xl border border-dashed border-slate-200">
+            <Car className="h-16 w-16 text-slate-300 mx-auto mb-6" />
+            <h3 className="text-2xl font-bold text-slate-900 mb-2 italic uppercase tracking-tight">
               {t("offers_page.noCarsTitle")}
             </h3>
-            <p className="text-gray-600 mb-6">{t("offers_page.noCarsSubtitle")}</p>
-            <Button onClick={() => window.location.reload()}>
+            <p className="text-slate-500 mb-8 max-w-sm mx-auto">{t("offers_page.noCarsSubtitle")}</p>
+            <Button 
+              onClick={() => window.location.reload()}
+              className="bg-slate-900 text-white font-bold text-[11px] uppercase tracking-widest px-8 h-12 rounded-xl"
+            >
               {t("offers_page.refresh")}
             </Button>
           </div>
         )}
 
-        {selectedCarId && currentCar && (
-          <div
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-            onClick={closeOffersModal}
-          >
-            <div
-              className="bg-white rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between p-4 sm:p-6 border-b">
-                <div className="flex items-center gap-3">
-                  <img src={currentCar.image_url} alt={currentCar.name} className="w-12 h-12 object-cover rounded-lg" />
-                  <div>
-                    <h2 className="font-bold text-gray-900 text-lg">{currentCar.name}</h2>
-                    <p className="text-gray-600 text-sm">{t(`offers_page.categories.${currentCar.category}`)}</p>
-                  </div>
-                </div>
-                <Button variant="ghost" size="sm" onClick={closeOffersModal} className="h-8 w-8 p-0">
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-
-              <div className="p-4 sm:p-6">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-blue-800 font-medium">{t("offers_page.standardPrice")}</p>
-                      <p className="text-blue-900 text-sm">{t("offers_page.dailyRental")}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-blue-900">{currentCar.price} MAD</p>
-                      <p className="text-blue-800 text-sm">{t("offers_page.perDay")}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mb-6">
-                  <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                    <Tag className="h-4 w-4 text-green-600" />
-                    {t("offers_page.specialOffers")}
-                  </h3>
-
-                  {currentCarOffers.length > 0 ? (
-                    <div className="space-y-3">
-                      {currentCarOffers.map((offer, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-green-600" />
-                            <span className="font-medium text-green-900">
-                              {getTranslatedPeriod(offer.period)}
-                            </span>
-                          </div>
-                          <div className="flex flex-col items-end leading-tight">
-                            <span className="text-lg font-bold text-green-600">
-                              {offer.price.value} MAD
-                            </span>
-                            <span className="text-sm text-green-800">
-                              {i18n.language === "fr"
-                                ? offer.price.fr || offer.price.en
-                                : offer.price.en || offer.price.fr}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-6 border-2 border-dashed border-gray-300 rounded-lg">
-                      <Clock className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-gray-600 text-sm">{t("offers_page.noSpecialOffers")}</p>
-                      <p className="text-gray-500 text-xs mt-1">{t("offers_page.checkStandardRates")}</p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-3">
-                  <Link
-                    to="/"
-                    onClick={closeOffersModal}
-                    className="block w-full text-center py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors"
-                  >
-                    {t("offers_page.bookNow")}
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Modal handling */}
+        <OffersModal
+          isOpen={!!selectedCarId}
+          onClose={closeOffersModal}
+          currentCar={currentCar}
+          currentCarOffers={currentCarOffers}
+          getTranslatedPeriod={getTranslatedPeriod}
+          i18n={i18n}
+          t={t}
+        />
       </main>
       <Footer />
     </div>

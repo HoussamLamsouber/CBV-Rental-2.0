@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Filter, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { motion } from "framer-motion";
 
 type Car = Database["public"]["Tables"]["cars"]["Row"] & {
   isAvailable?: boolean; // Ajoutez cette ligne
@@ -53,7 +54,7 @@ export const CarGrid = ({ cars, onReserve, canReserve }: CarGridProps) => {
         {/* Header */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
           <div>
-            <h2 className="text-3xl font-bold mb-2">{t('car_grid.title')}</h2>
+            <h2 className="text-xl font-semibold mb-2">{t('car_grid.title')}</h2>
             <p className="text-muted-foreground">
               {t('car_grid.available_count')
                 .replace('{available}', availableCars.length.toString())
@@ -66,8 +67,8 @@ export const CarGrid = ({ cars, onReserve, canReserve }: CarGridProps) => {
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center space-x-2">
               <Filter className="h-4 w-4 text-muted-foreground" />
-              <Select value={filterBy} onValueChange={setFilterBy}>
-                <SelectTrigger className="w-[180px]">
+              <Select value={filterBy} onValueChange={setFilterBy}> 
+                <SelectTrigger className="w-[180px] no-focus-ring">
                   <SelectValue placeholder={t('car_grid.filter.placeholder')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -84,7 +85,7 @@ export const CarGrid = ({ cars, onReserve, canReserve }: CarGridProps) => {
             <div className="flex items-center space-x-2">
               <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[180px] no-focus-ring">
                   <SelectValue placeholder={t('car_grid.sort.placeholder')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -97,67 +98,41 @@ export const CarGrid = ({ cars, onReserve, canReserve }: CarGridProps) => {
           </div>
         </div>
 
-        {/* Quick Filters */}
-        <div className="flex flex-wrap gap-2 mb-8">
-          <Badge
-            variant={filterBy === "all" ? "default" : "outline"}
-            className="cursor-pointer hover:bg-accent/20 transition-colors"
-            onClick={() => setFilterBy("all")}
-          >
-            {t('car_grid.quick_filters.all')}
-          </Badge>
-          <Badge
-            variant={filterBy === "available" ? "default" : "outline"}
-            className="cursor-pointer hover:bg-accent/20 transition-colors"
-            onClick={() => setFilterBy("available")}
-          >
-            {t('car_grid.quick_filters.available')}
-          </Badge>
-          <Badge
-            variant={filterBy === "category_suv" ? "default" : "outline"}
-            className="cursor-pointer hover:bg-accent/20 transition-colors"
-            onClick={() => setFilterBy("category_suv")}
-          >
-            {t('car_grid.categories.suv')}
-          </Badge>
-          <Badge
-            variant={filterBy === "category_sedan" ? "default" : "outline"}
-            className="cursor-pointer hover:bg-accent/20 transition-colors"
-            onClick={() => setFilterBy("category_sedan")}
-          >
-            {t('car_grid.categories.sedan')}
-          </Badge>
-          <Badge
-            variant={filterBy === "category_electric" ? "default" : "outline"}
-            className="cursor-pointer hover:bg-accent/20 transition-colors"
-            onClick={() => setFilterBy("category_electric")}
-          >
-            {t('car_grid.categories.electric')}
-          </Badge>
-          <Badge
-            variant={filterBy === "category_urban_suv" ? "default" : "outline"}
-            className="cursor-pointer hover:bg-accent/20 transition-colors"
-            onClick={() => setFilterBy("category_urban_suv")}
-          >
-            {t('car_grid.categories.suv_urban')}
-          </Badge>
-        </div>
+
 
         {/* Car Grid */}
         {sortedCars.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {sortedCars.map((car) => (
-              <CarCard
+          <motion.div 
+            layout
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ staggerChildren: 0.1 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8"
+          >
+            {sortedCars.map((car, index) => (
+              <motion.div 
                 key={car.id}
-                car={car}
-                onReserve={onReserve}
-                canReserve={canReserve}
-              />
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ 
+                  type: "spring", 
+                  stiffness: 260, 
+                  damping: 20, 
+                  delay: index * 0.05 
+                }}
+                className="h-full"
+              >
+                <CarCard
+                  car={car}
+                  onReserve={onReserve}
+                  canReserve={canReserve}
+                />
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         ) : (
-          <div className="text-center py-16">
-            <p className="text-muted-foreground text-lg mb-4">
+          <div className="text-center py-20 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+            <p className="text-gray-500 text-lg font-medium">
               {t('car_grid.messages.no_vehicles_match')}
             </p>
           </div>

@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Filter, X, ArrowLeft, Phone, Mail, Calendar, Car, User, Rows3, MapPin, Navigation, Check } from "lucide-react";
+import { Search, Filter, X, ArrowLeft, Phone, Mail, Calendar, Car, User, Rows3, MapPin, Navigation, Check, ChevronDown } from "lucide-react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { emailJSService } from "@/services/emailJSService";
 import { toast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/utils";
 
 export default function ReservationsAdmin() {
   const [reservations, setReservations] = useState([]);
@@ -17,7 +18,7 @@ export default function ReservationsAdmin() {
     vehicleModel: "",
     status: ""
   });
-  
+
   const [rejectModal, setRejectModal] = useState({
     isOpen: false,
     reservation: null,
@@ -36,11 +37,11 @@ export default function ReservationsAdmin() {
     // Vérifier immédiatement au chargement
     checkAndUpdateVehicleStatus();
   }, []);
-  
+
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const userId = searchParams.get('user');
-  
+
   const { t, i18n } = useTranslation();
 
   const getProfile = async (userId: string) => {
@@ -60,11 +61,11 @@ export default function ReservationsAdmin() {
       null
     );
   };
-  
+
   const translate = (key: string, fallback: string, params: Record<string, any> = {}) => {
     try {
       let translation = t(key);
-      
+
       // Remplacer les paramètres si présents
       if (params && Object.keys(params).length > 0) {
         Object.keys(params).forEach(param => {
@@ -74,7 +75,7 @@ export default function ReservationsAdmin() {
           }
         });
       }
-      
+
       return translation || fallback;
     } catch (error) {
       // Fallback avec remplacement des paramètres
@@ -93,7 +94,7 @@ export default function ReservationsAdmin() {
 
   const checkAndUpdateVehicleStatus = async () => {
     try {
-      
+
       // Récupérer toutes les réservations avec leurs véhicules assignés
       const { data: allReservations, error } = await supabase
         .from("reservations")
@@ -120,18 +121,18 @@ export default function ReservationsAdmin() {
       for (const reservation of allReservations || []) {
         const returnDateTime = new Date(`${reservation.return_date}T${reservation.return_time || "23:59:59"}`);
         const pickupDateTime = new Date(`${reservation.pickup_date}T${reservation.pickup_time}`);
-        
+
         // Vérifier si la réservation est terminée (date de retour passée)
         // OU si elle est expirée (date de pickup passée et status pending)
         const isCompleted = now > returnDateTime;
         const isExpired = reservation.status === 'pending' && now > pickupDateTime;
-        
+
         if ((isCompleted || isExpired) && reservation.assigned_vehicle_id) {
-          
+
           // Mettre à jour le statut du véhicule à "available"
           const { error: vehicleError } = await supabase
             .from("vehicles")
-            .update({ 
+            .update({
               status: "available",
               updated_at: new Date().toISOString()
             })
@@ -274,10 +275,10 @@ export default function ReservationsAdmin() {
               reservation.pickup_loc?.localisation_translations?.find(
                 (t: any) => t.language === i18n.language
               )?.display_name ?? "—",
-            return_location: 
+            return_location:
               reservation.return_loc?.localisation_translations?.find(
-              (t: any) => t.language === i18n.language
-            )?.display_name ?? "—",
+                (t: any) => t.language === i18n.language
+              )?.display_name ?? "—",
             total_price: reservation.total_price,
             status: reservation.status,
             business_status: businessStatus,
@@ -305,15 +306,15 @@ export default function ReservationsAdmin() {
     const now = new Date();
     const pickupDateTime = new Date(`${reservation.pickup_date}T${reservation.pickup_time}`);
     const returnDateTime = new Date(`${reservation.return_date}T${reservation.return_time || "23:59:59"}`);
-    
+
     if (reservation.status === 'pending' && now > pickupDateTime) {
       return 'expired';
     }
-    
+
     if (reservation.status === 'refused' || reservation.status === 'pending') {
       return reservation.status;
     }
-    
+
     if (reservation.status === 'accepted') {
       if (now < pickupDateTime) {
         return 'accepted'; // Acceptée mais pas encore active
@@ -323,7 +324,7 @@ export default function ReservationsAdmin() {
         return 'completed'; // Terminée
       }
     }
-    
+
     return reservation.status;
   }
 
@@ -358,17 +359,23 @@ export default function ReservationsAdmin() {
     excludeReservationId?: string
   ): Promise<boolean> => {
     try {
-      const { data: cars, error: carError } = await supabase
+      // 1. Récupérer le car_id et la quantité à partir du nom
+      const { data: carData, error: carError } = await supabase
         .from("cars")
-        .select("quantity")
-        .eq("name", carName);
+        .select("id, quantity")
+        .eq("name", carName)
+        .single();
 
-      if (carError || !cars || cars.length === 0) {
+      if (carError || !carData) {
         return false;
       }
 
-      const totalQuantity = cars[0].quantity || 1;
+      const stockQuantity = Number(carData.quantity);
+      console.log(`Checking admin availability for ${carName}, stock:`, stockQuantity);
 
+      if (stockQuantity <= 0) return false;
+
+      // 2. Compter les réservations acceptées qui chevauchent la période
       const { data: activeReservations, error: reservationsError } = await supabase
         .from("reservations")
         .select("id, pickup_date, return_date")
@@ -385,11 +392,11 @@ export default function ReservationsAdmin() {
         return (pickupDate <= resReturn && returnDate >= resPickup);
       }) || [];
 
-      const finalCount = excludeReservationId 
+      const reservedCount = excludeReservationId
         ? overlappingReservations.filter(r => r.id !== excludeReservationId).length
         : overlappingReservations.length;
 
-      return finalCount < totalQuantity;
+      return reservedCount < stockQuantity;
 
     } catch (error) {
       console.error("Erreur vérification disponibilité:", error);
@@ -415,7 +422,7 @@ export default function ReservationsAdmin() {
 
   const handleRejectWithReason = async () => {
     if (!rejectModal.reservation) return;
-    
+
     if (!rejectModal.reason.trim()) {
       toast({
         title: translate('admin_reservations.reject_modal.missing_reason', 'Raison manquante'),
@@ -432,7 +439,7 @@ export default function ReservationsAdmin() {
       if (reservation.assigned_vehicle_id) {
         const { error: vehicleError } = await supabase
           .from("vehicles")
-          .update({ 
+          .update({
             status: "available",
             updated_at: new Date().toISOString()
           })
@@ -444,11 +451,11 @@ export default function ReservationsAdmin() {
           console.log(`✅ Véhicule ${reservation.assigned_vehicle_id} libéré après refus`);
         }
       }
-      
+
       // UNE SEULE mise à jour de la réservation
       const { error } = await supabase
         .from("reservations")
-        .update({ 
+        .update({
           status: "refused",
           rejection_reason: rejectModal.reason,
           assigned_vehicle_id: null // Retirer l'assignation du véhicule
@@ -462,7 +469,7 @@ export default function ReservationsAdmin() {
       // 🔥 ENVOYER L'EMAIL DE REFUS MANUEL
       try {
         const clientEmail = await getReservationEmail(reservation);
-        
+
         if (clientEmail) {
           const emailData = {
             reservationId: reservation.id,
@@ -491,7 +498,7 @@ export default function ReservationsAdmin() {
       // Fermer la modal et rafraîchir
       closeRejectModal();
       await fetchReservations();
-      
+
       toast({
         title: translate('admin_reservations.toast.reservation_rejected', '❌ Réservation refusée'),
       });
@@ -507,54 +514,9 @@ export default function ReservationsAdmin() {
   };
 
   const AUTO_REFUSE_MESSAGE = t(
-    'admin_reservations.auto_reject_message', 
+    'admin_reservations.auto_reject_message',
     'Votre réservation a été refusée car le véhicule n’est plus disponible pour cette période.'
   );
-
-  const handleForceReleaseVehicle = async (reservation: any) => {
-    if (!reservation.assigned_vehicle_id) return;
-
-    try {
-      const { error: vehicleError } = await supabase
-        .from("vehicles")
-        .update({ 
-          status: "available",
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", reservation.assigned_vehicle_id);
-
-      if (vehicleError) {
-        throw vehicleError;
-      }
-
-      // Optionnel : marquer la réservation comme terminée
-      const { error: reservationError } = await supabase
-        .from("reservations")
-        .update({ 
-          status: "completed"
-        })
-        .eq("id", reservation.id);
-
-      if (reservationError) {
-        console.error("Erreur mise à jour réservation:", reservationError);
-      }
-
-      toast({
-        title: translate('admin_reservations.toast.vehicle_released', '✅ Véhicule libéré'),
-        description: translate('admin_reservations.toast.vehicle_now_available', 'Le véhicule est maintenant disponible.'),
-      });
-
-      await fetchReservations();
-
-    } catch (error: any) {
-      console.error("Erreur libération véhicule:", error);
-      toast({
-        title: translate('admin_reservations.toast.error', 'Erreur'),
-        description: error.message || translate('admin_reservations.toast.cannot_release_vehicle', 'Impossible de libérer le véhicule.'),
-        variant: "destructive",
-      });
-    }
-  };
 
   const handleAcceptReservation = async (reservation: any) => {
     try {
@@ -564,7 +526,7 @@ export default function ReservationsAdmin() {
         new Date(reservation.return_date),
         reservation.id
       );
-  
+
       if (!isAvailable) {
         toast({
           title: t('admin_reservations.toast.not_available', 'Véhicule non disponible'),
@@ -573,7 +535,7 @@ export default function ReservationsAdmin() {
         });
         return;
       }
-  
+
       // Ouvrir le pop-up de sélection de véhicule
       setVehicleSelectionModal({
         isOpen: true,
@@ -581,10 +543,10 @@ export default function ReservationsAdmin() {
         availableVehicles: [], // Sera rempli plus tard
         selectedVehicleId: null
       });
-  
+
       // Charger les véhicules disponibles
       await loadAvailableVehicles(reservation);
-  
+
     } catch (error: any) {
       console.error("Erreur vérification disponibilité:", error);
       toast({
@@ -722,18 +684,18 @@ export default function ReservationsAdmin() {
     // Logique pour extraire la ville de la location
     // Ex: "airport_casablanca" -> "casablanca"
     // Ex: "station_rabat" -> "rabat"
-    
+
     const parts = location.split('_');
     if (parts.length > 1) {
       return parts[1];
     }
     return location;
   };
-  
+
   const checkSpecificVehicleAvailability = async (vehicleId: string, pickupDate: Date, returnDate: Date) => {
     try {
       console.log("🔍 Vérification disponibilité véhicule:", vehicleId);
-      
+
       // Vérifier les réservations qui utilisent ce véhicule spécifique
       const { data: vehicleReservations, error } = await supabase
         .from("reservations")
@@ -755,7 +717,7 @@ export default function ReservationsAdmin() {
         try {
           const resPickup = new Date(reservation.pickup_date);
           const resReturn = new Date(reservation.return_date);
-          
+
           // Vérifier si les périodes se chevauchent
           const overlaps = (pickupDate <= resReturn && returnDate >= resPickup);
           if (overlaps) {
@@ -794,7 +756,7 @@ export default function ReservationsAdmin() {
       console.log("🔍 Finalisation réservation:", reservation.id, "avec véhicule:", selectedVehicleId);
 
       // 1. Mettre à jour la réservation avec le véhicule attribué
-      const updateData: any = { 
+      const updateData: any = {
         status: "accepted",
         assigned_vehicle_id: selectedVehicleId // C'est maintenant un UUID qui référence vehicles(id)
       };
@@ -814,7 +776,7 @@ export default function ReservationsAdmin() {
       // 2. Mettre à jour le statut du véhicule
       const { error: vehicleError } = await supabase
         .from("vehicles")
-        .update({ 
+        .update({
           status: "reserved",
           updated_at: new Date().toISOString()
         })
@@ -824,7 +786,7 @@ export default function ReservationsAdmin() {
         console.error("❌ Erreur mise à jour véhicule:", vehicleError);
         throw vehicleError;
       }
-      
+
       console.log("✅ Véhicule mis à jour (status: reserved)");
 
       // 3. Envoyer l'email d'acceptation
@@ -866,14 +828,14 @@ export default function ReservationsAdmin() {
         .neq("id", reservation.id);
 
       let refusedCount = 0;
-      
+
       if (allPendingReservations && allPendingReservations.length > 0) {
         const reservationsToRefuse = allPendingReservations.filter(req => {
           const reqPickup = new Date(req.pickup_date);
           const reqReturn = new Date(req.return_date);
           const resPickup = new Date(reservation.pickup_date);
           const resReturn = new Date(reservation.return_date);
-          
+
           return (reqPickup <= resReturn && reqReturn >= resPickup);
         });
 
@@ -886,12 +848,12 @@ export default function ReservationsAdmin() {
                 rejection_reason: AUTO_REFUSE_MESSAGE
               })
               .eq("id", req.id);
-            
+
             if (!rejectError) {
               refusedCount++;
-              
+
               const clientEmail = await getReservationEmail(req);
-              
+
               if (clientEmail) {
                 try {
                   const emailData = {
@@ -933,18 +895,18 @@ export default function ReservationsAdmin() {
       });
 
       await fetchReservations();
-      
+
       // Message de succès
       const selectedVehicle = vehicleSelectionModal.availableVehicles.find(
         v => v.id === selectedVehicleId
       );
-      
+
       toast({
         title: t('admin_reservations.toast.accept_success', '✅ Réservation acceptée'),
-        description: selectedVehicle?.registration_number 
-          ? t('admin_reservations.toast.vehicle_assigned', 'Véhicule {{registration}} attribué', { 
-              registration: selectedVehicle.registration_number 
-            })
+        description: selectedVehicle?.registration_number
+          ? t('admin_reservations.toast.vehicle_assigned', 'Véhicule {{registration}} attribué', {
+            registration: selectedVehicle.registration_number
+          })
           : t('admin_reservations.toast.reservation_accepted', 'Réservation acceptée avec succès'),
       });
 
@@ -962,7 +924,7 @@ export default function ReservationsAdmin() {
     if (reservation.guest_email) {
       return reservation.guest_email;
     }
-    
+
     if (reservation.user_id) {
       try {
         const { data: profile, error } = await supabase
@@ -970,7 +932,7 @@ export default function ReservationsAdmin() {
           .select("email")
           .eq("id", reservation.user_id)
           .single();
-        
+
         if (!error && profile?.email) {
           return profile.email;
         }
@@ -978,7 +940,7 @@ export default function ReservationsAdmin() {
         console.error("Erreur recherche profil:", error);
       }
     }
-    
+
     return null;
   };
 
@@ -988,13 +950,13 @@ export default function ReservationsAdmin() {
     if (airportTranslation && !airportTranslation.startsWith('airports.')) {
       return airportTranslation;
     }
-    
+
     const stationKey = locationValue.replace('station_', '');
     const stationTranslation = t(`stations.${stationKey}`);
     if (stationTranslation && !stationTranslation.startsWith('stations.')) {
       return stationTranslation;
     }
-    
+
     return locationValue;
   };
 
@@ -1004,18 +966,18 @@ export default function ReservationsAdmin() {
     if (adminCategoryTranslation && !adminCategoryTranslation.startsWith('admin_reservations.categories.')) {
       return adminCategoryTranslation;
     }
-    
+
     // Fallback aux catégories générales
     const categoryTranslation = t(`offers_page.categories.${category}`);
     if (categoryTranslation && !categoryTranslation.startsWith('offers_page.categories.')) {
       return categoryTranslation;
     }
-    
+
     const adminVehiclesCategoryTranslation = t(`admin_vehicles.categories.${category}`);
     if (adminVehiclesCategoryTranslation && !adminVehiclesCategoryTranslation.startsWith('admin_vehicles.categories.')) {
       return adminVehiclesCategoryTranslation;
     }
-    
+
     return category;
   };
 
@@ -1078,7 +1040,7 @@ export default function ReservationsAdmin() {
       if (reservation.assigned_vehicle_id) {
         const { error: freeOldVehicleError } = await supabase
           .from("vehicles")
-          .update({ 
+          .update({
             status: "available",
             updated_at: new Date().toISOString()
           })
@@ -1094,7 +1056,7 @@ export default function ReservationsAdmin() {
       // 2. Mettre à jour la réservation avec le nouveau véhicule
       const { error: reservationError } = await supabase
         .from("reservations")
-        .update({ 
+        .update({
           assigned_vehicle_id: selectedVehicleId
         })
         .eq("id", reservation.id);
@@ -1107,7 +1069,7 @@ export default function ReservationsAdmin() {
       // 3. Réserver le nouveau véhicule
       const { error: vehicleError } = await supabase
         .from("vehicles")
-        .update({ 
+        .update({
           status: "reserved",
           updated_at: new Date().toISOString()
         })
@@ -1129,18 +1091,18 @@ export default function ReservationsAdmin() {
       });
 
       await fetchReservations();
-      
+
       // Message de succès
       const selectedVehicle = vehicleSelectionModal.availableVehicles.find(
         v => v.id === selectedVehicleId
       );
-      
+
       toast({
         title: t('admin_reservations.toast.vehicle_changed', '✅ Véhicule changé'),
-        description: selectedVehicle?.registration_number 
-          ? t('admin_reservations.toast.new_vehicle_assigned', 'Nouveau véhicule {{registration}} attribué', { 
-              registration: selectedVehicle.registration_number 
-            })
+        description: selectedVehicle?.registration_number
+          ? t('admin_reservations.toast.new_vehicle_assigned', 'Nouveau véhicule {{registration}} attribué', {
+            registration: selectedVehicle.registration_number
+          })
           : t('admin_reservations.toast.vehicle_changed_success', 'Véhicule changé avec succès'),
       });
 
@@ -1160,37 +1122,37 @@ export default function ReservationsAdmin() {
 
   const getReservationsCountByStatus = (status: string) => {
     let filteredReservations = reservations;
-    
+
     if (userId) {
       filteredReservations = filteredReservations.filter(r => r.user_id === userId);
     }
-    
+
     if (status === 'active' || status === 'completed' || status === 'expired') {
       return filteredReservations.filter(r => r.business_status === status).length;
     }
-    
+
     if (status === 'pending') {
       return filteredReservations.filter(r => r.status === 'pending' && r.business_status !== 'expired').length;
     }
-    
+
     // Pour "accepted", on ne compte que celles qui sont acceptées mais pas encore actives
     if (status === 'accepted') {
-      return filteredReservations.filter(r => 
+      return filteredReservations.filter(r =>
         r.status === 'accepted' && r.business_status === 'accepted'
       ).length;
     }
-    
+
     // Ajouter le cas pour les réservations annulées
     if (status === 'cancelled') {
       return filteredReservations.filter(r => r.status === 'cancelled').length;
     }
-    
+
     return filteredReservations.filter(r => r.status === status).length;
   };
 
   const filteredReservations = reservations.filter((reservation) => {
     let displayStatus;
-    
+
     if (activeTab === 'expired') {
       displayStatus = reservation.business_status;
       if (displayStatus !== 'expired') return false;
@@ -1208,7 +1170,7 @@ export default function ReservationsAdmin() {
     } else {
       displayStatus = reservation.status;
       if (displayStatus !== activeTab) return false;
-      
+
       if (activeTab === 'pending' && reservation.business_status === 'expired') {
         return false;
       }
@@ -1220,27 +1182,32 @@ export default function ReservationsAdmin() {
 
     const searchLower = searchTerm.toLowerCase();
     if (searchTerm) {
-      const matchesSearch = 
+      const matchesSearch =
         (reservation.profiles?.full_name?.toLowerCase().includes(searchLower) ||
-         reservation.profiles?.email?.toLowerCase().includes(searchLower) ||
-         reservation.guest_name?.toLowerCase().includes(searchLower) ||
-         reservation.guest_email?.toLowerCase().includes(searchLower) ||
-         reservation.car_name?.toLowerCase().includes(searchLower) ||
-         reservation.car_category?.toLowerCase().includes(searchLower) ||
-         reservation.pickup_location?.toLowerCase().includes(searchLower) ||
-         reservation.return_location?.toLowerCase().includes(searchLower) ||
-         reservation.rejection_reason?.toLowerCase().includes(searchLower));
+          reservation.profiles?.email?.toLowerCase().includes(searchLower) ||
+          reservation.guest_name?.toLowerCase().includes(searchLower) ||
+          reservation.guest_email?.toLowerCase().includes(searchLower) ||
+          reservation.car_name?.toLowerCase().includes(searchLower) ||
+          reservation.car_category?.toLowerCase().includes(searchLower) ||
+          reservation.pickup_location?.toLowerCase().includes(searchLower) ||
+          reservation.return_location?.toLowerCase().includes(searchLower) ||
+          reservation.rejection_reason?.toLowerCase().includes(searchLower));
 
       if (!matchesSearch) return false;
     }
 
     if (filters.date) {
-      const filterDate = new Date(filters.date).toDateString();
-      const pickupDate = new Date(reservation.pickup_date).toDateString();
-      const returnDate = new Date(reservation.return_date).toDateString();
-      const creationDate = new Date(reservation.created_at).toDateString();
-      
-      if (pickupDate !== filterDate && returnDate !== filterDate && creationDate !== filterDate) {
+      const selectedDate = new Date(filters.date);
+      const pickupDate = new Date(reservation.pickup_date);
+      const returnDate = new Date(reservation.return_date);
+
+      // Normaliser (enlever l'heure)
+      selectedDate.setHours(0, 0, 0, 0);
+      pickupDate.setHours(0, 0, 0, 0);
+      returnDate.setHours(0, 0, 0, 0);
+
+      // Logique correcte : overlap
+      if (!(pickupDate <= selectedDate && returnDate >= selectedDate)) {
         return false;
       }
     }
@@ -1248,7 +1215,7 @@ export default function ReservationsAdmin() {
     if (filters.vehicleModel) {
       const vehicleLower = filters.vehicleModel.toLowerCase();
       if (!reservation.car_name?.toLowerCase().includes(vehicleLower) &&
-          !reservation.car_category?.toLowerCase().includes(vehicleLower)) {
+        !reservation.car_category?.toLowerCase().includes(vehicleLower)) {
         return false;
       }
     }
@@ -1273,45 +1240,45 @@ export default function ReservationsAdmin() {
   };
 
   const tabs = [
-    { 
-      key: "pending", 
-      label: translate('admin_reservations.status.pending', 'En attente'), 
+    {
+      key: "pending",
+      label: translate('admin_reservations.status.pending', 'En attente'),
       count: getReservationsCountByStatus("pending"),
       icon: "⏳"
     },
-    { 
-      key: "accepted", 
-      label: translate('admin_reservations.status.accepted', 'Acceptées'), 
+    {
+      key: "accepted",
+      label: translate('admin_reservations.status.accepted', 'Acceptées'),
       count: getReservationsCountByStatus("accepted"),
       icon: "✅"
     },
-    { 
-      key: "active", 
-      label: translate('admin_reservations.status.active', 'Actives'), 
+    {
+      key: "active",
+      label: translate('admin_reservations.status.active', 'Actives'),
       count: getReservationsCountByStatus("active"),
       icon: "🚗"
     },
-    { 
-      key: "completed", 
-      label: translate('admin_reservations.status.completed', 'Terminées'), 
+    {
+      key: "completed",
+      label: translate('admin_reservations.status.completed', 'Terminées'),
       count: getReservationsCountByStatus("completed"),
       icon: "🏁"
     },
-    { 
-      key: "expired", 
-      label: translate('admin_reservations.status.expired', 'Expirées'), 
+    {
+      key: "expired",
+      label: translate('admin_reservations.status.expired', 'Expirées'),
       count: getReservationsCountByStatus("expired"),
       icon: "⏱️"
     },
-    { 
-      key: "refused", 
-      label: translate('admin_reservations.status.refused', 'Refusées'), 
+    {
+      key: "refused",
+      label: translate('admin_reservations.status.refused', 'Refusées'),
       count: getReservationsCountByStatus("refused"),
       icon: "❌"
     },
-    { 
-      key: "cancelled", 
-      label: translate('admin_reservations.status.cancelled', 'Annulées'), 
+    {
+      key: "cancelled",
+      label: translate('admin_reservations.status.cancelled', 'Annulées'),
       count: getReservationsCountByStatus("cancelled"),
       icon: "🚫"
     },
@@ -1346,49 +1313,49 @@ export default function ReservationsAdmin() {
 
   const translateLocation = (location: string) => {
     if (!location) return location;
-    
+
     const cleanLocation = location
       .replace('airport_', '')
       .replace('station_', '');
-    
+
     const airportKey = `airports.${cleanLocation}`;
     const airportTrans = t(airportKey);
     if (airportTrans !== airportKey) {
       return airportTrans;
     }
-    
+
     const stationKey = `stations.${cleanLocation}`;
     const stationTrans = t(stationKey);
     if (stationTrans !== stationKey) {
       return stationTrans;
     }
-    
+
     return location;
   };
 
   const translateCategory = (category: string) => {
     if (!category) return category;
-    
+
     // Essayer d'abord les catégories spécifiques admin
     const adminCategoryKey = `admin_reservations.categories.${category}`;
     const adminCategoryTrans = t(adminCategoryKey);
     if (adminCategoryTrans !== adminCategoryKey) {
       return adminCategoryTrans;
     }
-    
+
     // Fallback aux autres namespaces
     const categoryKey = `admin_vehicles.categories.${category}`;
     const categoryTrans = t(categoryKey);
     if (categoryTrans !== categoryKey) {
       return categoryTrans;
     }
-    
+
     const directCategoryKey = `categories.${category}`;
     const directCategoryTrans = t(directCategoryKey);
     if (directCategoryTrans !== directCategoryKey) {
       return directCategoryTrans;
     }
-    
+
     return category;
   };
 
@@ -1398,31 +1365,31 @@ export default function ReservationsAdmin() {
     <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-gray-50 border-b">
+          <thead className="bg-slate-50/80 border-b border-slate-200">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {translate('admin_reservations.reservation.vehicle', 'Véhicule')} / {translate('admin_reservations.reservation.details', 'Client')}
+              <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
+                {translate('admin_reservations.reservation.vehicle', 'Véhicule')}
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
                 {translate('admin_reservations.vehicle_info.title', 'Véhicule attribué')}
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
                 {translate('admin_reservations.reservation.pickup', 'Période')}
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
                 {translate('admin_reservations.reservation.location', 'Lieux')}
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
                 {translate('admin_reservations.reservation.contact', 'Contact')}
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
                 {translate('admin_reservations.reservation.total_price', 'Prix')}
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
                 {translate('admin_reservations.reservation.status', 'Statut')}
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {translate('admin_reservations.actions.title', 'Actions')}
+              <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
+                {translate('admin_reservations.actions.title', 'Infos')}
               </th>
             </tr>
           </thead>
@@ -1439,7 +1406,7 @@ export default function ReservationsAdmin() {
                       />
                     ) : (
                       <div className="w-10 h-8 bg-gray-200 rounded flex items-center justify-center">
-                        <Car className="h-3 w-3 text-gray-400" />
+                        <Car className="h-3 w-3 text-slate-400" />
                       </div>
                     )}
                     <div className="min-w-0">
@@ -1472,7 +1439,7 @@ export default function ReservationsAdmin() {
                       </div>
                     </div>
                   ) : (
-                    <span className="text-sm text-gray-400 italic">
+                    <span className="text-sm text-slate-400 italic">
                       {translate('admin_reservations.vehicle_info.not_assigned', 'Non attribué')}
                     </span>
                   )}
@@ -1515,38 +1482,37 @@ export default function ReservationsAdmin() {
                 </td>
 
                 <td className="px-4 py-3">
-                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                  reservation.business_status === "pending" 
-                    ? "bg-yellow-100 text-yellow-800"
-                    : reservation.business_status === "accepted"
-                    ? "bg-blue-100 text-blue-800"
-                    : reservation.business_status === "active"
-                    ? "bg-green-100 text-green-800"
-                    : reservation.business_status === "completed"
-                    ? "bg-gray-100 text-gray-800"
-                    : reservation.business_status === "expired"
-                    ? "bg-orange-100 text-orange-800"
-                    : reservation.status === "cancelled"
-                    ? "bg-purple-100 text-purple-800"
-                    : "bg-red-100 text-red-800"
-                }`}>
-                  {reservation.business_status === "pending" && "⏳"}
-                  {reservation.business_status === "accepted" && "✅"}
-                  {reservation.business_status === "active" && "🚗"}
-                  {reservation.business_status === "completed" && "🏁"}
-                  {reservation.business_status === "expired" && "💀"}
-                  {reservation.status === "cancelled" && "🚫"}
-                  {reservation.business_status === "refused" && "❌"}
-                  <span className="ml-1 hidden sm:inline">
-                    {reservation.business_status === "pending" && translate('admin_reservations.status.pending', 'En attente')}
-                    {reservation.business_status === "accepted" && translate('admin_reservations.status.accepted', 'Acceptée')}
-                    {reservation.business_status === "active" && translate('admin_reservations.status.active', 'Active')}
-                    {reservation.business_status === "completed" && translate('admin_reservations.status.completed', 'Terminée')}
-                    {reservation.business_status === "expired" && translate('admin_reservations.status.expired', 'Expirée')}
-                    {reservation.status === "cancelled" && translate('admin_reservations.status.cancelled', 'Annulée')}
-                    {reservation.business_status === "refused" && translate('admin_reservations.status.refused', 'Refusée')}
+                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${reservation.business_status === "pending"
+                      ? "bg-yellow-100 text-yellow-800"
+                      : reservation.business_status === "accepted"
+                        ? "bg-blue-100 text-blue-800"
+                        : reservation.business_status === "active"
+                          ? "bg-green-100 text-green-800"
+                          : reservation.business_status === "completed"
+                            ? "bg-gray-100 text-gray-800"
+                            : reservation.business_status === "expired"
+                              ? "bg-orange-100 text-orange-800"
+                              : reservation.status === "cancelled"
+                                ? "bg-purple-100 text-purple-800"
+                                : "bg-red-100 text-red-800"
+                    }`}>
+                    {reservation.business_status === "pending" && "⏳"}
+                    {reservation.business_status === "accepted" && "✅"}
+                    {reservation.business_status === "active" && "🚗"}
+                    {reservation.business_status === "completed" && "🏁"}
+                    {reservation.business_status === "expired" && "💀"}
+                    {reservation.status === "cancelled" && "🚫"}
+                    {reservation.business_status === "refused" && "❌"}
+                    <span className="ml-1 hidden sm:inline">
+                      {reservation.business_status === "pending" && translate('admin_reservations.status.pending', 'En attente')}
+                      {reservation.business_status === "accepted" && translate('admin_reservations.status.accepted', 'Acceptée')}
+                      {reservation.business_status === "active" && translate('admin_reservations.status.active', 'Active')}
+                      {reservation.business_status === "completed" && translate('admin_reservations.status.completed', 'Terminée')}
+                      {reservation.business_status === "expired" && translate('admin_reservations.status.expired', 'Expirée')}
+                      {reservation.status === "cancelled" && translate('admin_reservations.status.cancelled', 'Annulée')}
+                      {reservation.business_status === "refused" && translate('admin_reservations.status.refused', 'Refusée')}
+                    </span>
                   </span>
-                </span>
                 </td>
 
                 <td className="px-4 py-3">
@@ -1576,26 +1542,20 @@ export default function ReservationsAdmin() {
                       {translate('admin_reservations.actions.change_vehicle', 'Changer véhicule')}
                     </button>
                   )}
-                  
-                  {/* Bouton pour libérer manuellement le véhicule */}
-                  {reservation.business_status === "completed" && reservation.assigned_vehicle_id && (
-                    <button
-                      onClick={() => handleForceReleaseVehicle(reservation)}
-                      className="bg-orange-600 text-white px-3 py-1 rounded text-xs hover:bg-orange-700 transition-colors"
-                    >
-                      {translate('admin_reservations.actions.release_vehicle', 'Libérer véhicule')}
-                    </button>
-                  )}
-                  
+
+
                   {reservation.business_status === "expired" && (
                     <div className="text-xs text-orange-600 italic">
                       {translate('admin_reservations.messages.expired_reservation', 'Réservation expirée')}
                     </div>
                   )}
-                  
-                  {(reservation.status !== "pending" && reservation.business_status !== "expired" && reservation.business_status !== "completed") && (
-                    <div className="text-xs text-gray-500 italic">
-                      {formatDateTime(reservation.updated_at || reservation.created_at)}
+
+                  {(reservation.status !== "pending" && reservation.business_status !== "expired") && (
+                    <div className="text-xs text-gray-500 italic flex flex-col gap-0.5">
+                      <span className="font-medium text-slate-600 not-italic">
+                        {translate('admin_reservations.reservation.reservation_date', 'Date de réservation')}:
+                      </span>
+                      <span>{formatDateTime(reservation.created_at)}</span>
                     </div>
                   )}
                 </td>
@@ -1634,24 +1594,29 @@ export default function ReservationsAdmin() {
               </button>
             )}
           </div>
-          
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <h1 className="text-xl sm:text-3xl font-bold text-gray-900 mb-2">
-                {userId && userProfile 
-                  ? `${translate('admin_reservations.title', 'Gestion des réservations')} - ${userProfile.full_name || userProfile.email}`
-                  : translate('admin_reservations.title', 'Gestion des réservations')
-                }
-              </h1>
-              <p className="text-gray-600 text-sm sm:text-base">
-                {userId 
-                  ? `${getReservationsCountByStatus("pending") + getReservationsCountByStatus("accepted") + getReservationsCountByStatus("expired") + getReservationsCountByStatus("refused")} ${translate('admin_reservations.client_reservations', 'réservation(s) pour ce client')}`
-                  : `${reservations.length} ${translate('admin_reservations.total_reservations', 'réservation(s) au total')}`
-                }
-                {hasActiveFilters && ` • ${filteredReservations.length} ${translate('admin_reservations.results', 'résultat(s)')}`}
-              </p>
+
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-white rounded-xl shadow-sm border border-gray-100">
+                <Calendar className="h-8 w-8 text-blue-600" />
+              </div>
+              <div>
+                <h1 className="text-[24px] font-semibold text-slate-900 mb-2">
+                  {userId && userProfile
+                    ? `${translate('admin_reservations.title', 'Gestion des réservations')} - ${userProfile.full_name || userProfile.email}`
+                    : translate('admin_reservations.title', 'Gestion des réservations')
+                  }
+                </h1>
+                <p className="text-gray-600 text-sm sm:text-base font-medium">
+                  {userId
+                    ? `${getReservationsCountByStatus("pending") + getReservationsCountByStatus("accepted") + getReservationsCountByStatus("expired") + getReservationsCountByStatus("refused")} ${translate('admin_reservations.client_reservations', 'réservation(s) pour ce client')}`
+                    : `${reservations.length} ${translate('admin_reservations.total_reservations', 'réservation(s) au total')}`
+                  }
+                  {hasActiveFilters && ` • ${filteredReservations.length} ${translate('admin_reservations.results', 'résultat(s)')}`}
+                </p>
+              </div>
             </div>
-            
+
             {userId && (
               <button
                 onClick={clearFilters}
@@ -1665,97 +1630,115 @@ export default function ReservationsAdmin() {
         </div>
 
         {!userId && (
-          <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6 mb-6">
-            <div className="flex flex-col lg:flex-row gap-3">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 sm:p-6 mb-8 transition-all hover:shadow-md">
+            <div className="flex flex-col xl:flex-row gap-4">
+              <div className="flex-1 relative group">
+                <Search className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 h-4.5 w-4.5 group-focus-within:text-blue-500 transition-colors" />
                 <input
                   type="text"
                   placeholder={translate('admin_reservations.search.placeholder', 'Rechercher par nom, email, modèle...')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full pl-11 pr-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all text-sm"
                 />
               </div>
 
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className={`flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 border rounded-lg transition-colors text-sm ${
-                  showFilters || hasActiveFilters
-                    ? "bg-blue-50 border-blue-500 text-blue-600"
-                    : "border-gray-300 text-gray-600 hover:bg-gray-50"
-                }`}
-              >
-                <Filter className="h-4 w-4" />
-                <span className="hidden sm:inline">{translate('admin_reservations.filters.title', 'Filtres')}</span>
-                {hasActiveFilters && (
-                  <span className="bg-blue-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">
-                    !
-                  </span>
-                )}
-              </button>
-
-              {hasActiveFilters && (
+              <div className="flex items-center gap-3">
                 <button
-                  onClick={clearFilters}
-                  className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors text-sm"
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={cn(
+                    "flex items-center gap-2.5 px-5 py-3 border rounded-xl font-semibold text-sm transition-all whitespace-nowrap h-[46px]",
+                    showFilters || hasActiveFilters
+                      ? "bg-blue-50 border-blue-200 text-blue-600 shadow-sm"
+                      : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
+                  )}
                 >
-                  <X className="h-4 w-4" />
-                  <span className="hidden sm:inline">{translate('admin_reservations.filters.reset', 'Réinitialiser')}</span>
-                  <span className="sm:hidden">{translate('admin_reservations.filters.reset', 'Réinitialiser')}</span>
+                  <Filter className="h-4 w-4" />
+                  <span>{translate('admin_reservations.filters.title', 'Filtres')}</span>
+                  {hasActiveFilters && (
+                    <span className="bg-blue-500 text-white rounded-full w-5 h-5 text-[10px] flex items-center justify-center font-black animate-in zoom-in-50 duration-300">
+                      !
+                    </span>
+                  )}
                 </button>
-              )}
+
+                {hasActiveFilters && (
+                  <button
+                    onClick={clearFilters}
+                    className="flex items-center gap-2.5 px-5 py-3 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-red-50 hover:text-red-600 hover:border-red-100 font-semibold text-sm transition-all shadow-sm h-[46px]"
+                  >
+                    <X className="h-4 w-4" />
+                    <span>{translate('admin_reservations.filters.reset', 'Effacer')}</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             {showFilters && (
-              <div className="mt-4 pt-4 border-t">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
-                  <div className="w-full">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="mt-6 pt-6 border-t border-slate-100 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="flex flex-wrap items-start gap-4">
+                  {/* Status Filter */}
+                  <div className="space-y-2 flex-1 min-w-[200px]">
+                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">
+                      {translate('admin_reservations.filters.status', 'Statut')}
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={filters.status}
+                        onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                        className="w-full appearance-none px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none text-sm font-medium text-slate-700 cursor-pointer transition-all"
+                      >
+                        <option value="all">{translate('admin_reservations.filters.all_status', 'Tous les statuts')}</option>
+                        <option value="pending">{translate('admin_reservations.status.pending', 'En attente')}</option>
+                        <option value="accepted">{translate('admin_reservations.status.accepted', 'Acceptée')}</option>
+                        <option value="refused">{translate('admin_reservations.status.refused', 'Refusée')}</option>
+                        <option value="cancelled">{translate('admin_reservations.status.cancelled', 'Annulée')}</option>
+                        <option value="active">{translate('admin_reservations.status.active', 'Active')}</option>
+                        <option value="completed">{translate('admin_reservations.status.completed', 'Terminée')}</option>
+                        <option value="expired">{translate('admin_reservations.status.expired', 'Expirée')}</option>
+                      </select>
+                      <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                        <ChevronDown className="h-4 w-4" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Date Filter */}
+                  <div className="space-y-2 flex-1 min-w-[200px]">
+                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">
                       {translate('admin_reservations.filters.date', 'Date spécifique')}
                     </label>
-                    <div className="relative w-full">
+                    <div className="relative group">
+                      <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 z-10">
+                        <Calendar className="h-4 w-4" />
+                      </div>
                       <input
                         type="date"
                         value={filters.date}
                         onChange={(e) => setFilters({ ...filters, date: e.target.value })}
-                        className="block w-full min-w-0 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm appearance-none sm:max-w-full overflow-hidden"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none text-sm font-medium text-slate-700 transition-all cursor-pointer"
                       />
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">{translate('admin_reservations.filters.date_help', 'Date de départ, retour ou création')}</p>
+                    {/* <p className="text-[10px] text-slate-400 font-medium ml-1 italic">{translate('admin_reservations.filters.date_help', 'Date de départ, retour ou création')}</p> */}
                   </div>
 
-                  <div className="w-full">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {/* Vehicle Model Filter */}
+                  <div className="space-y-2 flex-1 min-w-[200px]">
+                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">
                       {translate('admin_reservations.filters.vehicle_model', 'Modèle de véhicule')}
                     </label>
-                    <input
-                      type="text"
-                      placeholder={translate('admin_reservations.filters.vehicle_placeholder', 'Ex: Volvo XC60')}
-                      value={filters.vehicleModel}
-                      onChange={(e) => setFilters({...filters, vehicleModel: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                    />
-                  </div>
-
-                  <div className="w-full">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {translate('admin_reservations.filters.status', 'Statut')}
-                    </label>
-                    <select
-                      value={filters.status}
-                      onChange={(e) => setFilters({...filters, status: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                    >
-                      <option value="all">{translate('admin_reservations.filters.all_status', 'Tous les statuts')}</option>
-                      <option value="pending">{translate('admin_reservations.status.pending', 'En attente')}</option>
-                      <option value="accepted">{translate('admin_reservations.status.accepted', 'Acceptée')}</option>
-                      <option value="refused">{translate('admin_reservations.status.refused', 'Refusée')}</option>
-                      <option value="cancelled">{translate('admin_reservations.status.cancelled', 'Annulée')}</option>
-                      <option value="active">{translate('admin_reservations.status.active', 'Active')}</option>
-                      <option value="completed">{translate('admin_reservations.status.completed', 'Terminée')}</option>
-                      <option value="expired">{translate('admin_reservations.status.expired', 'Expirée')}</option>
-                    </select>
+                    <div className="relative">
+                      <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+                        <Car className="h-4 w-4" />
+                      </div>
+                      <input
+                        type="text"
+                        placeholder={translate('admin_reservations.filters.vehicle_placeholder', 'Ex: Volvo XC60')}
+                        value={filters.vehicleModel}
+                        onChange={(e) => setFilters({ ...filters, vehicleModel: e.target.value })}
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none text-sm font-medium text-slate-700 transition-all placeholder:text-slate-400"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1770,19 +1753,17 @@ export default function ReservationsAdmin() {
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
-                  className={`flex items-center justify-center gap-2 px-4 py-3 font-medium text-sm border-b-2 transition-colors whitespace-nowrap flex-1 min-w-0 ${
-                    activeTab === tab.key
+                  className={`flex items-center justify-center gap-2 px-4 py-3 font-medium text-sm border-b-2 transition-colors whitespace-nowrap flex-1 min-w-0 ${activeTab === tab.key
                       ? "border-blue-600 text-blue-600 bg-blue-50"
                       : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-                  }`}
+                    }`}
                 >
                   <span className="text-base">{tab.icon}</span>
                   <span className="hidden sm:inline truncate">{tab.label}</span>
-                  <span className={`px-2 py-1 rounded-full text-xs min-w-6 flex-shrink-0 ${
-                    activeTab === tab.key 
-                      ? "bg-blue-100 text-blue-600" 
+                  <span className={`px-2 py-1 rounded-full text-xs min-w-6 flex-shrink-0 ${activeTab === tab.key
+                      ? "bg-blue-100 text-blue-600"
                       : "bg-gray-100 text-gray-600"
-                  }`}>
+                    }`}>
                     {tab.count}
                   </span>
                 </button>
@@ -1793,21 +1774,21 @@ export default function ReservationsAdmin() {
 
         {filteredReservations.length === 0 ? (
           <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
-            <div className="text-gray-400 text-4xl sm:text-6xl mb-4">🔍</div>
+            <div className="text-slate-300 text-4xl sm:text-6xl mb-4">🔍</div>
             <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
-              {hasActiveFilters 
-                ? userId 
+              {hasActiveFilters
+                ? userId
                   ? translate('admin_reservations.messages.no_client_reservations', 'Aucune réservation pour ce client')
                   : translate('admin_reservations.messages.no_results', 'Aucun résultat trouvé')
                 : `${translate('admin_reservations.messages.no_reservations', 'Aucune réservation')} ${tabs.find((t) => t.key === activeTab)?.label.toLowerCase()}`
               }
             </h3>
             <p className="text-gray-600 text-sm sm:text-base max-w-md mx-auto mb-4">
-              {hasActiveFilters 
+              {hasActiveFilters
                 ? userId
                   ? translate('admin_reservations.messages.client_no_reservations', 'Ce client n\'a effectué aucune réservation pour le moment.')
                   : translate('admin_reservations.messages.try_search', 'Essayez de modifier vos critères de recherche.')
-                : activeTab === "pending" 
+                : activeTab === "pending"
                   ? translate('admin_reservations.messages.new_reservations', 'Les nouvelles réservations apparaîtront ici.')
                   : translate('admin_reservations.messages.no_category_reservations', 'Aucune réservation dans cette catégorie.')}
             </p>
@@ -1831,16 +1812,16 @@ export default function ReservationsAdmin() {
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
               {translate('admin_reservations.reject_modal.title', 'Refuser la réservation')}
             </h3>
-            
+
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 {translate('admin_reservations.reject_modal.reason', 'Raison du refus *')}
               </label>
               <textarea
                 value={rejectModal.reason}
-                onChange={(e) => setRejectModal({...rejectModal, reason: e.target.value})}
+                onChange={(e) => setRejectModal({ ...rejectModal, reason: e.target.value })}
                 placeholder={translate('admin_reservations.reject_modal.placeholder', 'Veuillez saisir la raison du refus (cette raison sera communiquée au client)...')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus-subtle text-sm resize-none"
                 rows={4}
               />
             </div>
@@ -1869,18 +1850,18 @@ export default function ReservationsAdmin() {
           <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
             <div className="p-6 border-b">
               <h3 className="text-lg font-semibold text-gray-900">
-                {vehicleSelectionModal.reservation?.assigned_vehicle_id 
+                {vehicleSelectionModal.reservation?.assigned_vehicle_id
                   ? translate('admin_reservations.vehicle_modal.change_vehicle_title', 'Changer le véhicule attribué')
                   : translate('admin_reservations.vehicle_modal.title', 'Attribuer un véhicule')
                 }
               </h3>
               <p className="text-sm text-gray-600 mt-1">
-                {vehicleSelectionModal.reservation?.assigned_vehicle_id 
+                {vehicleSelectionModal.reservation?.assigned_vehicle_id
                   ? translate('admin_reservations.vehicle_modal.change_vehicle_subtitle', 'Sélectionnez le nouveau véhicule à attribuer à cette réservation')
                   : translate('admin_reservations.vehicle_modal.subtitle', 'Sélectionnez le véhicule à attribuer à cette réservation')
                 }
               </p>
-              
+
               {/* Info réservation avec détails de location */}
               <div className="mt-4 p-4 bg-blue-50 rounded-lg">
                 <div className="flex items-start gap-4">
@@ -1900,7 +1881,7 @@ export default function ReservationsAdmin() {
                         {translateCategory(vehicleSelectionModal.reservation?.car_category)}
                       </span>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                       {/* Dans la section info réservation */}
                       <div>
@@ -1952,13 +1933,11 @@ export default function ReservationsAdmin() {
                         ...prev,
                         selectedVehicleId: vehicle.id
                       }))}
-                      className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                        vehicleSelectionModal.selectedVehicleId === vehicle.id
+                      className={`p-4 border rounded-lg cursor-pointer transition-all ${vehicleSelectionModal.selectedVehicleId === vehicle.id
                           ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
                           : 'border-gray-200 hover:border-gray-300'
-                      } ${
-                        !vehicle.isAvailable ? 'opacity-50 cursor-not-allowed' : ''
-                      }`}
+                        } ${!vehicle.isAvailable ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
                     >
                       <div className="flex items-start gap-4">
                         {vehicle.image ? (
@@ -1972,26 +1951,25 @@ export default function ReservationsAdmin() {
                             <Car className="h-6 w-6 text-gray-400" />
                           </div>
                         )}
-                        
+
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
                             <div className="font-medium text-gray-900">
                               {vehicle.registration_number}
                             </div>
-                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                              vehicle.status === 'available' 
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${vehicle.status === 'available'
                                 ? 'bg-green-100 text-green-800'
                                 : vehicle.status === 'reserved'
-                                ? 'bg-orange-100 text-orange-800'
-                                : 'bg-gray-100 text-gray-800'
-                            }`}>
+                                  ? 'bg-orange-100 text-orange-800'
+                                  : 'bg-gray-100 text-gray-800'
+                              }`}>
                               {vehicle.status === 'available' && translate('admin_reservations.vehicle_status.available', 'Disponible')}
                               {vehicle.status === 'reserved' && translate('admin_reservations.vehicle_status.reserved', 'Réservé')}
                               {vehicle.status === 'maintenance' && translate('admin_reservations.vehicle_status.maintenance', 'Maintenance')}
                             </span>
-                            
+
                           </div>
-                          
+
                           {/* Informations de localisation */}
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                             <div>
@@ -2014,19 +1992,18 @@ export default function ReservationsAdmin() {
                               )}
                             </div>
                           </div>
-                          
+
                           {!vehicle.isAvailable && (
                             <div className="text-xs text-red-600 mt-2">
                               {translate('admin_reservations.vehicle_modal.not_available_period', 'Non disponible pour cette période')}
                             </div>
                           )}
                         </div>
-                        
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                          vehicleSelectionModal.selectedVehicleId === vehicle.id
+
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${vehicleSelectionModal.selectedVehicleId === vehicle.id
                             ? 'bg-blue-500 border-blue-500'
                             : 'border-gray-300'
-                        } ${!vehicle.isAvailable ? 'border-gray-200' : ''}`}>
+                          } ${!vehicle.isAvailable ? 'border-gray-200' : ''}`}>
                           {vehicleSelectionModal.selectedVehicleId === vehicle.id && (
                             <Check className="h-3 w-3 text-white" />
                           )}
@@ -2062,7 +2039,7 @@ export default function ReservationsAdmin() {
                     disabled={!vehicleSelectionModal.selectedVehicleId}
                     className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
                   >
-                    {vehicleSelectionModal.reservation?.assigned_vehicle_id 
+                    {vehicleSelectionModal.reservation?.assigned_vehicle_id
                       ? translate('admin_reservations.vehicle_modal.change_vehicle', 'Changer le véhicule')
                       : translate('admin_reservations.vehicle_modal.confirm', 'Confirmer l\'attribution')
                     }

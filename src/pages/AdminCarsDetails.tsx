@@ -240,7 +240,11 @@ export default function AdminVehicleDetail() {
         if (vErr) throw vErr;
         if (!mounted) return;
         
-        setVehicle(vData as CarRow);
+        if (vData) {
+          // Log full object for debugging as requested by user
+          console.log('Vehicle details from DB (AdminCarsDetails):', vData);
+          setVehicle(vData as CarRow);
+        }
 
         // 2. Charger les véhicules individuels avec leurs dépôts
         const { data: vehiclesData, error } = await supabase
@@ -471,7 +475,8 @@ export default function AdminVehicleDetail() {
     }
 
     const reserved = getReservedCountForDate(date);
-    return Math.max(0, vehicle.quantity - reserved);
+    const totalCount = Number(vehicle.quantity || 0);
+    return Math.max(0, totalCount - reserved);
   };
 
   // Fonction pour obtenir les informations du client
@@ -890,10 +895,10 @@ export default function AdminVehicleDetail() {
 
             {/* Stock affiché simplement sans input */}
             <div className="mb-4">
-              <label className="block text-sm text-gray-600 mb-1">{t('admin_vehicle_detail.vehicle_info.total_stock')} : {vehicle.quantity}</label>
+              <label className="block text-sm text-gray-600 mb-1">{t('admin_vehicle_detail.vehicle_info.total_stock')} : {vehicle.quantity || 0}</label>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-500">
-                  ({t('admin_vehicle_detail.vehicle_info.auto_sync')} {vehicles.length} {t('admin_vehicle_detail.vehicle_info.vehicles_active')})
+                  ({t('admin_vehicle_detail.vehicle_info.auto_sync')} {vehicle.quantity || 0} {t('admin_vehicle_detail.vehicle_info.vehicles_active')})
                 </span>
               </div>
             </div>
@@ -1318,7 +1323,7 @@ export default function AdminVehicleDetail() {
                   {t('admin_vehicle_detail.calendar.reservation_calendar')}
                 </h4>
                 <div className="text-sm text-gray-500">
-                  {t('admin_vehicle_detail.calendar.total_stock')} {vehicle.quantity} {t('admin_vehicle_detail.calendar.vehicles')}
+                  {t('admin_vehicle_detail.calendar.total_stock')} {vehicle?.quantity || 0} {t('admin_vehicle_detail.calendar.vehicles')}
                 </div>
               </div>
               
@@ -1329,8 +1334,9 @@ export default function AdminVehicleDetail() {
                     const reserved = getReservedCountForDate(date);
                     const isToday = date === format(new Date(), "yyyy-MM-dd");
                     const isFullyBooked = available === 0;
-                    const isPartiallyAvailable = available > 0 && available < vehicle.quantity;
-                    const isFullyAvailable = available === vehicle.quantity;
+                    const totalStockCount = Number(vehicle?.quantity || 0);
+                    const isPartiallyAvailable = available > 0 && available < totalStockCount;
+                    const isFullyAvailable = totalStockCount > 0 && available === totalStockCount;
                     
                     return (
                       <div
@@ -1345,7 +1351,7 @@ export default function AdminVehicleDetail() {
                         title={`${format(new Date(date), "dd/MM/yyyy")}
                         ${available} ${t('admin_vehicle_detail.calendar.available')}
                         ${reserved} ${t('admin_vehicle_detail.messages.vehicles_reserved')}
-                        ${t('admin_vehicle_detail.calendar.total_stock')} ${vehicle.quantity} ${t('admin_vehicle_detail.calendar.vehicles')}`}
+                        ${t('admin_vehicle_detail.calendar.total_stock')} ${vehicle?.quantity || 0} ${t('admin_vehicle_detail.calendar.vehicles')}`}
                       >
                         <span className="font-semibold">{format(new Date(date), "dd")}</span>
                         <span className="text-[10px] opacity-70">{getTranslatedMonth(date)}</span>
@@ -1371,7 +1377,7 @@ export default function AdminVehicleDetail() {
                                 "bg-green-400"
                               }`}
                               style={{ 
-                                width: `${vehicle.quantity > 0 ? (available / vehicle.quantity) * 100 : 0}%` 
+                                width: `${Number(vehicle?.quantity || 0) > 0 ? (available / Number(vehicle.quantity)) * 100 : 0}%` 
                               }}
                             />
                           </div>
@@ -1386,7 +1392,7 @@ export default function AdminVehicleDetail() {
               <div className="flex flex-wrap items-center justify-center gap-4 mt-6 text-xs text-gray-600">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 bg-green-100 border border-green-200 rounded"></div>
-                  <span>{t('admin_vehicle_detail.calendar.fully_available')} ({vehicle.quantity} {t('admin_vehicle_detail.calendar.vehicles')})</span>
+                  <span>{t('admin_vehicle_detail.calendar.fully_available')} ({vehicle?.quantity || 0} {t('admin_vehicle_detail.calendar.vehicles')})</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 bg-yellow-100 border border-yellow-200 rounded"></div>
@@ -1421,7 +1427,7 @@ export default function AdminVehicleDetail() {
                     {getDailyAvailability(format(new Date(), "yyyy-MM-dd"))}
                   </div>
                   <p className="text-sm text-muted-foreground mt-2">
-                    {t('admin_vehicle_detail.calendar.out_of')} {vehicle.quantity} {t('admin_vehicle_detail.calendar.total')}
+                    {t('admin_vehicle_detail.calendar.out_of')} {vehicle.quantity || 0} {t('admin_vehicle_detail.calendar.total')}
                   </p>
                 </CardContent>
               </Card>
@@ -1446,8 +1452,8 @@ export default function AdminVehicleDetail() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-purple-600">
-                    {vehicle.quantity > 0 
-                      ? `${Math.round((currentReservations.length / vehicle.quantity) * 100)}%`
+                    {Number(vehicle.quantity || 0) > 0 
+                      ? `${Math.round((currentReservations.length / Number(vehicle.quantity)) * 100)}%`
                       : '0%'
                     }
                   </div>

@@ -43,7 +43,6 @@ export default function AdminVehicles() {
     name: "",
     category: "",
     price: "",
-    quantity: "",
     image_url: "",
     fuel: "",
     seats: "",
@@ -75,18 +74,23 @@ export default function AdminVehicles() {
       if (vehiclesError) throw vehiclesError;
 
       // Construire la map count par modèle
-      const stockTracker = carsData.map(car => {
-        const relatedVehicles = vehiclesData.filter(v => v.car_id === car.id);
+      const stockTracker = (carsData || []).map(car => {
+        // Log full object for debugging as requested by user
+        console.log('Vehicle data from DB (AdminVehicles):', car);
 
-        const availableCount = relatedVehicles.filter(v => v.status === "available").length;
+        // SOURCE OF TRUTH: must use car.quantity
+        const totalStock = Number(car.quantity || 0);
+        
+        // Count reservations from established units if needed for "available_now"
+        const relatedVehicles = (vehiclesData || []).filter(v => v.car_id === car.id);
         const reservedCount = relatedVehicles.filter(v => v.status === "reserved").length;
-        const maintenanceCount = relatedVehicles.filter(v => v.status === "maintenance").length;
 
         return {
           ...car,
-          available_now: availableCount,
+          quantity: totalStock,
+          available_now: Math.max(0, totalStock - reservedCount),
           reservation_count: reservedCount,
-          maintenance_count: maintenanceCount,
+          maintenance_count: relatedVehicles.filter(v => v.status === "maintenance").length,
         };
       });
 
@@ -106,7 +110,7 @@ export default function AdminVehicles() {
   const handleImageUpload = async (file: File) => {
     try {
       setImageUploading(true);
-      
+
       // Vérifier la taille du fichier (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         toast({
@@ -116,31 +120,31 @@ export default function AdminVehicles() {
         });
         return;
       }
-  
+
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
       const filePath = `vehicle-images/${fileName}`;
-  
+
       console.log("Uploading file:", filePath);
-  
+
       const { error: uploadError } = await supabase.storage
         .from('cars')
         .upload(filePath, file);
-  
+
       if (uploadError) {
         console.error("Upload error:", uploadError);
         throw uploadError;
       }
-  
+
       // Récupérer l'URL publique
       const { data: { publicUrl } } = supabase.storage
         .from('cars')
         .getPublicUrl(filePath);
-  
+
       console.log("Public URL:", publicUrl);
-  
+
       setNewVehicle(prev => ({ ...prev, image_url: publicUrl }));
-      
+
       toast({
         title: t('admin_vehicles.messages.image_uploaded'),
         description: t('admin_vehicles.messages.image_upload_success'),
@@ -160,13 +164,12 @@ export default function AdminVehicles() {
   const handleCreateVehicle = async (e: React.FormEvent) => {
 
     e.preventDefault(); // ← AJOUTEZ CETTE LIGNE
-  
+
     // DEBUG: Afficher les valeurs actuelles
     console.log('Valeurs du formulaire:', {
       name: newVehicle.name,
       category: newVehicle.category,
       price: newVehicle.price,
-      quantity: newVehicle.quantity,
       fuel: newVehicle.fuel,
       transmission: newVehicle.transmission,
       seats: newVehicle.seats
@@ -177,14 +180,13 @@ export default function AdminVehicles() {
       { field: 'name', value: newVehicle.name, label: 'Nom du modèle' },
       { field: 'category', value: newVehicle.category, label: 'Catégorie' },
       { field: 'price', value: newVehicle.price, label: 'Prix' },
-      { field: 'quantity', value: newVehicle.quantity, label: 'Quantité' },
       { field: 'fuel', value: newVehicle.fuel, label: 'Carburant' },
       { field: 'transmission', value: newVehicle.transmission, label: 'Transmission' },
       { field: 'seats', value: newVehicle.seats, label: 'Sièges' }
     ];
 
     const missingFields = requiredFields.filter(field => !field.value);
-    
+
     if (missingFields.length > 0) {
       console.log('❌ Champs manquants:', missingFields);
       toast({
@@ -197,22 +199,12 @@ export default function AdminVehicles() {
 
     // Validation des nombres
     const price = Number(newVehicle.price);
-    const quantity = Number(newVehicle.quantity);
     const seats = Number(newVehicle.seats);
 
     if (isNaN(price) || price <= 0) {
       toast({
         title: t('admin_vehicles.messages.invalid_price'),
         description: t('admin_vehicles.messages.invalid_price_description'),
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (isNaN(quantity) || quantity <= 0) {
-      toast({
-        title: t('admin_vehicles.messages.invalid_quantity'),
-        description: t('admin_vehicles.messages.invalid_quantity_description'),
         variant: "destructive",
       });
       return;
@@ -227,7 +219,7 @@ export default function AdminVehicles() {
       return;
     }
 
-    if (!newVehicle.name || !newVehicle.category || !newVehicle.price || !newVehicle.quantity) {
+    if (!newVehicle.name || !newVehicle.category || !newVehicle.price) {
       toast({
         title: t('admin_vehicles.messages.missing_fields'),
         description: t('admin_vehicles.messages.fill_required_fields'),
@@ -266,7 +258,7 @@ export default function AdminVehicles() {
           name: newVehicle.name,
           category: newVehicle.category,
           price: Number(newVehicle.price),
-          quantity: Number(newVehicle.quantity),
+          quantity: 0,
           image_url: newVehicle.image_url || null,
           fuel: newVehicle.fuel,
           seats: newVehicle.seats ? Number(newVehicle.seats) : null,
@@ -288,7 +280,6 @@ export default function AdminVehicles() {
         name: "",
         category: "",
         price: "",
-        quantity: "",
         image_url: "",
         fuel: "fuel_gasoline",
         seats: "",
@@ -314,7 +305,6 @@ export default function AdminVehicles() {
       name: "",
       category: "",
       price: "",
-      quantity: "",
       image_url: "",
       fuel: "fuel_gasoline",
       seats: "",
@@ -328,7 +318,6 @@ export default function AdminVehicles() {
       name: vehicle.name,
       category: vehicle.category,
       price: vehicle.price.toString(),
-      quantity: vehicle.quantity.toString(),
       image_url: vehicle.image_url || "",
       fuel: vehicle.fuel || "fuel_gasoline",
       seats: vehicle.seats?.toString() || "",
@@ -338,7 +327,7 @@ export default function AdminVehicles() {
   };
 
   const handleUpdateVehicle = async () => {
-    if (!editingVehicle || !newVehicle.name || !newVehicle.category || !newVehicle.price || !newVehicle.quantity) {
+    if (!editingVehicle || !newVehicle.name || !newVehicle.category || !newVehicle.price) {
       toast({
         title: t('admin_vehicles.messages.missing_fields'),
         description: t('admin_vehicles.messages.fill_required_fields'),
@@ -355,7 +344,6 @@ export default function AdminVehicles() {
           name: newVehicle.name,
           category: newVehicle.category,
           price: Number(newVehicle.price),
-          quantity: Number(newVehicle.quantity),
           image_url: newVehicle.image_url || null,
           fuel: newVehicle.fuel,
           seats: newVehicle.seats ? Number(newVehicle.seats) : null,
@@ -425,7 +413,7 @@ export default function AdminVehicles() {
 
   const getAvailabilityColor = (available_now: number, quantity: number) => {
     const ratio = available_now / quantity;
-  
+
     if (available_now === 0) return "bg-red-100 text-red-800 border-red-300";
     if (ratio <= 0.3) return "bg-orange-100 text-orange-800 border-orange-300";
     if (ratio <= 0.7) return "bg-yellow-100 text-yellow-800 border-yellow-300";
@@ -434,7 +422,7 @@ export default function AdminVehicles() {
 
   // Filtrage des véhicules
   const filteredVehicles = vehicles.filter(vehicle => {
-    const matchesSearch = searchTerm === "" || 
+    const matchesSearch = searchTerm === "" ||
       vehicle.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       vehicle.category.toLowerCase().includes(searchTerm.toLowerCase());
 
@@ -455,15 +443,15 @@ export default function AdminVehicles() {
                   <Car className="h-8 w-8 text-blue-600" />
                 </div>
                 <div>
-                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                  <h1 className="text-[24px] font-semibold text-slate-900 mb-2">
                     {t('admin_vehicles.title')}
                   </h1>
-                  <p className="text-gray-600 text-sm sm:text-base">
+                  <p className="text-slate-600 text-sm sm:text-base font-medium">
                     {t('admin_vehicles.subtitle')}
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setIsCreateModalOpen(true)}
@@ -480,23 +468,23 @@ export default function AdminVehicles() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
             <div className="flex flex-col lg:flex-row gap-4">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 h-4 w-4" />
                 <input
                   type="text"
                   placeholder={t('admin_vehicles.search.placeholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-gray-50/50 transition-colors"
+                  className="pl-10 input-base"
                 />
               </div>
 
               <div className="flex gap-3">
                 <div className="relative">
-                  <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 h-4 w-4" />
                   <select
                     value={filterCategory}
                     onChange={(e) => setFilterCategory(e.target.value)}
-                    className="pl-10 pr-8 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-gray-50/50 appearance-none cursor-pointer"
+                    className="pl-10 input-base w-[220px]"
                   >
                     <option value="all">{t('admin_vehicles.filters.all_categories')}</option>
                     <option value="category_electric">{t('admin_vehicles.categories.category_electric')}</option>
@@ -515,7 +503,7 @@ export default function AdminVehicles() {
                     className="flex items-center gap-2 px-4 py-3 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors text-sm"
                   >
                     <X className="h-4 w-4" />
-                    {t('admin_vehicles.search.reset')} 
+                    {t('admin_vehicles.search.reset')}
                   </button>
                 )}
               </div>
@@ -532,7 +520,7 @@ export default function AdminVehicles() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
               <div className="text-gray-300 text-6xl mb-4">🚗</div>
               <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                {searchTerm || filterCategory !== "all" 
+                {searchTerm || filterCategory !== "all"
                   ? t('admin_vehicles.messages.no_results_title')
                   : t('admin_vehicles.messages.no_vehicles_title')
                 }
@@ -567,18 +555,18 @@ export default function AdminVehicles() {
             // Vue tableau uniquement
             <div className="overflow-hidden bg-white rounded-xl shadow-sm border border-gray-100">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead className="bg-slate-50/80 border-b border-slate-200">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
                       {t('admin_vehicles.table.vehicle')}
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
                       {t('admin_vehicles.table.category')}
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
                       {t('admin_vehicles.table.price')}
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
                       {t('admin_vehicles.table.availability')}
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -612,9 +600,8 @@ export default function AdminVehicles() {
                         {vehicle.price} MAD
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          getAvailabilityColor(vehicle.available_now ?? 0, vehicle.quantity)
-                        }`}>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getAvailabilityColor(vehicle.available_now ?? 0, vehicle.quantity)
+                          }`}>
                           {vehicle.available_now === 0
                             ? t('admin_vehicles.status.fully_booked')
                             : `${vehicle.available_now}/${vehicle.quantity}`}
@@ -630,21 +617,21 @@ export default function AdminVehicles() {
                         <div className="flex justify-center gap-1">
                           <Link
                             to={`/admin/vehicle/${vehicle.id}`}
-                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                             title={t('admin_vehicles.actions.view_details')}
                           >
                             <Car className="h-4 w-4" />
                           </Link>
                           <button
                             onClick={() => handleEditVehicle(vehicle)}
-                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                             title={t('admin_vehicles.actions.edit')}
                           >
                             <Edit className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => handleDeleteVehicle(vehicle)}
-                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                             title={t('admin_vehicles.actions.delete')}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -667,7 +654,7 @@ export default function AdminVehicles() {
                   <Car className="h-5 w-5" />
                   {t('admin_vehicles.modals.create_vehicle.title')}
                 </Dialog.Title>
-                
+
                 <form onSubmit={handleCreateVehicle} className="space-y-6">
                   {/* Section Informations de base */}
                   <div>
@@ -682,14 +669,14 @@ export default function AdminVehicles() {
                         <Input
                           id="name"
                           value={newVehicle.name}
-                          onChange={(e) => setNewVehicle({...newVehicle, name: e.target.value})}
+                          onChange={(e) => setNewVehicle({ ...newVehicle, name: e.target.value })}
                           placeholder={t('admin_vehicles.modals.create_vehicle.model_name_placeholder')}
                           className="mt-1"
                           required
                           minLength={2}
                         />
                       </div>
-                      
+
                       <div>
                         <Label htmlFor="category" className="text-sm font-medium">
                           {t('admin_vehicles.modals.create_vehicle.category')} *
@@ -697,8 +684,8 @@ export default function AdminVehicles() {
                         <select
                           id="category"
                           value={newVehicle.category}
-                          onChange={(e) => setNewVehicle({...newVehicle, category: e.target.value})}
-                          className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          onChange={(e) => setNewVehicle({ ...newVehicle, category: e.target.value })}
+                          className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus-subtle"
                           required
                         >
                           <option value="">{t('admin_vehicles.modals.create_vehicle.select_category')}</option>
@@ -717,7 +704,7 @@ export default function AdminVehicles() {
                           id="price"
                           type="number"
                           value={newVehicle.price}
-                          onChange={(e) => setNewVehicle({...newVehicle, price: e.target.value})}
+                          onChange={(e) => setNewVehicle({ ...newVehicle, price: e.target.value })}
                           placeholder="0.00"
                           className="mt-1"
                           min="0"
@@ -726,21 +713,6 @@ export default function AdminVehicles() {
                         />
                       </div>
 
-                      <div>
-                        <Label htmlFor="quantity" className="text-sm font-medium">
-                          {t('admin_vehicles.modals.create_vehicle.initial_stock')} *
-                        </Label>
-                        <Input
-                          id="quantity"
-                          type="number"
-                          value={newVehicle.quantity}
-                          onChange={(e) => setNewVehicle({...newVehicle, quantity: e.target.value})}
-                          placeholder="1"
-                          className="mt-1"
-                          min="1"
-                          required
-                        />
-                      </div>
                     </div>
                   </div>
 
@@ -757,8 +729,8 @@ export default function AdminVehicles() {
                         <select
                           id="fuel"
                           value={newVehicle.fuel}
-                          onChange={(e) => setNewVehicle({...newVehicle, fuel: e.target.value})}
-                          className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          onChange={(e) => setNewVehicle({ ...newVehicle, fuel: e.target.value })}
+                          className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus-subtle"
                           required
                         >
                           <option value="">{t('admin_vehicles.modals.create_vehicle.select_fuel')}</option>
@@ -776,8 +748,8 @@ export default function AdminVehicles() {
                         <select
                           id="transmission"
                           value={newVehicle.transmission}
-                          onChange={(e) => setNewVehicle({...newVehicle, transmission: e.target.value})}
-                          className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          onChange={(e) => setNewVehicle({ ...newVehicle, transmission: e.target.value })}
+                          className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus-subtle"
                           required
                         >
                           <option value="">{t('admin_vehicles.modals.create_vehicle.select_transmission')}</option>
@@ -794,7 +766,7 @@ export default function AdminVehicles() {
                           id="seats"
                           type="number"
                           value={newVehicle.seats}
-                          onChange={(e) => setNewVehicle({...newVehicle, seats: e.target.value})}
+                          onChange={(e) => setNewVehicle({ ...newVehicle, seats: e.target.value })}
                           placeholder="5"
                           className="mt-1"
                           min="1"
@@ -842,17 +814,17 @@ export default function AdminVehicles() {
                             htmlFor="image-upload"
                             className="cursor-pointer flex flex-col items-center justify-center"
                           >
-                            <Upload className="h-8 w-8 text-gray-400 mb-2" />
+                            <Upload className="h-8 w-8 text-slate-400 mb-2" />
                             <p className="text-gray-600">
-                              {imageUploading 
-                                ? t('admin_vehicles.modals.create_vehicle.uploading') 
+                              {imageUploading
+                                ? t('admin_vehicles.modals.create_vehicle.uploading')
                                 : t('admin_vehicles.modals.create_vehicle.upload_image')
                               }
                             </p>
                           </label>
                         </div>
                       )}
-                      
+
                       <div>
                         <Label htmlFor="image_url" className="text-sm font-medium">
                           {t('admin_vehicles.modals.create_vehicle.or_enter_url')}
@@ -860,7 +832,7 @@ export default function AdminVehicles() {
                         <Input
                           id="image_url"
                           value={newVehicle.image_url}
-                          onChange={(e) => setNewVehicle({...newVehicle, image_url: e.target.value})}
+                          onChange={(e) => setNewVehicle({ ...newVehicle, image_url: e.target.value })}
                           placeholder={t('admin_vehicles.modals.create_vehicle.url_placeholder')}
                           className="mt-1"
                         />
@@ -869,9 +841,9 @@ export default function AdminVehicles() {
                   </div>
 
                   <div className="flex justify-between items-center pt-6 border-t mt-6">
-                    <Button 
+                    <Button
                       type="button"
-                      variant="outline" 
+                      variant="outline"
                       onClick={() => {
                         resetForm();
                         setIsCreateModalOpen(false);
@@ -880,23 +852,23 @@ export default function AdminVehicles() {
                     >
                       {t('admin_vehicles.modals.create_vehicle.cancel')}
                     </Button>
-                    
+
                     <div className="flex gap-3">
-                      <Button 
+                      <Button
                         type="button"
-                        variant="secondary" 
+                        variant="secondary"
                         onClick={resetForm}
                         disabled={isLoading}
                       >
                         {t('admin_vehicles.modals.create_vehicle.reset')}
                       </Button>
-                      <Button 
+                      <Button
                         type="submit"
                         disabled={isLoading}
                         className="bg-blue-600 hover:bg-blue-700"
                       >
-                        {isLoading 
-                          ? t('admin_vehicles.modals.create_vehicle.creating') 
+                        {isLoading
+                          ? t('admin_vehicles.modals.create_vehicle.creating')
                           : t('admin_vehicles.modals.create_vehicle.create_model')
                         }
                       </Button>
@@ -916,7 +888,7 @@ export default function AdminVehicles() {
                   <Edit className="h-5 w-5" />
                   {t('admin_vehicles.modals.edit_vehicle.title')} - {editingVehicle?.name}
                 </Dialog.Title>
-                
+
                 <form onSubmit={(e) => { e.preventDefault(); handleUpdateVehicle(); }} className="space-y-6">
                   {/* Section Informations de base */}
                   <div>
@@ -931,14 +903,14 @@ export default function AdminVehicles() {
                         <Input
                           id="edit-name"
                           value={newVehicle.name}
-                          onChange={(e) => setNewVehicle({...newVehicle, name: e.target.value})}
+                          onChange={(e) => setNewVehicle({ ...newVehicle, name: e.target.value })}
                           placeholder={t('admin_vehicles.modals.create_vehicle.model_name_placeholder')}
                           className="mt-1"
                           required
                           minLength={2}
                         />
                       </div>
-                      
+
                       <div>
                         <Label htmlFor="edit-category" className="text-sm font-medium">
                           {t('admin_vehicles.modals.create_vehicle.category')} *
@@ -946,8 +918,8 @@ export default function AdminVehicles() {
                         <select
                           id="edit-category"
                           value={newVehicle.category}
-                          onChange={(e) => setNewVehicle({...newVehicle, category: e.target.value})}
-                          className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          onChange={(e) => setNewVehicle({ ...newVehicle, category: e.target.value })}
+                          className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus-subtle"
                           required
                         >
                           <option value="">{t('admin_vehicles.modals.create_vehicle.select_category')}</option>
@@ -966,7 +938,7 @@ export default function AdminVehicles() {
                           id="edit-price"
                           type="number"
                           value={newVehicle.price}
-                          onChange={(e) => setNewVehicle({...newVehicle, price: e.target.value})}
+                          onChange={(e) => setNewVehicle({ ...newVehicle, price: e.target.value })}
                           placeholder="0.00"
                           className="mt-1"
                           min="0"
@@ -975,21 +947,6 @@ export default function AdminVehicles() {
                         />
                       </div>
 
-                      <div>
-                        <Label htmlFor="edit-quantity" className="text-sm font-medium">
-                          {t('admin_vehicles.modals.create_vehicle.initial_stock')} *
-                        </Label>
-                        <Input
-                          id="edit-quantity"
-                          type="number"
-                          value={newVehicle.quantity}
-                          onChange={(e) => setNewVehicle({...newVehicle, quantity: e.target.value})}
-                          placeholder="1"
-                          className="mt-1"
-                          min="1"
-                          required
-                        />
-                      </div>
                     </div>
                   </div>
 
@@ -1006,8 +963,8 @@ export default function AdminVehicles() {
                         <select
                           id="edit-fuel"
                           value={newVehicle.fuel}
-                          onChange={(e) => setNewVehicle({...newVehicle, fuel: e.target.value})}
-                          className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          onChange={(e) => setNewVehicle({ ...newVehicle, fuel: e.target.value })}
+                          className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus-subtle"
                           required
                         >
                           <option value="">{t('admin_vehicles.modals.create_vehicle.select_fuel')}</option>
@@ -1025,8 +982,8 @@ export default function AdminVehicles() {
                         <select
                           id="edit-transmission"
                           value={newVehicle.transmission}
-                          onChange={(e) => setNewVehicle({...newVehicle, transmission: e.target.value})}
-                          className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          onChange={(e) => setNewVehicle({ ...newVehicle, transmission: e.target.value })}
+                          className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus-subtle"
                           required
                         >
                           <option value="">{t('admin_vehicles.modals.create_vehicle.select_transmission')}</option>
@@ -1043,7 +1000,7 @@ export default function AdminVehicles() {
                           id="edit-seats"
                           type="number"
                           value={newVehicle.seats}
-                          onChange={(e) => setNewVehicle({...newVehicle, seats: e.target.value})}
+                          onChange={(e) => setNewVehicle({ ...newVehicle, seats: e.target.value })}
                           placeholder="5"
                           className="mt-1"
                           min="1"
@@ -1093,15 +1050,15 @@ export default function AdminVehicles() {
                           >
                             <Upload className="h-8 w-8 text-gray-400 mb-2" />
                             <p className="text-gray-600">
-                              {imageUploading 
-                                ? t('admin_vehicles.modals.create_vehicle.uploading') 
+                              {imageUploading
+                                ? t('admin_vehicles.modals.create_vehicle.uploading')
                                 : t('admin_vehicles.modals.create_vehicle.upload_image')
                               }
                             </p>
                           </label>
                         </div>
                       )}
-                      
+
                       <div>
                         <Label htmlFor="edit-image_url" className="text-sm font-medium">
                           {t('admin_vehicles.modals.create_vehicle.or_enter_url')}
@@ -1109,7 +1066,7 @@ export default function AdminVehicles() {
                         <Input
                           id="edit-image_url"
                           value={newVehicle.image_url}
-                          onChange={(e) => setNewVehicle({...newVehicle, image_url: e.target.value})}
+                          onChange={(e) => setNewVehicle({ ...newVehicle, image_url: e.target.value })}
                           placeholder={t('admin_vehicles.modals.create_vehicle.url_placeholder')}
                           className="mt-1"
                         />
@@ -1118,9 +1075,9 @@ export default function AdminVehicles() {
                   </div>
 
                   <div className="flex justify-between items-center pt-6 border-t mt-6">
-                    <Button 
+                    <Button
                       type="button"
-                      variant="outline" 
+                      variant="outline"
                       onClick={() => {
                         resetForm();
                         setIsEditModalOpen(false);
@@ -1130,18 +1087,17 @@ export default function AdminVehicles() {
                     >
                       Annuler
                     </Button>
-                    
+
                     <div className="flex gap-3">
-                      <Button 
+                      <Button
                         type="button"
-                        variant="secondary" 
+                        variant="secondary"
                         onClick={() => {
                           if (editingVehicle) {
                             setNewVehicle({
                               name: editingVehicle.name,
                               category: editingVehicle.category,
                               price: editingVehicle.price.toString(),
-                              quantity: editingVehicle.quantity.toString(),
                               image_url: editingVehicle.image_url || "",
                               fuel: editingVehicle.fuel || "",
                               seats: editingVehicle.seats?.toString() || "",
@@ -1153,12 +1109,12 @@ export default function AdminVehicles() {
                       >
                         Réinitialiser
                       </Button>
-                      <Button 
+                      <Button
                         type="submit"
                         disabled={isLoading}
                         className="bg-blue-600 hover:bg-blue-700"
                       >
-                        {isLoading 
+                        {isLoading
                           ? t('admin_vehicles.modals.edit_vehicle.updating')
                           : t('admin_vehicles.modals.edit_vehicle.update_model')
                         }
