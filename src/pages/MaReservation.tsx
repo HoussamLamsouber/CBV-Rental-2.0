@@ -234,11 +234,10 @@ const MaReservation = () => {
   //   return now > returnDateTime;
   // };
 
-  const canCancelReservation = (res: ReservationWithProfile): boolean => {
+  const getReservationState = (res: ReservationWithProfile) => {
     const now = new Date();
 
     const pickupDateTime = new Date(res.pickup_date);
-    
     if (res.pickup_time) {
       const [hours, minutes] = res.pickup_time.split(":").map(Number);
       pickupDateTime.setHours(hours, minutes, 0, 0);
@@ -246,7 +245,17 @@ const MaReservation = () => {
       pickupDateTime.setHours(0, 0, 0, 0);
     }
 
-    return now < pickupDateTime;
+    const returnDateTime = new Date(res.return_date);
+    if (res.return_time) {
+      const [hours, minutes] = res.return_time.split(":").map(Number);
+      returnDateTime.setHours(hours, minutes, 0, 0);
+    } else {
+      returnDateTime.setHours(23, 59, 59, 999);
+    }
+
+    if (now < pickupDateTime) return "upcoming";
+    if (now >= pickupDateTime && now <= returnDateTime) return "active";
+    return "completed";
   };
 
   const getTranslatedCategory = (category: string) => {
@@ -417,33 +426,50 @@ const MaReservation = () => {
                         </div>
 
                         <div className="mt-6">
-                          {(res.status === 'pending' || res.status === 'accepted') && canCancelReservation(res) ? (
-                            <Button
-                              variant="ghost"
-                              className="w-full h-11 rounded-xl text-red-500 hover:text-red-600 hover:bg-red-50 font-bold text-[10px] uppercase tracking-wider border border-red-100 transition-all"
-                              onClick={() => handleCancelReservation(res)}
-                              disabled={cancellingId === res.id}
-                            >
-                              {cancellingId === res.id ? (
-                                <>
-                                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-red-500 mr-2"></div>
-                                  {t('ma_reservation.actions.cancelling')}
-                                </>
-                              ) : (
-                                <>
-                                  <Trash2 className="h-3.5 w-3.5 mr-2" />
-                                  {t('ma_reservation.actions.cancel')}
-                                </>
-                              )}
-                            </Button>
-                          ) : (
-                            <div className="flex items-center justify-center h-11 bg-slate-50 rounded-xl border border-slate-100 italic text-[10px] text-slate-400 font-bold uppercase tracking-widest px-4 text-center">
-                              {!canCancelReservation(res)
-                                ? t('ma_reservation.messages.cannot_cancel_passed')
-                                : t('ma_reservation.messages.cannot_cancel')
-                              }
-                            </div>
-                          )}
+                          {(() => {
+                            const state = getReservationState(res);
+                            const isCancellableStatus = res.status === 'pending' || res.status === 'accepted';
+                            const showCancelButton = isCancellableStatus && state === "upcoming";
+
+                            if (showCancelButton) {
+                              return (
+                                <Button
+                                  variant="ghost"
+                                  className="w-full h-11 rounded-xl text-red-500 hover:text-red-600 hover:bg-red-50 font-bold text-[10px] uppercase tracking-wider border border-red-100 transition-all"
+                                  onClick={() => handleCancelReservation(res)}
+                                  disabled={cancellingId === res.id}
+                                >
+                                  {cancellingId === res.id ? (
+                                    <>
+                                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-red-500 mr-2"></div>
+                                      {t('ma_reservation.actions.cancelling')}
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Trash2 className="h-3.5 w-3.5 mr-2" />
+                                      {t('ma_reservation.actions.cancel')}
+                                    </>
+                                  )}
+                                </Button>
+                              );
+                            } else {
+                               let messageKey = 'ma_reservation.messages.cannot_cancel';
+                               
+                               if (res.status === 'cancelled' || res.status === 'refused') {
+                                   messageKey = 'ma_reservation.messages.cannot_cancel';
+                               } else if (state === 'active' || res.status === 'active') {
+                                   messageKey = 'ma_reservation.messages.cannot_cancel_active';
+                               } else if (state === 'completed' || res.status === 'completed') {
+                                   messageKey = 'ma_reservation.messages.cannot_cancel_completed';
+                               }
+
+                               return (
+                                <div className="flex items-center justify-center h-11 bg-slate-50 rounded-xl border border-slate-100 italic text-[10px] text-slate-400 font-bold uppercase tracking-widest px-4 text-center">
+                                  {t(messageKey)}
+                                </div>
+                              );
+                            }
+                          })()}
                         </div>
                      </div>
                   </div>

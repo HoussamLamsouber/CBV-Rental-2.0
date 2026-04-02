@@ -533,10 +533,6 @@ export const SearchForm = ({ onSearch }: SearchFormProps) => {
           </div>
           <div>
             <h2 className="text-sm font-bold text-slate-900 tracking-tight uppercase">{t("searchForm.title")}</h2>
-            <div className="flex items-center gap-2">
-               <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{t("searchForm.live_availablity")}</span>
-            </div>
           </div>
         </div>
 
@@ -546,7 +542,7 @@ export const SearchForm = ({ onSearch }: SearchFormProps) => {
                 <Button
                   variant="outline"
                   className={cn(
-                    "bg-slate-50 hover:bg-blue-600 border-none text-xs font-semibold h-11 px-4 rounded-full transition-all shadow-sm flex items-center gap-2 w-36 justify-center overflow-hidden no-focus-ring",
+                    "bg-slate-50 hover:bg-blue-600 border-none text-xs font-semibold h-8 px-4 rounded-full transition-all shadow-sm flex items-center gap-2 w-22 justify-center overflow-hidden no-focus-ring",
                     activeFilterCount > 0 && "bg-blue-600 text-white hover:bg-blue-700"
                   )}
                 >

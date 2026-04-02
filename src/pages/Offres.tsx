@@ -236,6 +236,22 @@ const Offres = () => {
         });
       });
 
+      // Sort each car's offers numerically by the leading number in the period label
+      const getMinDays = (periodJson: string): number => {
+        try {
+          const obj = typeof periodJson === "string" ? JSON.parse(periodJson) : periodJson;
+          const label: string = obj.fr || obj.en || "";
+          const match = label.match(/\d+/);
+          return match ? parseInt(match[0], 10) : Infinity;
+        } catch {
+          return Infinity;
+        }
+      };
+
+      Object.keys(map).forEach((carId) => {
+        map[carId].sort((a, b) => getMinDays(a.period) - getMinDays(b.period));
+      });
+
       setOffers(map);
     };
 

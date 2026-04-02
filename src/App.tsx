@@ -29,6 +29,7 @@ import AdminLocalisations from "./pages/AdminLocalisations";
 import AdminDepots from "./pages/AdminDepots";
 import { AdminLayout } from './components/AdminLayout';
 import Contact from "./pages/Contact";
+import ScrollToTop from "./components/ScrollToTop";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+        <ScrollToTop />
         <AppProviders>
           <TooltipProvider>
             <Toaster />

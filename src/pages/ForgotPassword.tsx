@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -77,24 +78,24 @@ export default function ForgotPassword() {
           </CardHeader>
 
           <CardContent>
-            <form onSubmit={handleResetPassword} className="space-y-5">
+            <form onSubmit={handleResetPassword} className="space-y-4">
               <div>
-                <label className="block mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">
+                <Label className="block mb-2 text-sm font-medium text-slate-700 ml-1">
                   {t("email")}
-                </label>
+                </Label>
                 <Input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder="votre@email.com"
-                  className="h-12 bg-slate-50 border-slate-200 text-slate-900 focus:ring-4 focus:ring-blue-500/10 rounded-xl transition-all"
+                  className="h-10 bg-slate-50 border-slate-200 text-slate-900 focus:ring-4 focus:ring-blue-500/10 rounded-lg transition-all text-sm"
                 />
               </div>
 
               <Button
                 type="submit"
-                className="w-full h-12 bg-slate-900 hover:bg-blue-600 text-white font-bold text-xs uppercase tracking-[0.2em] rounded-xl shadow-lg shadow-slate-900/10 hover:shadow-blue-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                className="w-full h-10 bg-slate-900 hover:bg-blue-600 text-white font-bold text-sm uppercase tracking-wider rounded-lg shadow-lg shadow-slate-900/10 hover:shadow-blue-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
                 disabled={loading}
               >
                 {loading ? t("sending") + "..." : t("send_reset_link")}

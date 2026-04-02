@@ -6,6 +6,8 @@ import { emailJSService } from "@/services/emailJSService";
 import { toast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { DatePicker } from "@/components/ui/DatePicker";
 
 export default function ReservationsAdmin() {
   const [reservations, setReservations] = useState([]);
@@ -1361,128 +1363,129 @@ export default function ReservationsAdmin() {
 
   const hasActiveFilters = searchTerm || filters.date || filters.vehicleModel || (filters.status && filters.status !== "all") || userId;
 
-  const TableView = ({ reservations }) => (
-    <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-slate-50/80 border-b border-slate-200">
-            <tr>
-              <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
-                {translate('admin_reservations.reservation.vehicle', 'Véhicule')}
-              </th>
-              <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
-                {translate('admin_reservations.vehicle_info.title', 'Véhicule attribué')}
-              </th>
-              <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
-                {translate('admin_reservations.reservation.pickup', 'Période')}
-              </th>
-              <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
-                {translate('admin_reservations.reservation.location', 'Lieux')}
-              </th>
-              <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
-                {translate('admin_reservations.reservation.contact', 'Contact')}
-              </th>
-              <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
-                {translate('admin_reservations.reservation.total_price', 'Prix')}
-              </th>
-              <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
-                {translate('admin_reservations.reservation.status', 'Statut')}
-              </th>
-              <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
-                {translate('admin_reservations.actions.title', 'Infos')}
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {reservations.map((reservation) => (
-              <tr key={reservation.id} className="hover:bg-gray-50">
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    {reservation.car_image ? (
-                      <img
-                        src={reservation.car_image}
-                        alt={reservation.car_name}
-                        className="w-10 h-8 object-cover rounded"
-                      />
+  const TableView = ({ reservations }: { reservations: any[] }) => (
+    <div className="flex flex-col min-h-[500px]">
+      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-slate-50/80 border-b border-slate-200">
+              <tr>
+                <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
+                  {translate('admin_reservations.reservation.vehicle', 'Véhicule')}
+                </th>
+                <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
+                  {translate('admin_reservations.vehicle_info.title', 'Véhicule attribué')}
+                </th>
+                <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
+                  {translate('admin_reservations.reservation.pickup', 'Période')}
+                </th>
+                <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
+                  {translate('admin_reservations.reservation.location', 'Lieux')}
+                </th>
+                <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
+                  {translate('admin_reservations.reservation.contact', 'Contact')}
+                </th>
+                <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
+                  {translate('admin_reservations.reservation.total_price', 'Prix')}
+                </th>
+                <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
+                  {translate('admin_reservations.reservation.status', 'Statut')}
+                </th>
+                <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
+                  {translate('admin_reservations.actions.title', 'Infos')}
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {reservations.map((reservation) => (
+                <tr key={reservation.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      {reservation.car_image ? (
+                        <img
+                          src={reservation.car_image}
+                          alt={reservation.car_name}
+                          className="w-10 h-8 object-cover rounded"
+                        />
+                      ) : (
+                        <div className="w-10 h-8 bg-gray-200 rounded flex items-center justify-center">
+                          <Car className="h-3 w-3 text-slate-400" />
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <div className="font-medium text-gray-900 text-sm truncate">
+                          {reservation.car_name}
+                        </div>
+                        <div className="text-xs text-gray-500 truncate">
+                          {reservation.profiles?.full_name || reservation.guest_name || translate('admin_reservations.reservation.unidentified', 'Client non identifié')}
+                          {reservation.guest_name && (
+                            <span className="ml-1 text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded">
+                              {translate('admin_reservations.reservation.guest', 'Invité')}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+
+                  <td className="px-4 py-3">
+                    {reservation.vehicle_info ? (
+                      <div className="text-sm">
+                        <div className="font-medium text-gray-900">
+                          {reservation.vehicle_info.registration_number}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {reservation.depot_info?.name || translate('admin_reservations.vehicle_info.no_depot', 'Dépôt non spécifié')}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {reservation.depot_info?.city}
+                        </div>
+                      </div>
                     ) : (
-                      <div className="w-10 h-8 bg-gray-200 rounded flex items-center justify-center">
-                        <Car className="h-3 w-3 text-slate-400" />
-                      </div>
+                      <span className="text-sm text-slate-400 italic">
+                        {translate('admin_reservations.vehicle_info.not_assigned', 'Non attribué')}
+                      </span>
                     )}
-                    <div className="min-w-0">
-                      <div className="font-medium text-gray-900 text-sm truncate">
-                        {reservation.car_name}
-                      </div>
-                      <div className="text-xs text-gray-500 truncate">
-                        {reservation.profiles?.full_name || reservation.guest_name || translate('admin_reservations.reservation.unidentified', 'Client non identifié')}
-                        {reservation.guest_name && (
-                          <span className="ml-1 text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded">
-                            {translate('admin_reservations.reservation.guest', 'Invité')}
-                          </span>
-                        )}
-                      </div>
+                  </td>
+
+                  <td className="px-4 py-3">
+                    <div className="text-sm text-gray-900">
+                      {formatDate(reservation.pickup_date)}
                     </div>
-                  </div>
-                </td>
-
-                <td className="px-4 py-3">
-                  {reservation.vehicle_info ? (
-                    <div className="text-sm">
-                      <div className="font-medium text-gray-900">
-                        {reservation.vehicle_info.registration_number}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {reservation.depot_info?.name || translate('admin_reservations.vehicle_info.no_depot', 'Dépôt non spécifié')}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {reservation.depot_info?.city}
-                      </div>
+                    <div className="text-sm text-gray-900">
+                      {formatDate(reservation.return_date)}
                     </div>
-                  ) : (
-                    <span className="text-sm text-slate-400 italic">
-                      {translate('admin_reservations.vehicle_info.not_assigned', 'Non attribué')}
-                    </span>
-                  )}
-                </td>
+                    <div className="text-xs text-gray-500">
+                      {reservation.pickup_time} - {reservation.return_time}
+                    </div>
+                  </td>
 
-                <td className="px-4 py-3">
-                  <div className="text-sm text-gray-900">
-                    {formatDate(reservation.pickup_date)}
-                  </div>
-                  <div className="text-sm text-gray-900">
-                    {formatDate(reservation.return_date)}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {reservation.pickup_time} - {reservation.return_time}
-                  </div>
-                </td>
+                  <td className="px-4 py-3">
+                    <div className="text-sm text-gray-900">
+                      {reservation.pickup_location}
+                    </div>
+                    <div className="text-sm text-gray-900">
+                      {reservation.return_location}
+                    </div>
+                  </td>
 
-                <td className="px-4 py-3">
-                  <div className="text-sm text-gray-900">
-                    {reservation.pickup_location}
-                  </div>
-                  <div className="text-sm text-gray-900">
-                    {reservation.return_location}
-                  </div>
-                </td>
+                  <td className="px-4 py-3">
+                    <div className="text-sm text-gray-900 truncate">
+                      {reservation.guest_email || reservation.profiles?.email}
+                    </div>
+                    <div className="text-sm text-gray-600 truncate">
+                      {reservation.guest_phone || reservation.profiles?.telephone || translate('admin_reservations.reservation.not_provided', 'Non renseigné')}
+                    </div>
+                  </td>
 
-                <td className="px-4 py-3">
-                  <div className="text-sm text-gray-900 truncate">
-                    {reservation.guest_email || reservation.profiles?.email}
-                  </div>
-                  <div className="text-sm text-gray-600 truncate">
-                    {reservation.guest_phone || reservation.profiles?.telephone || translate('admin_reservations.reservation.not_provided', 'Non renseigné')}
-                  </div>
-                </td>
+                  <td className="px-4 py-3">
+                    <div className="text-sm font-semibold text-gray-900">
+                      {formatPrice(reservation.total_price)}
+                    </div>
+                  </td>
 
-                <td className="px-4 py-3">
-                  <div className="text-sm font-semibold text-gray-900">
-                    {formatPrice(reservation.total_price)}
-                  </div>
-                </td>
-
-                <td className="px-4 py-3">
-                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${reservation.business_status === "pending"
+                  <td className="px-4 py-3">
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${reservation.business_status === "pending"
                       ? "bg-yellow-100 text-yellow-800"
                       : reservation.business_status === "accepted"
                         ? "bg-blue-100 text-blue-800"
@@ -1495,74 +1498,75 @@ export default function ReservationsAdmin() {
                               : reservation.status === "cancelled"
                                 ? "bg-purple-100 text-purple-800"
                                 : "bg-red-100 text-red-800"
-                    }`}>
-                    {reservation.business_status === "pending" && "⏳"}
-                    {reservation.business_status === "accepted" && "✅"}
-                    {reservation.business_status === "active" && "🚗"}
-                    {reservation.business_status === "completed" && "🏁"}
-                    {reservation.business_status === "expired" && "💀"}
-                    {reservation.status === "cancelled" && "🚫"}
-                    {reservation.business_status === "refused" && "❌"}
-                    <span className="ml-1 hidden sm:inline">
-                      {reservation.business_status === "pending" && translate('admin_reservations.status.pending', 'En attente')}
-                      {reservation.business_status === "accepted" && translate('admin_reservations.status.accepted', 'Acceptée')}
-                      {reservation.business_status === "active" && translate('admin_reservations.status.active', 'Active')}
-                      {reservation.business_status === "completed" && translate('admin_reservations.status.completed', 'Terminée')}
-                      {reservation.business_status === "expired" && translate('admin_reservations.status.expired', 'Expirée')}
-                      {reservation.status === "cancelled" && translate('admin_reservations.status.cancelled', 'Annulée')}
-                      {reservation.business_status === "refused" && translate('admin_reservations.status.refused', 'Refusée')}
-                    </span>
-                  </span>
-                </td>
-
-                <td className="px-4 py-3">
-                  {reservation.status === "pending" && reservation.business_status !== "expired" && (
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleAcceptReservation(reservation)}
-                        className="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700 transition-colors"
-                      >
-                        {translate('admin_reservations.actions.accept', 'Accepter')}
-                      </button>
-                      <button
-                        onClick={() => openRejectModal(reservation)}
-                        className="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700 transition-colors"
-                      >
-                        {translate('admin_reservations.actions.reject', 'Refuser')}
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Bouton pour changer de véhicule - SEULEMENT pour les réservations acceptées mais pas encore actives */}
-                  {reservation.status === "accepted" && reservation.business_status === "accepted" && reservation.assigned_vehicle_id && (
-                    <button
-                      onClick={() => handleChangeVehicle(reservation)}
-                      className="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 transition-colors"
-                    >
-                      {translate('admin_reservations.actions.change_vehicle', 'Changer véhicule')}
-                    </button>
-                  )}
-
-
-                  {reservation.business_status === "expired" && (
-                    <div className="text-xs text-orange-600 italic">
-                      {translate('admin_reservations.messages.expired_reservation', 'Réservation expirée')}
-                    </div>
-                  )}
-
-                  {(reservation.status !== "pending" && reservation.business_status !== "expired") && (
-                    <div className="text-xs text-gray-500 italic flex flex-col gap-0.5">
-                      <span className="font-medium text-slate-600 not-italic">
-                        {translate('admin_reservations.reservation.reservation_date', 'Date de réservation')}:
+                      }`}>
+                      {reservation.business_status === "pending" && "⏳"}
+                      {reservation.business_status === "accepted" && "✅"}
+                      {reservation.business_status === "active" && "🚗"}
+                      {reservation.business_status === "completed" && "🏁"}
+                      {reservation.business_status === "expired" && "💀"}
+                      {reservation.status === "cancelled" && "🚫"}
+                      {reservation.business_status === "refused" && "❌"}
+                      <span className="ml-1 hidden sm:inline">
+                        {reservation.business_status === "pending" && translate('admin_reservations.status.pending', 'En attente')}
+                        {reservation.business_status === "accepted" && translate('admin_reservations.status.accepted', 'Acceptée')}
+                        {reservation.business_status === "active" && translate('admin_reservations.status.active', 'Active')}
+                        {reservation.business_status === "completed" && translate('admin_reservations.status.completed', 'Terminée')}
+                        {reservation.business_status === "expired" && translate('admin_reservations.status.expired', 'Expirée')}
+                        {reservation.status === "cancelled" && translate('admin_reservations.status.cancelled', 'Annulée')}
+                        {reservation.business_status === "refused" && translate('admin_reservations.status.refused', 'Refusée')}
                       </span>
-                      <span>{formatDateTime(reservation.created_at)}</span>
-                    </div>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                    </span>
+                  </td>
+
+                  <td className="px-4 py-3">
+                    {reservation.status === "pending" && reservation.business_status !== "expired" && (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleAcceptReservation(reservation)}
+                          className="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700 transition-colors"
+                        >
+                          {translate('admin_reservations.actions.accept', 'Accepter')}
+                        </button>
+                        <button
+                          onClick={() => openRejectModal(reservation)}
+                          className="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700 transition-colors"
+                        >
+                          {translate('admin_reservations.actions.reject', 'Refuser')}
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Bouton pour changer de véhicule - SEULEMENT pour les réservations acceptées mais pas encore actives */}
+                    {reservation.status === "accepted" && reservation.business_status === "accepted" && reservation.assigned_vehicle_id && (
+                      <button
+                        onClick={() => handleChangeVehicle(reservation)}
+                        className="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 transition-colors"
+                      >
+                        {translate('admin_reservations.actions.change_vehicle', 'Changer véhicule')}
+                      </button>
+                    )}
+
+
+                    {reservation.business_status === "expired" && (
+                      <div className="text-xs text-orange-600 italic">
+                        {translate('admin_reservations.messages.expired_reservation', 'Réservation expirée')}
+                      </div>
+                    )}
+
+                    {(reservation.status !== "pending" && reservation.business_status !== "expired") && (
+                      <div className="text-xs text-gray-500 italic flex flex-col gap-0.5">
+                        <span className="font-medium text-slate-600 not-italic">
+                          {translate('admin_reservations.reservation.reservation_date', 'Date de réservation')}:
+                        </span>
+                        <span>{formatDateTime(reservation.created_at)}</span>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
@@ -1630,16 +1634,16 @@ export default function ReservationsAdmin() {
         </div>
 
         {!userId && (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 sm:p-6 mb-8 transition-all hover:shadow-md">
-            <div className="flex flex-col xl:flex-row gap-4">
-              <div className="flex-1 relative group">
-                <Search className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 h-4.5 w-4.5 group-focus-within:text-blue-500 transition-colors" />
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-8 transition-all hover:shadow-md">
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="relative flex-1 min-w-[250px]">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
                 <input
                   type="text"
                   placeholder={translate('admin_reservations.search.placeholder', 'Rechercher par nom, email, modèle...')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all text-sm"
+                  className="h-10 pl-10 pr-4 text-sm border border-slate-200 rounded-lg w-full focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all"
                 />
               </div>
 
@@ -1647,7 +1651,7 @@ export default function ReservationsAdmin() {
                 <button
                   onClick={() => setShowFilters(!showFilters)}
                   className={cn(
-                    "flex items-center gap-2.5 px-5 py-3 border rounded-xl font-semibold text-sm transition-all whitespace-nowrap h-[46px]",
+                    "flex items-center gap-2 px-4 h-10 text-sm border rounded-lg font-medium transition-all whitespace-nowrap",
                     showFilters || hasActiveFilters
                       ? "bg-blue-50 border-blue-200 text-blue-600 shadow-sm"
                       : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
@@ -1665,7 +1669,7 @@ export default function ReservationsAdmin() {
                 {hasActiveFilters && (
                   <button
                     onClick={clearFilters}
-                    className="flex items-center gap-2.5 px-5 py-3 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-red-50 hover:text-red-600 hover:border-red-100 font-semibold text-sm transition-all shadow-sm h-[46px]"
+                    className="flex items-center gap-2 h-10 px-4 text-sm text-slate-600 hover:bg-slate-100 rounded-lg border border-slate-200 font-medium transition-all shadow-sm"
                   >
                     <X className="h-4 w-4" />
                     <span>{translate('admin_reservations.filters.reset', 'Effacer')}</span>
@@ -1676,9 +1680,9 @@ export default function ReservationsAdmin() {
 
             {showFilters && (
               <div className="mt-6 pt-6 border-t border-slate-100 animate-in fade-in slide-in-from-top-2 duration-300">
-                <div className="flex flex-wrap items-start gap-4">
+                <div className="flex items-center gap-3 flex-wrap">
                   {/* Status Filter */}
-                  <div className="space-y-2 flex-1 min-w-[200px]">
+                  <div className="space-y-1.5 flex-1 min-w-[150px]">
                     <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">
                       {translate('admin_reservations.filters.status', 'Statut')}
                     </label>
@@ -1686,7 +1690,7 @@ export default function ReservationsAdmin() {
                       <select
                         value={filters.status}
                         onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                        className="w-full appearance-none px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none text-sm font-medium text-slate-700 cursor-pointer transition-all"
+                        className="h-10 px-3 pr-10 text-sm border border-slate-200 rounded-lg w-full appearance-none bg-slate-50 focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none cursor-pointer transition-all"
                       >
                         <option value="all">{translate('admin_reservations.filters.all_status', 'Tous les statuts')}</option>
                         <option value="pending">{translate('admin_reservations.status.pending', 'En attente')}</option>
@@ -1704,26 +1708,23 @@ export default function ReservationsAdmin() {
                   </div>
 
                   {/* Date Filter */}
-                  <div className="space-y-2 flex-1 min-w-[200px]">
+                  <div className="space-y-1.5 flex-1 min-w-[150px]">
                     <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">
                       {translate('admin_reservations.filters.date', 'Date spécifique')}
                     </label>
                     <div className="relative group">
-                      <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 z-10">
-                        <Calendar className="h-4 w-4" />
-                      </div>
-                      <input
-                        type="date"
-                        value={filters.date}
-                        onChange={(e) => setFilters({ ...filters, date: e.target.value })}
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none text-sm font-medium text-slate-700 transition-all cursor-pointer"
+                      <DatePicker
+                        variant="filter"
+                        className="h-10 px-3 text-sm"
+                        selected={filters.date ? new Date(filters.date + "T00:00:00") : undefined}
+                        onSelect={(date) => setFilters({ ...filters, date: date ? format(date, "yyyy-MM-dd") : "" })}
+                        placeholder={translate('admin_reservations.filters.select_date', 'Sélectionner une date')}
                       />
                     </div>
-                    {/* <p className="text-[10px] text-slate-400 font-medium ml-1 italic">{translate('admin_reservations.filters.date_help', 'Date de départ, retour ou création')}</p> */}
                   </div>
 
                   {/* Vehicle Model Filter */}
-                  <div className="space-y-2 flex-1 min-w-[200px]">
+                  <div className="space-y-1.5 flex-1 min-w-[150px]">
                     <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">
                       {translate('admin_reservations.filters.vehicle_model', 'Modèle de véhicule')}
                     </label>
@@ -1736,7 +1737,7 @@ export default function ReservationsAdmin() {
                         placeholder={translate('admin_reservations.filters.vehicle_placeholder', 'Ex: Volvo XC60')}
                         value={filters.vehicleModel}
                         onChange={(e) => setFilters({ ...filters, vehicleModel: e.target.value })}
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none text-sm font-medium text-slate-700 transition-all placeholder:text-slate-400"
+                        className="h-10 pl-10 pr-4 text-sm border border-slate-200 rounded-lg w-full bg-slate-50 focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400"
                       />
                     </div>
                   </div>
@@ -1754,15 +1755,15 @@ export default function ReservationsAdmin() {
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
                   className={`flex items-center justify-center gap-2 px-4 py-3 font-medium text-sm border-b-2 transition-colors whitespace-nowrap flex-1 min-w-0 ${activeTab === tab.key
-                      ? "border-blue-600 text-blue-600 bg-blue-50"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                    ? "border-blue-600 text-blue-600 bg-blue-50"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                     }`}
                 >
                   <span className="text-base">{tab.icon}</span>
                   <span className="hidden sm:inline truncate">{tab.label}</span>
                   <span className={`px-2 py-1 rounded-full text-xs min-w-6 flex-shrink-0 ${activeTab === tab.key
-                      ? "bg-blue-100 text-blue-600"
-                      : "bg-gray-100 text-gray-600"
+                    ? "bg-blue-100 text-blue-600"
+                    : "bg-gray-100 text-gray-600"
                     }`}>
                     {tab.count}
                   </span>
@@ -1934,8 +1935,8 @@ export default function ReservationsAdmin() {
                         selectedVehicleId: vehicle.id
                       }))}
                       className={`p-4 border rounded-lg cursor-pointer transition-all ${vehicleSelectionModal.selectedVehicleId === vehicle.id
-                          ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
-                          : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
+                        : 'border-gray-200 hover:border-gray-300'
                         } ${!vehicle.isAvailable ? 'opacity-50 cursor-not-allowed' : ''
                         }`}
                     >
@@ -1958,10 +1959,10 @@ export default function ReservationsAdmin() {
                               {vehicle.registration_number}
                             </div>
                             <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${vehicle.status === 'available'
-                                ? 'bg-green-100 text-green-800'
-                                : vehicle.status === 'reserved'
-                                  ? 'bg-orange-100 text-orange-800'
-                                  : 'bg-gray-100 text-gray-800'
+                              ? 'bg-green-100 text-green-800'
+                              : vehicle.status === 'reserved'
+                                ? 'bg-orange-100 text-orange-800'
+                                : 'bg-gray-100 text-gray-800'
                               }`}>
                               {vehicle.status === 'available' && translate('admin_reservations.vehicle_status.available', 'Disponible')}
                               {vehicle.status === 'reserved' && translate('admin_reservations.vehicle_status.reserved', 'Réservé')}
@@ -2001,8 +2002,8 @@ export default function ReservationsAdmin() {
                         </div>
 
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${vehicleSelectionModal.selectedVehicleId === vehicle.id
-                            ? 'bg-blue-500 border-blue-500'
-                            : 'border-gray-300'
+                          ? 'bg-blue-500 border-blue-500'
+                          : 'border-gray-300'
                           } ${!vehicle.isAvailable ? 'border-gray-200' : ''}`}>
                           {vehicleSelectionModal.selectedVehicleId === vehicle.id && (
                             <Check className="h-3 w-3 text-white" />

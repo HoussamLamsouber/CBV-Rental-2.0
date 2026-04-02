@@ -1,7 +1,7 @@
 // components/AdminDepots.tsx
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Edit, Trash2, MapPin, Phone, Mail, Search, Filter, X, Car, Check, Table, Building2 } from "lucide-react";
+import { Plus, Edit, Trash2, MapPin, Phone, Mail, Search, Filter, X, Car, Check, Table, Building2, Warehouse } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 
@@ -386,6 +386,46 @@ export default function AdminDepots() {
     }
   };
 
+  const handleBulkRemove = async () => {
+    if (!selectedDepot || selectedVehicles.length === 0) return;
+
+    if (!confirm(t('admin_depots.messages.confirm_bulk_remove', { count: selectedVehicles.length }))) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('vehicles')
+        .update({
+          depot_id: null,
+          updated_at: new Date().toISOString()
+        })
+        .in('id', selectedVehicles);
+
+      if (error) throw error;
+
+      toast({
+        title: t('admin_depots.toast.vehicles_removed'),
+        description: t('admin_depots.toast.vehicles_removed_desc', {
+          count: selectedVehicles.length
+        }),
+      });
+
+      setSelectedVehicles([]);
+      if (selectedDepot) {
+        await fetchDepotVehicles(selectedDepot.id);
+        await fetchAvailableVehicles();
+      }
+    } catch (error: any) {
+      console.error('Erreur retrait groupé:', error);
+      toast({
+        title: t('admin_depots.toast.remove_error'),
+        description: error.message || t('admin_depots.toast.remove_error_desc'),
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleRemoveVehicle = async (vehicleId: string) => {
 
     try {
@@ -429,11 +469,12 @@ export default function AdminDepots() {
     );
   };
 
-  const handleSelectAll = () => {
-    if (selectedVehicles.length === availableVehicles.length) {
+  const handleSelectAll = (isAvailableMode: boolean = false) => {
+    const listToSelect = isAvailableMode ? availableVehicles : depotVehicles;
+    if (selectedVehicles.length === listToSelect.length) {
       setSelectedVehicles([]);
     } else {
-      setSelectedVehicles(availableVehicles.map(v => v.id));
+      setSelectedVehicles(listToSelect.map(v => v.id));
     }
   };
 
@@ -488,6 +529,7 @@ export default function AdminDepots() {
 
   const openVehiclesModal = async (depot: Depot) => {
     setSelectedDepot(depot);
+    setSelectedVehicles([]);
     await fetchDepotVehicles(depot.id);
     setShowVehiclesModal(true);
   };
@@ -538,28 +580,30 @@ export default function AdminDepots() {
         {/* En-tête amélioré */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-white rounded-xl shadow-sm border border-gray-100">
-                <Building2 className="h-8 w-8 text-blue-600" />
-              </div>
-              <div>
-                <h1 className="text-[24px] font-semibold text-slate-900 mb-2">
-                  {t('admin_depots.title')}
-                </h1>
-                <p className="text-slate-600 text-sm sm:text-base font-medium">
-                  {t('admin_depots.subtitle', {
-                    total: depots.length,
-                    active: activeDepotsCount,
-                    inactive: inactiveDepotsCount
-                  })}
-                </p>
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="p-3 bg-white rounded-xl shadow-sm border border-gray-100">
+                  <Warehouse className="h-8 w-8 text-blue-600" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-semibold text-slate-900">
+                    {t('admin_depots.title')}
+                  </h1>
+                  <p className="text-slate-600 text-sm sm:text-base font-medium">
+                    {t('admin_depots.subtitle', {
+                      total: depots.length,
+                      active: activeDepotsCount,
+                      inactive: inactiveDepotsCount
+                    })}
+                  </p>
+                </div>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
               <button
                 onClick={openCreateModal}
-                className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2.5 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-sm hover:shadow-md"
+                className="h-10 px-4 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 whitespace-nowrap font-medium"
               >
                 <Plus className="h-4 w-4" />
                 {t('admin_depots.actions.create')}
@@ -569,26 +613,26 @@ export default function AdminDepots() {
         </div>
 
         {/* Barre de recherche et filtres améliorée */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1 relative">
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-8 w-full">
+          <div className="flex items-center gap-3 flex-wrap w-full">
+            <div className="relative flex-1 min-w-[250px]">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
               <input
                 type="text"
                 placeholder={t('admin_depots.search.placeholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 input-base"
+                className="h-10 pl-10 pr-4 text-sm border border-slate-200 rounded-lg w-full focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all"
               />
             </div>
 
-            <div className="flex gap-3">
-              <div className="relative">
+            <div className="flex items-center gap-3">
+              <div className="relative min-w-[150px]">
                 <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
                 <select
                   value={filterActive}
                   onChange={(e) => setFilterActive(e.target.value as "all" | "active" | "inactive")}
-                  className="pl-10 input-base w-[180px]"
+                  className="h-10 pl-10 pr-4 text-sm border border-slate-200 rounded-lg w-full appearance-none bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
                 >
                   <option value="all">{t('admin_depots.filters.all')}</option>
                   <option value="active">{t('admin_depots.filters.active')}</option>
@@ -602,7 +646,7 @@ export default function AdminDepots() {
                     setSearchTerm("");
                     setFilterActive("all");
                   }}
-                  className="flex items-center gap-2 px-4 py-3 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors text-sm"
+                  className="h-10 px-4 text-sm text-slate-600 hover:bg-slate-100 rounded-lg border border-slate-200 flex items-center gap-2 transition-colors font-medium whitespace-nowrap"
                 >
                   <X className="h-4 w-4" />
                   {t('admin_depots.filters.reset')}
@@ -725,8 +769,15 @@ export default function AdminDepots() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex justify-center gap-1">
                           <button
+                            onClick={() => openVehiclesModal(depot)}
+                            className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                          >
+                            <Car className="h-4 w-4" />
+                          </button>
+
+                          <button
                             onClick={() => openEditModal(depot)}
-                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                           >
                             <Edit className="h-4 w-4" />
                           </button>
@@ -736,13 +787,6 @@ export default function AdminDepots() {
                             className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           >
                             <Trash2 className="h-4 w-4" />
-                          </button>
-
-                          <button
-                            onClick={() => openVehiclesModal(depot)}
-                            className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                          >
-                            <Car className="h-4 w-4" />
                           </button>
                         </div>
                       </td>
@@ -784,7 +828,11 @@ export default function AdminDepots() {
         <VehiclesModal
           depot={selectedDepot}
           vehicles={depotVehicles}
+          selectedVehicles={selectedVehicles}
+          onSelectVehicle={handleSelectVehicle}
+          onSelectAll={handleSelectAll}
           onRemoveVehicle={handleRemoveVehicle}
+          onBulkRemove={handleBulkRemove}
           onClose={() => setShowVehiclesModal(false)}
           onAddVehicle={() => {
             setShowVehiclesModal(false);
@@ -828,21 +876,25 @@ function DepotModal({ title, formData, setFormData, onSubmit, onClose, submitTex
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-xl">
-
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">{title}</h3>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+      <div className="bg-white rounded-xl sm:max-w-lg w-full p-6 shadow-xl">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
 
         {/* Tabs langues */}
-        <div className="flex gap-2 mb-4">
+        <div className="flex gap-1 mb-6 p-1 bg-gray-50 rounded-lg w-fit">
           {["fr", "en"].map((lang) => (
             <button
               key={lang}
               type="button"
               onClick={() => setActiveLang(lang as any)}
-              className={`px-3 py-1 rounded-lg text-sm font-medium transition ${activeLang === lang
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700"
+              className={`px-4 py-1.5 rounded-md text-xs font-semibold transition-all ${activeLang === lang
+                  ? "bg-white text-blue-600 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
                 }`}
             >
               {lang.toUpperCase()}
@@ -850,100 +902,113 @@ function DepotModal({ title, formData, setFormData, onSubmit, onClose, submitTex
           ))}
         </div>
 
-        <form onSubmit={onSubmit} className="space-y-4">
+        <form onSubmit={onSubmit} className="flex flex-col gap-6 w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-5 w-full">
+            {/* Champs traduits */}
+            <div className="w-full">
+              <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1.5">
+                {t('admin_depots.form.name')}
+              </label>
+              <input
+                type="text"
+                required
+                placeholder={t('admin_depots.form.name')}
+                value={formData.translations[activeLang].name}
+                onChange={(e) => updateTranslation("name", e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+              />
+            </div>
 
-          {/* Champs traduits */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {t('admin_depots.form.name')} ({activeLang.toUpperCase()})
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.translations[activeLang].name}
-              onChange={(e) => updateTranslation("name", e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg"
-            />
+            <div className="w-full">
+              <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1.5">
+                {t('admin_depots.form.city')}
+              </label>
+              <input
+                type="text"
+                required
+                placeholder={t('admin_depots.form.city')}
+                value={formData.translations[activeLang].city}
+                onChange={(e) => updateTranslation("city", e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+              />
+            </div>
+
+            <div className="sm:col-span-2 w-full">
+              <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1.5">
+                {t('admin_depots.form.address')}
+              </label>
+              <input
+                type="text"
+                required
+                placeholder={t('admin_depots.form.address')}
+                value={formData.translations[activeLang].address}
+                onChange={(e) => updateTranslation("address", e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+              />
+            </div>
+
+            {/* Champs non traduits */}
+            <div className="w-full">
+              <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1.5">
+                {t('admin_depots.form.phone')}
+              </label>
+              <input
+                type="tel"
+                placeholder="+212 ..."
+                value={formData.phone}
+                onChange={(e) =>
+                  setFormData({ ...formData, phone: e.target.value })
+                }
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+              />
+            </div>
+
+            <div className="w-full">
+              <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1.5">
+                {t('admin_depots.form.email')}
+              </label>
+              <input
+                type="email"
+                placeholder="contact@..."
+                value={formData.email}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+              />
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {t('admin_depots.form.address')} ({activeLang.toUpperCase()})
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.translations[activeLang].address}
-              onChange={(e) => updateTranslation("address", e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {t('admin_depots.form.city')} ({activeLang.toUpperCase()})
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.translations[activeLang].city}
-              onChange={(e) => updateTranslation("city", e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg"
-            />
-          </div>
-
-          {/* Champs non traduits */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {t('admin_depots.form.phone')}
-            </label>
-            <input
-              type="tel"
-              value={formData.phone}
-              onChange={(e) =>
-                setFormData({ ...formData, phone: e.target.value })
-              }
-              className="w-full px-3 py-2 border rounded-lg"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {t('admin_depots.form.email')}
-            </label>
-            <input
-              type="email"
-              value={formData.email}
-              onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
-              }
-              className="w-full px-3 py-2 border rounded-lg"
-            />
-          </div>
-
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
             <input
               type="checkbox"
+              id="is_active"
               checked={formData.is_active}
               onChange={(e) =>
                 setFormData({ ...formData, is_active: e.target.checked })
               }
+              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
             />
-            <label>{t('admin_depots.form.active')}</label>
+            <label htmlFor="is_active" className="text-sm font-medium text-gray-700 cursor-pointer select-none">
+              {t('admin_depots.form.active')}
+            </label>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t">
-            <button type="button" onClick={onClose}>
+          <div className="flex justify-end gap-3 pt-6 border-t border-gray-100 w-full">
+            <button 
+              type="button" 
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            >
               {t('admin_depots.actions.cancel')}
             </button>
             <button
               type="submit"
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md"
             >
               {submitText}
             </button>
           </div>
-
         </form>
       </div>
     </div>
@@ -951,8 +1016,27 @@ function DepotModal({ title, formData, setFormData, onSubmit, onClose, submitTex
 }
 
 // Composant modal pour la gestion des véhicules avec design amélioré
-function VehiclesModal({ depot, vehicles, onRemoveVehicle, onClose, onAddVehicle }: any) {
+function VehiclesModal({ 
+  depot, 
+  vehicles, 
+  selectedVehicles,
+  onSelectVehicle,
+  onSelectAll,
+  onRemoveVehicle, 
+  onBulkRemove,
+  onClose, 
+  onAddVehicle 
+}: any) {
   const { t } = useTranslation();
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleBulkRemoveAction = async () => {
+    setIsDeleting(true);
+    await onBulkRemove();
+    setIsDeleting(false);
+  };
+
+  const allSelected = vehicles.length > 0 && selectedVehicles.length === vehicles.length;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -972,13 +1056,24 @@ function VehiclesModal({ depot, vehicles, onRemoveVehicle, onClose, onAddVehicle
                 </p>
               </div>
             </div>
-            <button
-              onClick={onAddVehicle}
-              className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-green-700 text-white px-3 py-2 rounded-lg hover:from-green-700 hover:to-green-800 transition-all text-sm shadow-sm"
-            >
-              <Plus className="h-4 w-4" />
-              {t('admin_depots.actions.add_vehicle')}
-            </button>
+            <div className="flex items-center gap-2">
+              {vehicles.length > 0 && (
+                <button
+                  onClick={() => onSelectAll(false)}
+                  className="flex items-center gap-2 bg-gray-100 text-gray-700 px-3 py-2 rounded-lg text-sm hover:bg-gray-200 transition-colors"
+                >
+                  <Check className={`h-4 w-4 ${allSelected ? 'text-green-600' : 'text-gray-400'}`} />
+                  {allSelected ? t('admin_depots.actions.deselect_all') : t('admin_depots.actions.select_all')}
+                </button>
+              )}
+              <button
+                onClick={onAddVehicle}
+                className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-green-700 text-white px-3 py-2 rounded-lg hover:from-green-700 hover:to-green-800 transition-all text-sm shadow-sm"
+              >
+                <Plus className="h-4 w-4" />
+                {t('admin_depots.actions.add_vehicle')}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -996,8 +1091,26 @@ function VehiclesModal({ depot, vehicles, onRemoveVehicle, onClose, onAddVehicle
           ) : (
             <div className="space-y-3">
               {vehicles.map((vehicle: any) => (
-                <div key={vehicle.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50/50 transition-colors">
+                <div 
+                  key={vehicle.id} 
+                  className={`flex items-center justify-between p-4 border rounded-lg transition-colors cursor-pointer ${
+                    selectedVehicles.includes(vehicle.id) 
+                      ? 'border-blue-500 bg-blue-50' 
+                      : 'border-gray-200 hover:bg-gray-50/50'
+                  }`}
+                  onClick={() => onSelectVehicle(vehicle.id)}
+                >
                   <div className="flex items-center gap-3">
+                    <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                      selectedVehicles.includes(vehicle.id)
+                        ? 'bg-blue-500 border-blue-500'
+                        : 'border-gray-300'
+                    }`}>
+                      {selectedVehicles.includes(vehicle.id) && (
+                        <Check className="h-3 w-3 text-white" />
+                      )}
+                    </div>
+
                     {vehicle.cars?.image_url ? (
                       <img
                         src={vehicle.cars.image_url}
@@ -1030,7 +1143,10 @@ function VehiclesModal({ depot, vehicles, onRemoveVehicle, onClose, onAddVehicle
                   </div>
 
                   <button
-                    onClick={() => onRemoveVehicle(vehicle.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemoveVehicle(vehicle.id);
+                    }}
                     className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                     title={t('admin_depots.actions.remove_vehicle')}
                   >
@@ -1043,19 +1159,33 @@ function VehiclesModal({ depot, vehicles, onRemoveVehicle, onClose, onAddVehicle
         </div>
 
         <div className="p-6 border-t border-gray-200 bg-gray-50">
-          <div className="flex justify-end">
-            <button
-              onClick={onClose}
-              className="px-4 py-2.5 text-gray-600 hover:text-gray-800 transition-colors font-medium"
-            >
-              {t('admin_depots.actions.close')}
-            </button>
+          <div className="flex justify-between items-center">
+            {selectedVehicles.length > 0 && (
+              <button
+                onClick={handleBulkRemoveAction}
+                disabled={isDeleting}
+                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+              >
+                <Trash2 className="h-4 w-4" />
+                {t('admin_depots.actions.remove_selected', { count: selectedVehicles.length })}
+              </button>
+            )}
+            <div className="flex gap-3 ml-auto">
+              <button
+                onClick={onClose}
+                className="px-4 py-2.5 text-gray-600 hover:text-gray-800 transition-colors font-medium"
+              >
+                {t('admin_depots.actions.close')}
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
 }
+
+
 
 // Composant modal pour l'assignation de véhicules avec sélection multiple et design amélioré
 function AssignVehicleModal({

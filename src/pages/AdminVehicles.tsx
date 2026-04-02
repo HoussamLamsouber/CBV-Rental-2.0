@@ -465,26 +465,26 @@ export default function AdminVehicles() {
           </div>
 
           {/* Barre de recherche et filtres */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
-            <div className="flex flex-col lg:flex-row gap-4">
-              <div className="flex-1 relative">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-8">
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="relative flex-1 min-w-[250px]">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 h-4 w-4" />
                 <input
                   type="text"
                   placeholder={t('admin_vehicles.search.placeholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 input-base"
+                  className="h-10 pl-10 pr-4 text-sm border border-slate-200 rounded-lg w-full focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all"
                 />
               </div>
 
-              <div className="flex gap-3">
-                <div className="relative">
+              <div className="flex items-center gap-3">
+                <div className="relative min-w-[150px]">
                   <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 h-4 w-4" />
                   <select
                     value={filterCategory}
                     onChange={(e) => setFilterCategory(e.target.value)}
-                    className="pl-10 input-base w-[220px]"
+                    className="h-10 pl-10 pr-4 text-sm border border-slate-200 rounded-lg w-full appearance-none bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
                   >
                     <option value="all">{t('admin_vehicles.filters.all_categories')}</option>
                     <option value="category_electric">{t('admin_vehicles.categories.category_electric')}</option>
@@ -500,7 +500,7 @@ export default function AdminVehicles() {
                       setSearchTerm("");
                       setFilterCategory("all");
                     }}
-                    className="flex items-center gap-2 px-4 py-3 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors text-sm"
+                    className="h-10 px-4 text-sm text-slate-600 hover:bg-slate-100 rounded-lg border border-slate-200 flex items-center gap-2 transition-colors font-medium"
                   >
                     <X className="h-4 w-4" />
                     {t('admin_vehicles.search.reset')}
@@ -617,21 +617,21 @@ export default function AdminVehicles() {
                         <div className="flex justify-center gap-1">
                           <Link
                             to={`/admin/vehicle/${vehicle.id}`}
-                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                             title={t('admin_vehicles.actions.view_details')}
                           >
                             <Car className="h-4 w-4" />
                           </Link>
                           <button
                             onClick={() => handleEditVehicle(vehicle)}
-                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                             title={t('admin_vehicles.actions.edit')}
                           >
                             <Edit className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => handleDeleteVehicle(vehicle)}
-                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                             title={t('admin_vehicles.actions.delete')}
                           >
                             <Trash2 className="h-4 w-4" />

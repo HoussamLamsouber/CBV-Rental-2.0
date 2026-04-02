@@ -265,6 +265,7 @@ export default function AdminDashboard() {
     const monthlyRevenue: { [key: string]: number } = {};
     const last6Months = Array.from({ length: 6 }, (_, i) => {
       const date = new Date();
+      date.setDate(1); // prevent day-overflow (e.g. Mar 30 - 1m → Feb 30 → Mar 2)
       date.setMonth(date.getMonth() - i);
       return date.toISOString().slice(0, 7);
     }).reverse();

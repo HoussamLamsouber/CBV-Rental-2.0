@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Lock } from "lucide-react";
@@ -84,36 +85,36 @@ export default function ResetPassword() {
           </CardHeader>
 
           <CardContent>
-            <form onSubmit={handlePasswordReset} className="space-y-5">
+            <form onSubmit={handlePasswordReset} className="space-y-4">
               <div>
-                <label className="block mb-1 text-sm font-medium text-blue-900">
+                <Label className="block mb-1 text-sm font-medium text-slate-700 ml-1">
                   {t("new_password")}
-                </label>
+                </Label>
                 <Input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="bg-white border border-gray-300 text-gray-900"
+                  className="h-10 bg-white border-slate-200 rounded-lg focus:ring-4 focus:ring-blue-500/10 transition-all text-sm"
                 />
               </div>
 
               <div>
-                <label className="block mb-1 text-sm font-medium text-blue-900">
+                <Label className="block mb-1 text-sm font-medium text-slate-700 ml-1">
                   {t("confirm_password")}
-                </label>
+                </Label>
                 <Input
                   type="password"
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
                   required
-                  className="bg-white border border-gray-300 text-gray-900"
+                  className="h-10 bg-white border-slate-200 rounded-lg focus:ring-4 focus:ring-blue-500/10 transition-all text-sm"
                 />
               </div>
 
               <Button
                 type="submit"
-                className="w-full bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2 rounded-lg transition-all"
+                className="w-full h-10 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm uppercase tracking-wider rounded-lg shadow-lg shadow-slate-900/10 transition-all"
                 disabled={loading}
               >
                 {loading ? t("saving") + "..." : t("update_password")}

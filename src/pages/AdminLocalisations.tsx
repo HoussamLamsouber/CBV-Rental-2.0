@@ -370,7 +370,7 @@ export default function AdminLocalisations() {
           {/* En-tête */}
           <div className="mb-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 mb-2">
                 <div className="p-3 bg-white rounded-xl shadow-sm border border-gray-100">
                   <MapPin className="h-8 w-8 text-blue-600" />
                 </div>
@@ -386,41 +386,41 @@ export default function AdminLocalisations() {
             </div>
           </div>
 
-          {/* Barre de recherche et filtres */}
-          <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-            <div className="flex flex-col lg:flex-row gap-4 mb-4">
-              <div className="flex-1 relative">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-8 w-full">
+            <div className="flex items-center gap-3 flex-wrap w-full">
+              <div className="relative flex-1 min-w-[250px]">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
-                <Input
+                <input
                   type="text"
                   placeholder={t('admin_localisations.search.placeholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 input-base"
+                  className="h-10 pl-10 pr-4 text-sm border border-slate-200 rounded-lg w-full focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all"
                 />
               </div>
 
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-                className="input-base w-[200px]"
-              >
-                <option value="all">{t('admin_localisations.filters.all_types')}</option>
-                <option value="airport">{t('admin_localisations.filters.airports')}</option>
-                <option value="station">{t('admin_localisations.filters.stations')}</option>
-              </select>
+              <div className="flex items-center gap-3">
+                <select
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value)}
+                  className="h-10 px-3 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer min-w-[150px]"
+                >
+                  <option value="all">{t('admin_localisations.filters.all_types')}</option>
+                  <option value="airport">{t('admin_localisations.filters.airports')}</option>
+                  <option value="station">{t('admin_localisations.filters.stations')}</option>
+                </select>
 
-              <Button
-                onClick={() => setShowAddForm(!showAddForm)}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                {t('admin_localisations.actions.add_localisation')}
-              </Button>
+                <button
+                  onClick={() => setShowAddForm(!showAddForm)}
+                  className="h-10 px-4 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 whitespace-nowrap font-medium"
+                >
+                  <Plus className="h-4 w-4" />
+                  {t('admin_localisations.actions.add_localisation')}
+                </button>
+              </div>
             </div>
-
             {/* Statistiques */}
-            <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+            <div className="flex flex-wrap gap-4 text-sm text-gray-600 mt-4 pt-4 border-t border-slate-100">
               <span>{t('admin_localisations.stats.total')}: {localisations.length}</span>
               <span>{t('admin_localisations.stats.active')}: {localisations.filter(l => l.is_active).length}</span>
               <span>{t('admin_localisations.stats.airports')}: {localisations.filter(l => l.localisation_type === 'airport').length}</span>
@@ -434,18 +434,17 @@ export default function AdminLocalisations() {
               <h3 className="text-lg font-semibold mb-6">{t('admin_localisations.add_form.title')}</h3>
 
               {/* Grid pour aligner les inputs */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4 mb-6 items-start">
-
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6 mb-8 items-start w-full">
                 {/* Type */}
-                <div className="flex flex-col">
-                  <Label htmlFor="localisation_type" className="mb-1">
-                    {t('admin_localisations.add_form.type')} *
+                <div className="flex flex-col w-full">
+                  <Label htmlFor="localisation_type" className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                    {t('admin_localisations.fields.type')} *
                   </Label>
                   <select
                     id="localisation_type"
                     value={newLocalisation.localisation_type}
                     onChange={(e) => handleLocalisationTypeChange(e.target.value)}
-                    className="input-base mt-1"
+                    className="h-10 px-3 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer w-full"
                   >
                     <option value="airport">{t('admin_localisations.types.airport')}</option>
                     <option value="station">{t('admin_localisations.types.station')}</option>
@@ -453,21 +452,21 @@ export default function AdminLocalisations() {
                 </div>
 
                 {/* Display Name */}
-                <div className="flex flex-col relative">
-                  <Label className="mb-1">
-                    {t('admin_localisations.add_form.display_name_label')} *
+                <div className="flex flex-col relative w-full">
+                  <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                    {t('admin_localisations.fields.display_name')} *
                   </Label>
 
                   {/* Tabs pour FR / EN */}
-                  <div className="absolute -top-3 right-0 flex gap-2">
+                  <div className="absolute -top-1 right-0 flex gap-1 p-1 bg-slate-50 rounded-md">
                     {["fr", "en"].map((lang) => (
                       <button
                         key={lang}
                         type="button"
                         onClick={() => setActiveLang(lang as "fr" | "en")}
-                        className={`px-3 py-1 rounded-md text-sm font-medium transition ${activeLang === lang
-                          ? "bg-blue-600 text-white"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        className={`px-3 py-1 rounded text-[10px] font-bold transition-all ${activeLang === lang
+                          ? "bg-white text-blue-600 shadow-sm"
+                          : "text-slate-400 hover:text-slate-600"
                           }`}
                       >
                         {lang.toUpperCase()}
@@ -475,8 +474,8 @@ export default function AdminLocalisations() {
                     ))}
                   </div>
 
-                  <Input
-                    className="mt-1 input-base"
+                  <input
+                    className="h-10 px-3 text-sm border border-slate-200 rounded-lg w-full focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all"
                     value={newLocalisation.translations[activeLang]}
                     onChange={(e) =>
                       setNewLocalisation((prev) => ({
@@ -492,20 +491,20 @@ export default function AdminLocalisations() {
                 </div>
 
                 {/* Technical Value */}
-                <div className="flex flex-col">
-                  <Label htmlFor="localisation_value" className="mb-1">
-                    {t('admin_localisations.add_form.technical_value')}
+                <div className="flex flex-col md:col-span-2 w-full">
+                  <Label htmlFor="localisation_value" className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                    {t('admin_localisations.fields.technical_value')}
                   </Label>
-                  <div className="relative">
-                    <Input
+                  <div className="relative w-full">
+                    <input
                       id="localisation_value"
                       value={newLocalisation.localisation_value}
                       readOnly
                       className={cn(
-                        "mt-1 pr-10 input-base",
+                        "h-10 pl-3 pr-10 text-sm border rounded-lg w-full font-mono text-xs outline-none transition-all",
                         validation.isDuplicate
                           ? "bg-red-50 border-red-300 text-red-900"
-                          : "bg-gray-50 border-gray-200 text-gray-700 font-mono text-xs"
+                          : "bg-slate-50 border-slate-200 text-slate-500 cursor-not-allowed"
                       )}
                       placeholder={t('admin_localisations.add_form.technical_value_placeholder')}
                     />
@@ -515,14 +514,13 @@ export default function AdminLocalisations() {
                       </div>
                     )}
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-slate-400 mt-2">
                     {validation.isDuplicate
                       ? t('admin_localisations.validation.duplicate')
                       : t('admin_localisations.add_form.technical_value_help')
                     }
                   </p>
                 </div>
-
               </div>
 
               {/* Aperçu */}
@@ -544,7 +542,7 @@ export default function AdminLocalisations() {
                   </h4>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="font-medium">Nom affiché :</span>
+                      <span className="font-medium">{t('admin_localisations.fields.display_name')} :</span>
                       <div className={cn(
                         "mt-1",
                         validation.isDuplicate ? "text-red-700" : "text-blue-700"
@@ -553,7 +551,7 @@ export default function AdminLocalisations() {
                       </div>
                     </div>
                     <div>
-                      <span className="font-medium">Valeur technique :</span>
+                      <span className="font-medium">{t('admin_localisations.fields.technical_value')} :</span>
                       <div className={cn(
                         "font-mono text-xs mt-1 px-2 py-1 rounded",
                         validation.isDuplicate
@@ -584,7 +582,7 @@ export default function AdminLocalisations() {
                     validation.isDuplicate
                   }
                 >
-                  {t('admin_localisations.actions.add')} {t('admin_localisations.add_form.technical_value')}
+                  {t('admin_localisations.actions.create')} {t('admin_localisations.fields.technical_value')}
                 </Button>
                 <Button variant="outline" onClick={() => {
                   setShowAddForm(false);

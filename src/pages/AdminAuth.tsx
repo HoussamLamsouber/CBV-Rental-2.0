@@ -107,7 +107,7 @@ const AdminLogin = () => {
           <CardContent className="p-8 space-y-6">
             <form onSubmit={handleSignIn} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="admin-email" className="text-[11px] font-bold uppercase tracking-wider text-slate-600 ml-1">
+                <Label htmlFor="admin-email" className="text-sm font-medium text-slate-700 ml-1">
                   {t("admin_login.email_label")}
                 </Label>
                 <Input
@@ -117,12 +117,12 @@ const AdminLogin = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="h-12 bg-white border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 transition-all"
+                  className="h-10 bg-white border-slate-200 rounded-lg focus:ring-4 focus:ring-blue-500/10 transition-all text-sm"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="admin-password" className="text-[11px] font-bold uppercase tracking-wider text-slate-600 ml-1">
+                <Label htmlFor="admin-password" className="text-sm font-medium text-slate-700 ml-1">
                   {t("admin_login.password_label")}
                 </Label>
                 <Input
@@ -132,23 +132,23 @@ const AdminLogin = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="h-12 bg-white border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 transition-all"
+                  className="h-10 bg-white border-slate-200 rounded-lg focus:ring-4 focus:ring-blue-500/10 transition-all text-sm"
                 />
               </div>
 
               <Button
                 type="submit"
-                className="w-full h-12 bg-slate-900 text-white font-bold text-xs uppercase tracking-[0.2em] rounded-xl shadow-lg shadow-slate-900/10 hover:bg-blue-600 hover:shadow-blue-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
+                className="w-full h-10 bg-slate-900 text-white font-bold text-sm uppercase tracking-wider rounded-lg shadow-lg shadow-slate-900/10 hover:bg-blue-600 hover:shadow-blue-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
                 disabled={loading}
               >
                 {loading ? t("admin_login.button_loading") : t("admin_login.button_login")}
               </Button>
             </form>
 
-            <div className="pt-6 border-t border-slate-100">
+            <div className="pt-4 border-t border-slate-100">
               <Button
                 variant="ghost"
-                className="w-full h-11 text-slate-500 font-bold text-[10px] uppercase tracking-wider hover:bg-slate-50 hover:text-blue-600"
+                className="w-full h-10 text-slate-500 font-bold text-xs uppercase tracking-wider hover:bg-slate-50 hover:text-blue-600 rounded-lg"
                 onClick={() => navigate("/auth")}
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />

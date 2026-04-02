@@ -131,11 +131,11 @@ export default function AdminUsers() {
     }
 
     try {
-      const { error: rpcError } = await supabase.rpc('delete_user_profile', {
-        target_user_id: profileId
+      const { error: invokeError } = await supabase.functions.invoke('delete-user', {
+        body: { userId: profileId }
       });
 
-      if (rpcError) throw rpcError;
+      if (invokeError) throw invokeError;
 
       toast({
         title: t('admin_users.messages.user_deleted'),
@@ -315,23 +315,23 @@ export default function AdminUsers() {
 
                         {/* Actions */}
                         <td className="w-[120px] px-4 py-3">
-                          <div className="flex gap-2">
+                          <div className="flex justify-center gap-1">
 
-                            <Button
-                              variant="ghost"
-                              size="sm"
+                            <button
                               onClick={() => navigate(`/admin/reservations?user=${profile.id}`)}
+                              className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title={t('admin_users.actions.view_reservations')}
                             >
                               <Eye className="h-4 w-4" />
-                            </Button>
+                            </button>
 
-                            <Button
-                              variant="ghost"
-                              size="sm"
+                            <button
                               onClick={() => handleDeleteUser(profile.id, profile.email, profile.role)}
+                              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              title={t('admin_users.actions.delete_user')}
                             >
-                              <Trash2 className="h-4 w-4 text-red-600" />
-                            </Button>
+                              <Trash2 className="h-4 w-4" />
+                            </button>
 
                           </div>
                         </td>

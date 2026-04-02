@@ -11,9 +11,11 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { ArrowLeft, Calendar, Trash2, Pencil } from "lucide-react";
+import { ArrowLeft, Calendar, Trash2, Pencil, CalendarIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
+import { Calendar as CalendarPicker } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 type CarRow = {
   id: string;
@@ -122,6 +124,8 @@ export default function AdminVehicleDetail() {
   const [isCreateVehicleModalOpen, setIsCreateVehicleModalOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCreateObdOpen, setIsCreateObdOpen] = useState(false);
+  const [isEditObdOpen, setIsEditObdOpen] = useState(false);
 
   const [newOffer, setNewOffer] = useState({
     price: "",
@@ -441,15 +445,30 @@ export default function AdminVehicleDetail() {
       .from("offers")
       .select("*")
       .eq("car_id", id)
-      .is("is_deleted", false)
-      .order("price", { ascending: true });
+      .is("is_deleted", false);
     
     if (error) {
       console.error("Erreur chargement offres:", error);
       return;
     }
+
+    // Sort numerically by the leading integer in the period label (e.g. "1-3 jours" → 1)
+    const getMinDays = (periodJson: string): number => {
+      try {
+        const obj = typeof periodJson === "string" ? JSON.parse(periodJson) : periodJson;
+        const label: string = obj.fr || obj.en || "";
+        const match = label.match(/\d+/);
+        return match ? parseInt(match[0], 10) : Infinity;
+      } catch {
+        return Infinity;
+      }
+    };
+
+    const sorted = [...(offersData || [])].sort(
+      (a, b) => getMinDays(a.period) - getMinDays(b.period)
+    );
     
-    setOffers(offersData || []);
+    setOffers(sorted);
   };
 
   // Fonctions pour le calendrier de disponibilité
@@ -1499,12 +1518,36 @@ export default function AdminVehicleDetail() {
 
                 <div>
                   <Label htmlFor="date_obd">{t('admin_vehicle_detail.modals.obd_date_label')}</Label>
-                  <Input
-                    id="date_obd"
-                    type="date"
-                    value={newVehicle.date_obd}
-                    onChange={(e) => setNewVehicle({...newVehicle, date_obd: e.target.value})}
-                  />
+                  <Popover open={isCreateObdOpen} onOpenChange={setIsCreateObdOpen}>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className="flex items-center gap-2 w-full h-10 px-3 text-sm text-black bg-white border border-slate-200 rounded-lg hover:border-blue-400 transition-colors"
+                      >
+                        <CalendarIcon className="h-4 w-4 text-slate-400 shrink-0" />
+                        <span className={newVehicle.date_obd ? "text-black" : "text-slate-400"}>
+                          {newVehicle.date_obd
+                            ? format(new Date(newVehicle.date_obd + "T00:00:00"), "dd/MM/yyyy")
+                            : t('admin_vehicle_detail.modals.obd_date_placeholder', 'Select OBD date')}
+                        </span>
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarPicker
+                        mode="single"
+                        colorScheme="blue"
+                        selected={newVehicle.date_obd ? new Date(newVehicle.date_obd + "T00:00:00") : undefined}
+                        onSelect={(date) => {
+                          if (date) {
+                            setNewVehicle({ ...newVehicle, date_obd: format(date, "yyyy-MM-dd") });
+                            setIsCreateObdOpen(false);
+                          }
+                        }}
+                        disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 <div>
@@ -1564,13 +1607,36 @@ export default function AdminVehicleDetail() {
 
                   <div>
                     <Label>Date OBD</Label>
-                    <Input
-                      type="date"
-                      value={editingVehicle.date_obd || ""}
-                      onChange={(e) =>
-                        setEditingVehicle({ ...editingVehicle, date_obd: e.target.value })
-                      }
-                    />
+                    <Popover open={isEditObdOpen} onOpenChange={setIsEditObdOpen}>
+                      <PopoverTrigger asChild>
+                        <button
+                          type="button"
+                          className="flex items-center gap-2 w-full h-10 px-3 text-sm text-black bg-white border border-slate-200 rounded-lg hover:border-blue-400 transition-colors"
+                        >
+                          <CalendarIcon className="h-4 w-4 text-slate-400 shrink-0" />
+                          <span className={editingVehicle.date_obd ? "text-black" : "text-slate-400"}>
+                            {editingVehicle.date_obd
+                              ? format(new Date(editingVehicle.date_obd + "T00:00:00"), "dd/MM/yyyy")
+                              : t('admin_vehicle_detail.modals.obd_date_placeholder', 'Select OBD date')}
+                          </span>
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <CalendarPicker
+                          mode="single"
+                          colorScheme="blue"
+                          selected={editingVehicle.date_obd ? new Date(editingVehicle.date_obd + "T00:00:00") : undefined}
+                          onSelect={(date) => {
+                            if (date) {
+                              setEditingVehicle({ ...editingVehicle, date_obd: format(date, "yyyy-MM-dd") });
+                              setIsEditObdOpen(false);
+                            }
+                          }}
+                          disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
 
                   <div>

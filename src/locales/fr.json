@@ -151,7 +151,8 @@
             "vehicle_model": "Modèle de véhicule",
             "vehicle_placeholder": "Ex: Volvo XC60",
             "status": "Statut",
-            "all_status": "Tous les statuts"
+            "all_status": "Tous les statuts",
+            "select_date": "Sélectionner une date"
         },
         "status": {
             "pending": "En attente",
@@ -242,12 +243,6 @@
             "cannot_change_vehicle": "Impossible de changer le véhicule",
             "same_vehicle": "Véhicule identique",
             "same_vehicle_desc": "Le véhicule sélectionné est le même que celui actuellement attribué."
-        },
-        "offers_page": {
-            "title": "Offres Spéciales",
-            "subtitle": "Profitez de nos offres de location exclusives pour une durée limitée",
-            "noSpecialOffers": "Aucune offre spéciale disponible pour le moment.",
-            "bookNow": "Choisir ce véhicule"
         },
         "vehicle_modal": {
             "title": "Attribuer un véhicule",
@@ -533,22 +528,22 @@
             "checking_permissions": "Vérification des permissions...",
             "cannot_load_users": "Impossible de charger les utilisateurs.",
             "promotion_success": "Promotion réussie",
-            "now_admin": "{email} est maintenant administrateur.",
+            "now_admin": "{{email}} est maintenant administrateur.",
             "no_change": "Aucun changement",
-            "not_client_or_not_exists": "{email} n'était pas un client ou n'existe pas.",
+            "not_client_or_not_exists": "{{email}} n'était pas un client ou n'existe pas.",
             "cannot_promote_user": "Impossible de promouvoir l'utilisateur.",
-            "confirm_remove_admin": "Êtes-vous sûr de vouloir retirer les droits administrateur à {email} ?",
+            "confirm_remove_admin": "Êtes-vous sûr de vouloir retirer les droits administrateur à {{email}} ?",
             "rights_removed": "Droits retirés",
-            "no_longer_admin": "{email} n'est plus administrateur.",
+            "no_longer_admin": "{{email}} n'est plus administrateur.",
             "removal_failed": "Le retrait n'a pas fonctionné",
             "cannot_remove_admin_rights": "Impossible de retirer les droits administrateur.",
-            "confirm_delete_user": "Êtes-vous sûr de vouloir supprimer définitivement {email} ({role}) ? Cette action est irréversible.",
+            "confirm_delete_user": "Êtes-vous sûr de vouloir supprimer définitivement {{email}} ({{role}}) ? Cette action est irréversible.",
             "user_deleted": "Utilisateur supprimé",
-            "user_deleted_permanently": "{email} a été supprimé définitivement.",
+            "user_deleted_permanently": "{{email}} a été supprimé définitivement.",
             "cannot_delete_user": "Impossible de supprimer l'utilisateur.",
             "never": "Jamais",
             "loading_users": "Chargement des utilisateurs...",
-            "no_results_title": "Aucun {type} trouvé",
+            "no_results_title": "Aucun {{type}} trouvé",
             "no_search_results": "Aucun résultat pour votre recherche.",
             "no_admins_yet": "Commencez par ajouter un administrateur.",
             "no_clients_yet": "Aucun client inscrit.",
@@ -774,7 +769,7 @@
         "placeholders": {
             "email": "votre@email.com",
             "password": "••••••••",
-            "password_min_length": "Au moins 6 caractères",
+            "password_min_length": "Au moins 8 caractères",
             "full_name": "Votre nom complet"
         },
         "buttons": {
@@ -808,6 +803,11 @@
             "login_error": "Erreur de connexion",
             "login_success": "Connexion réussie !",
             "welcome": "Bienvenue {{name}}"
+        },
+        "confirm_password": "Confirmer le mot de passe",
+        "errors": {
+            "password_mismatch": "Les mots de passe ne correspondent pas",
+            "password_rules": "Le mot de passe doit contenir au moins 8 caractères et une majuscule"
         },
         "admin_link": {
             "text": "Vous êtes administrateur ?",
@@ -893,6 +893,8 @@
             "reservations_found": "{count} réservation(s) trouvée(s)",
             "cannot_cancel": "Cette réservation ne peut pas être annulée",
             "cannot_cancel_passed": "Cette réservation ne peut pas être annulée - la période de location est terminée",
+            "cannot_cancel_active": "Cette réservation est en cours et ne peut pas être annulée.",
+            "cannot_cancel_completed": "Cette réservation ne peut pas être annulée car la période de location est terminée.",
             "from_date": "Du {date}",
             "to_date": "Au {date}"
         },
@@ -1214,6 +1216,7 @@
             "view_vehicles": "Véhicules",
             "add_vehicle": "Ajouter",
             "remove_vehicle": "Retirer du dépôt",
+            "remove_selected": "Retirer la sélection ({{count}})",
             "close": "Fermer",
             "switch_table": "Mode tableau",
             "switch_cards": "Mode cartes"
@@ -1229,7 +1232,8 @@
             "try_search": "Essayez de modifier vos critères de recherche.",
             "create_first": "Créez votre premier dépôt pour commencer.",
             "confirm_delete": "Êtes-vous sûr de vouloir supprimer ce dépôt ?",
-            "confirm_remove_vehicle": "Êtes-vous sûr de vouloir retirer ce véhicule du dépôt ?"
+            "confirm_remove_vehicle": "Êtes-vous sûr de vouloir retirer ce véhicule du dépôt ?",
+            "confirm_bulk_remove": "Êtes-vous sûr de vouloir retirer les {{count}} véhicules sélectionnés de ce dépôt ?"
         },
         "modal": {
             "create_title": "Créer un nouveau dépôt",
@@ -1269,6 +1273,8 @@
             "loading_available_error_desc": "Impossible de charger les véhicules disponibles.",
             "vehicle_removed": "✅ Véhicule retiré",
             "vehicle_removed_desc": "Le véhicule a été retiré du dépôt avec succès.",
+            "vehicles_removed": "✅ Véhicules retirés",
+            "vehicles_removed_desc": "{{count}} véhicules ont été retirés du dépôt avec succès.",
             "remove_error": "Erreur de retrait",
             "remove_error_desc": "Impossible de retirer le véhicule du dépôt.",
             "assignment_error": "Erreur d'assignation",
@@ -1308,6 +1314,12 @@
     "admin_localisations": {
         "title": "Gestion des Localisations",
         "subtitle": "Sélectionnez les localisations qui apparaîtront dans la recherche de la page d'accueil",
+        "fields": {
+            "display_name": "Nom affiché",
+            "technical_value": "Valeur technique",
+            "type": "Type",
+            "status": "Statut"
+        },
         "stats": {
             "total": "Total",
             "active": "Actives",
@@ -1331,10 +1343,11 @@
             "inactive": "Inactive"
         },
         "actions": {
+            "create": "Créer",
+            "cancel": "Annuler",
             "add_localisation": "Ajouter une localisation",
             "activate": "Activer",
             "deactivate": "Désactiver",
-            "cancel": "Annuler",
             "add": "Ajouter",
             "delete": "Supprimer"
         },

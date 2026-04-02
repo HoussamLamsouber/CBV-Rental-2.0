@@ -68,9 +68,9 @@ export default function Contact() {
                 </div>
                 <div className="space-y-1">
                   <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t('contact.phone')}</h3>
-                  <a href={`tel:${t('contact.phone_number')}`} className="text-blue-600 hover:text-blue-700 font-bold text-lg transition-colors">
+                  <p className="text-slate-700 font-bold text-lg">
                     {t('contact.phone_display')}
-                  </a>
+                  </p>
                 </div>
               </div>
 
@@ -81,9 +81,9 @@ export default function Contact() {
                 </div>
                 <div className="space-y-1">
                   <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t('about_page.email_support')}</h3>
-                  <a href={`mailto:${t('contact.email')}`} className="text-slate-900 font-bold hover:text-blue-600 transition-colors">
+                  <p className="text-slate-700 font-bold">
                     {t('contact.email')}
-                  </a>
+                  </p>
                 </div>
               </div>
 
