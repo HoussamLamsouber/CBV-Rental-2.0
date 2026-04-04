@@ -173,6 +173,7 @@ const MonCompte = () => {
     return (
       <div className={isUserAdmin ? "p-4 lg:p-10" : "min-h-screen bg-[#f8fafc] pt-32"}>
         <div className={isUserAdmin ? "max-w-5xl mx-auto space-y-10" : "container mx-auto px-6 max-w-5xl space-y-10"}>
+          <div className="max-w-2xl mx-auto w-full space-y-10">
           
           {/* Header Section */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -229,9 +230,9 @@ const MonCompte = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
+          <div className="flex justify-center animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
             {/* Main Info Card */}
-            <div className="lg:col-span-2 space-y-8">
+            <div className="w-full max-w-2xl space-y-8">
                <Card className="rounded-2xl border-slate-200 shadow-sm overflow-hidden bg-white">
                  <CardHeader className="p-8 pb-0">
                     <div className="flex items-center gap-3">
@@ -326,11 +327,11 @@ const MonCompte = () => {
                  </CardContent>
                </Card>
             </div>
-
           </div>
         </div>
-        {!isUserAdmin && <Footer />}
       </div>
+      {!isUserAdmin && <Footer />}
+    </div>
     );
   };
 

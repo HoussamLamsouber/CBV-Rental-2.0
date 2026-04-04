@@ -304,8 +304,8 @@ const Auth = () => {
               </TabsTrigger>
             </TabsList>
             
-            <TabsContent value="login" className="mt-0">
-              <div className="min-h-[450px] flex flex-col justify-center">
+            <TabsContent value="login" className="mt-2">
+              <div className="min-h-[400px] flex flex-col justify-start pt-2">
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="login-email" className="text-sm font-medium text-slate-700 ml-1">{t('auth.fields.email')}</Label>
@@ -389,8 +389,8 @@ const Auth = () => {
             <TabsContent value="signup" className="mt-2">
               <div className="min-h-[400px] flex flex-col justify-start">
                 <form onSubmit={handleSignUp} className="flex flex-col justify-between h-full max-h-[550px]">
-                  <div className="overflow-visible flex flex-col gap-2 py-2 px-0.5">
-                    <div className="space-y-1.5">
+                  <div className="overflow-visible space-y-4 py-2 px-0.5">
+                    <div className="space-y-1">
                       <Label htmlFor="signup-fullname" className="text-sm font-medium text-slate-700 ml-1">{t('auth.fields.full_name')} *</Label>
                       <div className="relative group overflow-visible">
                         <Input
@@ -410,7 +410,7 @@ const Auth = () => {
                       </div>
                     </div>
 
-                    <div className="space-y-1.5">
+                    <div className="space-y-1">
                       <Label htmlFor="signup-email" className="text-sm font-medium text-slate-700 ml-1">{t('auth.fields.email')} *</Label>
                       <div className="relative group overflow-visible">
                         <Input
@@ -430,7 +430,7 @@ const Auth = () => {
                       </div>
                     </div>
 
-                    <div className="space-y-1.5">
+                    <div className="space-y-1">
                       <Label htmlFor="signup-password" className="text-sm font-medium text-slate-700 ml-1">{t('auth.fields.password')} *</Label>
                       <div className="relative group overflow-visible">
                         <Input
@@ -466,7 +466,7 @@ const Auth = () => {
                       </div>
                     </div>
 
-                    <div className="space-y-1.5">
+                    <div className="space-y-1">
                       <Label htmlFor="signup-confirm-password" className="text-sm font-medium text-slate-700 ml-1">{t('auth.confirm_password')} *</Label>
                       <div className="relative group overflow-visible">
                         <Input

@@ -878,7 +878,7 @@ function DepotModal({ title, formData, setFormData, onSubmit, onClose, submitTex
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
       <div className="bg-white rounded-xl sm:max-w-lg w-full p-6 shadow-xl">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
             <X className="h-5 w-5" />
@@ -886,7 +886,7 @@ function DepotModal({ title, formData, setFormData, onSubmit, onClose, submitTex
         </div>
 
         {/* Tabs langues */}
-        <div className="flex gap-1 mb-6 p-1 bg-gray-50 rounded-lg w-fit">
+        <div className="flex gap-1 mb-4 p-1 bg-gray-50 rounded-lg w-fit">
           {["fr", "en"].map((lang) => (
             <button
               key={lang}
@@ -902,7 +902,7 @@ function DepotModal({ title, formData, setFormData, onSubmit, onClose, submitTex
           ))}
         </div>
 
-        <form onSubmit={onSubmit} className="flex flex-col gap-6 w-full">
+        <form onSubmit={onSubmit} className="flex flex-col gap-4 w-full">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-5 w-full">
             {/* Champs traduits */}
             <div className="w-full">
@@ -979,7 +979,7 @@ function DepotModal({ title, formData, setFormData, onSubmit, onClose, submitTex
             </div>
           </div>
 
-          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+          <label htmlFor="is_active" className="flex items-center gap-3 p-3 w-full bg-gray-50 rounded-lg border border-gray-100 cursor-pointer select-none hover:bg-gray-100 transition-colors">
             <input
               type="checkbox"
               id="is_active"
@@ -987,12 +987,12 @@ function DepotModal({ title, formData, setFormData, onSubmit, onClose, submitTex
               onChange={(e) =>
                 setFormData({ ...formData, is_active: e.target.checked })
               }
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
             />
-            <label htmlFor="is_active" className="text-sm font-medium text-gray-700 cursor-pointer select-none">
+            <span className="text-sm font-medium text-gray-700">
               {t('admin_depots.form.active')}
-            </label>
-          </div>
+            </span>
+          </label>
 
           <div className="flex justify-end gap-3 pt-6 border-t border-gray-100 w-full">
             <button 

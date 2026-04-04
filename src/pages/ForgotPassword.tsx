@@ -95,7 +95,7 @@ export default function ForgotPassword() {
 
               <Button
                 type="submit"
-                className="w-full h-10 bg-slate-900 hover:bg-blue-600 text-white font-bold text-sm uppercase tracking-wider rounded-lg shadow-lg shadow-slate-900/10 hover:shadow-blue-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                className="w-auto px-4 mx-auto flex items-center justify-center h-10 bg-slate-900 hover:bg-blue-600 text-white font-bold text-sm uppercase tracking-wider rounded-lg shadow-lg shadow-slate-900/10 hover:shadow-blue-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
                 disabled={loading}
               >
                 {loading ? t("sending") + "..." : t("send_reset_link")}

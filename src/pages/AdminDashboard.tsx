@@ -94,6 +94,8 @@ export default function AdminDashboard() {
   const [reservationTrendData, setReservationTrendData] = useState<ChartData[]>([]);
   const [translationKey, setTranslationKey] = useState(0);
   const [chartKey, setChartKey] = useState(0);
+  const [monthsRange, setMonthsRange] = useState(6);
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -102,7 +104,7 @@ export default function AdminDashboard() {
     if (vehicles.length > 0 && allReservations.length > 0) {
       prepareChartData(vehicles, allReservations);
     }
-  }, [i18n.language]);
+  }, [i18n.language, monthsRange]);
 
   useEffect(() => {
     if (
@@ -175,7 +177,7 @@ export default function AdminDashboard() {
   const calculateStats = (vehicles: any[], allReservations: Reservation[]) => {
     // SOURCE OF TRUTH: sum of quantities from cars table
     const totalVehicles = vehicles.reduce((sum, v) => sum + Number(v.quantity || 0), 0);
-    
+
     const activeRentals = allReservations.filter(r => {
       const today = new Date();
       const pickup = new Date(r.pickup_date);
@@ -263,14 +265,14 @@ export default function AdminDashboard() {
     setCategoryData(categoryChartData);
 
     const monthlyRevenue: { [key: string]: number } = {};
-    const last6Months = Array.from({ length: 6 }, (_, i) => {
+    const lastXMonths = Array.from({ length: monthsRange }, (_, i) => {
       const date = new Date();
       date.setDate(1); // prevent day-overflow (e.g. Mar 30 - 1m → Feb 30 → Mar 2)
       date.setMonth(date.getMonth() - i);
       return date.toISOString().slice(0, 7);
     }).reverse();
 
-    last6Months.forEach(month => {
+    lastXMonths.forEach(month => {
       monthlyRevenue[month] = 0;
     });
 
@@ -311,13 +313,13 @@ export default function AdminDashboard() {
       return `${monthTranslations[monthIndex]} ${year}`;
     };
 
-    const revenueChartData = last6Months.map(month => ({
+    const revenueChartData = lastXMonths.map(month => ({
       name: formatMonthForChart(month), // ← Utiliser la nouvelle fonction
       value: Math.round(monthlyRevenue[month] / 100) * 100,
     }));
     setRevenueData(revenueChartData);
 
-    const reservationTrend = last6Months.map(month => ({
+    const reservationTrend = lastXMonths.map(month => ({
       name: formatMonthForChart(month), // ← Utiliser la nouvelle fonction
       value: allReservations.filter(
         res => res.created_at.slice(0, 7) === month && res.status === "accepted"
@@ -400,6 +402,27 @@ export default function AdminDashboard() {
                   color="orange"
                 />
               </motion.div>
+
+              {/* Chart Actions */}
+              <div className="flex justify-end mb-4">
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant={monthsRange === 6 ? "default" : "outline"}
+                    className="h-9 px-3 text-sm rounded-lg transition-all duration-200"
+                    onClick={() => setMonthsRange(6)}
+                  >
+                    6 mois
+                  </Button>
+
+                  <Button
+                    variant={monthsRange === 12 ? "default" : "outline"}
+                    className="h-9 px-3 text-sm rounded-lg transition-all duration-200"
+                    onClick={() => setMonthsRange(12)}
+                  >
+                    12 mois
+                  </Button>
+                </div>
+              </div>
 
               {/* Graphiques */}
               <motion.div

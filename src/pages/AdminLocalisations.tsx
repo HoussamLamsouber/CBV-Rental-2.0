@@ -430,14 +430,15 @@ export default function AdminLocalisations() {
 
           {/* Formulaire d'ajout */}
           {showAddForm && (
-            <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-              <h3 className="text-lg font-semibold mb-6">{t('admin_localisations.add_form.title')}</h3>
+            <div className="bg-white rounded-lg shadow-sm border p-6 mb-6 w-full max-w-7xl mx-auto">
+              <h3 className="text-lg font-semibold mb-4">{t('admin_localisations.add_form.title')}</h3>
 
               {/* Grid pour aligner les inputs */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6 mb-8 items-start w-full">
-                {/* Type */}
-                <div className="flex flex-col w-full">
-                  <Label htmlFor="localisation_type" className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end w-full mb-4">
+
+                {/* 1. Type */}
+                <div className="w-full">
+                  <Label htmlFor="localisation_type" className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 block">
                     {t('admin_localisations.fields.type')} *
                   </Label>
                   <select
@@ -450,30 +451,30 @@ export default function AdminLocalisations() {
                     <option value="station">{t('admin_localisations.types.station')}</option>
                   </select>
                 </div>
-
-                {/* Display Name */}
-                <div className="flex flex-col relative w-full">
-                  <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                    {t('admin_localisations.fields.display_name')} *
-                  </Label>
-
-                  {/* Tabs pour FR / EN */}
-                  <div className="absolute -top-1 right-0 flex gap-1 p-1 bg-slate-50 rounded-md">
-                    {["fr", "en"].map((lang) => (
-                      <button
-                        key={lang}
-                        type="button"
-                        onClick={() => setActiveLang(lang as "fr" | "en")}
-                        className={`px-3 py-1 rounded text-[10px] font-bold transition-all ${activeLang === lang
-                          ? "bg-white text-blue-600 shadow-sm"
-                          : "text-slate-400 hover:text-slate-600"
-                          }`}
-                      >
-                        {lang.toUpperCase()}
-                      </button>
-                    ))}
+                
+                {/* 2. Display Name */}
+                <div className="w-full">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                      {t('admin_localisations.fields.display_name')} *
+                    </Label>
+                    {/* Tabs pour FR / EN inline */}
+                    <div className="flex gap-1 p-0.5 bg-slate-50 rounded text-[10px]">
+                      {["fr", "en"].map((lang) => (
+                        <button
+                          key={lang}
+                          type="button"
+                          onClick={() => setActiveLang(lang as "fr" | "en")}
+                          className={`px-2 py-0.5 rounded font-bold transition-all ${activeLang === lang
+                            ? "bg-white text-blue-600 shadow-sm"
+                            : "text-slate-400 hover:text-slate-600"
+                            }`}
+                        >
+                          {lang.toUpperCase()}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-
                   <input
                     className="h-10 px-3 text-sm border border-slate-200 rounded-lg w-full focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all"
                     value={newLocalisation.translations[activeLang]}
@@ -490,9 +491,9 @@ export default function AdminLocalisations() {
                   />
                 </div>
 
-                {/* Technical Value */}
-                <div className="flex flex-col md:col-span-2 w-full">
-                  <Label htmlFor="localisation_value" className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                {/* 3. Technical Value */}
+                <div className="w-full">
+                  <Label htmlFor="localisation_value" className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 block">
                     {t('admin_localisations.fields.technical_value')}
                   </Label>
                   <div className="relative w-full">
@@ -501,7 +502,7 @@ export default function AdminLocalisations() {
                       value={newLocalisation.localisation_value}
                       readOnly
                       className={cn(
-                        "h-10 pl-3 pr-10 text-sm border rounded-lg w-full font-mono text-xs outline-none transition-all",
+                        "h-10 px-3 text-sm border border-slate-200 rounded-lg w-full font-mono outline-none transition-all",
                         validation.isDuplicate
                           ? "bg-red-50 border-red-300 text-red-900"
                           : "bg-slate-50 border-slate-200 text-slate-500 cursor-not-allowed"
@@ -514,93 +515,40 @@ export default function AdminLocalisations() {
                       </div>
                     )}
                   </div>
-                  <p className="text-xs text-slate-400 mt-2">
-                    {validation.isDuplicate
-                      ? t('admin_localisations.validation.duplicate')
-                      : t('admin_localisations.add_form.technical_value_help')
-                    }
-                  </p>
                 </div>
-              </div>
 
-              {/* Aperçu */}
-              {newLocalisation.translations.fr && (
-                <div className={cn(
-                  "border rounded-lg p-4 mb-4",
-                  validation.isDuplicate
-                    ? "bg-red-50 border-red-200"
-                    : "bg-blue-50 border-blue-200"
-                )}>
-                  <h4 className={cn(
-                    "text-sm font-medium mb-2",
-                    validation.isDuplicate ? "text-red-900" : "text-blue-900"
-                  )}>
-                    {validation.isDuplicate
-                      ? t('admin_localisations.add_form.conflict_detected')
-                      : t('admin_localisations.add_form.preview')
+                {/* 4. Actions */}
+                <div className="flex gap-2 w-full ml-20">
+                  <Button
+                    onClick={handleAddLocalisation}
+                    className="w-auto px-4 bg-green-600 hover:bg-green-700 h-10 text-sm"
+                    disabled={
+                      !newLocalisation.translations.fr ||
+                      !newLocalisation.translations.en ||
+                      !newLocalisation.localisation_value ||
+                      validation.isDuplicate
                     }
-                  </h4>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="font-medium">{t('admin_localisations.fields.display_name')} :</span>
-                      <div className={cn(
-                        "mt-1",
-                        validation.isDuplicate ? "text-red-700" : "text-blue-700"
-                      )}>
-                        {newLocalisation.translations[activeLang]}
-                      </div>
-                    </div>
-                    <div>
-                      <span className="font-medium">{t('admin_localisations.fields.technical_value')} :</span>
-                      <div className={cn(
-                        "font-mono text-xs mt-1 px-2 py-1 rounded",
-                        validation.isDuplicate
-                          ? "bg-red-100 text-red-700"
-                          : "bg-blue-100 text-blue-700"
-                      )}>
-                        {newLocalisation.localisation_value}
-                      </div>
-                    </div>
-                  </div>
-                  {validation.isDuplicate && (
-                    <p className="text-red-600 text-xs mt-2">
-                      {t('admin_localisations.add_form.conflict_message')}
-                    </p>
-                  )}
+                  >
+                    {t('admin_localisations.actions.create')}
+                  </Button>
+                  <Button variant="outline" className="w-auto px-4 h-10 text-sm" onClick={() => {
+                    setShowAddForm(false);
+                    setNewLocalisation({
+                      localisation_value: "",
+                      localisation_type: "airport",
+                      translations: {
+                        fr: "",
+                        en: ""
+                      }
+                    });
+                    setValidation({
+                      isDuplicate: false,
+                      isValid: true
+                    });
+                  }}>
+                    {t('admin_localisations.actions.cancel')}
+                  </Button>
                 </div>
-              )}
-
-              {/* Actions */}
-              <div className="flex flex-wrap gap-3">
-                <Button
-                  onClick={handleAddLocalisation}
-                  className="bg-green-600 hover:bg-green-700"
-                  disabled={
-                    !newLocalisation.translations.fr ||
-                    !newLocalisation.translations.en ||
-                    !newLocalisation.localisation_value ||
-                    validation.isDuplicate
-                  }
-                >
-                  {t('admin_localisations.actions.create')} {t('admin_localisations.fields.technical_value')}
-                </Button>
-                <Button variant="outline" onClick={() => {
-                  setShowAddForm(false);
-                  setNewLocalisation({
-                    localisation_value: "",
-                    localisation_type: "airport",
-                    translations: {
-                      fr: "",
-                      en: ""
-                    }
-                  });
-                  setValidation({
-                    isDuplicate: false,
-                    isValid: true
-                  });
-                }}>
-                  {t('admin_localisations.actions.cancel')}
-                </Button>
               </div>
             </div>
           )}

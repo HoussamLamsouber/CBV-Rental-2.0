@@ -114,7 +114,7 @@ export default function ResetPassword() {
 
               <Button
                 type="submit"
-                className="w-full h-10 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm uppercase tracking-wider rounded-lg shadow-lg shadow-slate-900/10 transition-all"
+                className="w-auto px-4 mx-auto flex items-center justify-center h-10 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm uppercase tracking-wider rounded-lg shadow-lg shadow-slate-900/10 transition-all"
                 disabled={loading}
               >
                 {loading ? t("saving") + "..." : t("update_password")}

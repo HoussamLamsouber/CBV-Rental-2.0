@@ -53,6 +53,21 @@ export default function AdminVehicles() {
     fetchVehicles();
   }, []);
 
+  useEffect(() => {
+    if (!isCreateModalOpen && !isEditModalOpen) {
+      setNewVehicle({
+        name: "",
+        category: "",
+        price: "",
+        image_url: "",
+        fuel: "",
+        seats: "",
+        transmission: ""
+      });
+      setEditingVehicle(null);
+    }
+  }, [isCreateModalOpen, isEditModalOpen]);
+
   const fetchVehicles = async () => {
     try {
       setIsLoading(true);
@@ -281,9 +296,9 @@ export default function AdminVehicles() {
         category: "",
         price: "",
         image_url: "",
-        fuel: "fuel_gasoline",
+        fuel: "",
         seats: "",
-        transmission: "transmission_manual"
+        transmission: ""
       });
 
       setIsCreateModalOpen(false);
@@ -306,9 +321,9 @@ export default function AdminVehicles() {
       category: "",
       price: "",
       image_url: "",
-      fuel: "fuel_gasoline",
+      fuel: "",
       seats: "",
-      transmission: "transmission_manual"
+      transmission: ""
     });
   };
 

@@ -183,7 +183,7 @@ export default function ChangePassword() {
               <CardFooter className="p-0 mt-4">
                 <Button
                   type="submit"
-                  className="w-full h-12 bg-slate-900 hover:bg-blue-600 text-white font-bold text-xs uppercase tracking-[0.2em] rounded-xl shadow-lg shadow-slate-900/10 hover:shadow-blue-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                  className="w-fit px-8 mx-auto h-12 bg-slate-900 hover:bg-blue-600 text-white font-bold text-xs uppercase tracking-[0.2em] rounded-xl shadow-lg shadow-slate-900/10 hover:shadow-blue-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
                   disabled={loading}
                 >
                   {loading ? t("saving") + "..." : t("update_password")}

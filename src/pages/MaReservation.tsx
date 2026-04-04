@@ -361,7 +361,7 @@ const MaReservation = () => {
                         <img 
                           src={res.car_image || "/placeholder-car.jpg"} 
                           alt={res.car_name} 
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                          className="w-full h-full object-contain object-center scale-95 transition-transform duration-700 group-hover:scale-105"
                         />
                         <div className="absolute top-4 left-4">
                            {getStatusBadge(res.status)}

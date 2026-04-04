@@ -138,7 +138,7 @@ const AdminLogin = () => {
 
               <Button
                 type="submit"
-                className="w-full h-10 bg-slate-900 text-white font-bold text-sm uppercase tracking-wider rounded-lg shadow-lg shadow-slate-900/10 hover:bg-blue-600 hover:shadow-blue-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
+                className="w-auto px-4 mx-auto flex items-center justify-center h-10 bg-slate-900 text-white font-bold text-sm uppercase tracking-wider rounded-lg shadow-lg shadow-slate-900/10 hover:bg-blue-600 hover:shadow-blue-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
                 disabled={loading}
               >
                 {loading ? t("admin_login.button_loading") : t("admin_login.button_login")}
@@ -148,7 +148,7 @@ const AdminLogin = () => {
             <div className="pt-4 border-t border-slate-100">
               <Button
                 variant="ghost"
-                className="w-full h-10 text-slate-500 font-bold text-xs uppercase tracking-wider hover:bg-slate-50 hover:text-blue-600 rounded-lg"
+                className="w-auto px-4 mx-auto flex items-center justify-center h-10 text-slate-500 font-bold text-xs uppercase tracking-wider hover:bg-slate-50 hover:text-blue-600 rounded-lg"
                 onClick={() => navigate("/auth")}
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
