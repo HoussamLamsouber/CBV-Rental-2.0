@@ -99,13 +99,15 @@ export default function AdminVehicles() {
         // Count reservations from established units if needed for "available_now"
         const relatedVehicles = (vehiclesData || []).filter(v => v.car_id === car.id);
         const reservedCount = relatedVehicles.filter(v => v.status === "reserved").length;
+        const maintenanceCount = relatedVehicles.filter(v => v.status === "maintenance").length;
 
         return {
           ...car,
           quantity: totalStock,
-          available_now: Math.max(0, totalStock - reservedCount),
+          // Subtract both reserved AND maintenance vehicles from available count
+          available_now: Math.max(0, totalStock - reservedCount - maintenanceCount),
           reservation_count: reservedCount,
-          maintenance_count: relatedVehicles.filter(v => v.status === "maintenance").length,
+          maintenance_count: maintenanceCount,
         };
       });
 

@@ -1,16 +1,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { format, subDays, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
-import { Link, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { format, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import {
   Car,
   Calendar,
-  Users,
-  DollarSign,
-  ChevronRight,
-  MapPin,
   Clock,
   Zap,
   TrendingUp,
@@ -30,7 +25,6 @@ import {
   PieChart,
   Pie,
   Cell,
-  LineChart,
   Line
 } from "recharts";
 import { motion } from "framer-motion";
@@ -94,7 +88,8 @@ export default function AdminDashboard() {
   const [reservationTrendData, setReservationTrendData] = useState<ChartData[]>([]);
   const [translationKey, setTranslationKey] = useState(0);
   const [chartKey, setChartKey] = useState(0);
-  const [monthsRange, setMonthsRange] = useState(6);
+  const [revenueRange, setRevenueRange] = useState(6);
+  const [bookingRange, setBookingRange] = useState(6);
 
   useEffect(() => {
     fetchData();
@@ -104,7 +99,7 @@ export default function AdminDashboard() {
     if (vehicles.length > 0 && allReservations.length > 0) {
       prepareChartData(vehicles, allReservations);
     }
-  }, [i18n.language, monthsRange]);
+  }, [i18n.language, revenueRange, bookingRange]);
 
   useEffect(() => {
     if (
@@ -128,6 +123,12 @@ export default function AdminDashboard() {
       if (carsError) throw carsError;
       setVehicles(carsData || []);
 
+      // Fetch physical vehicle statuses to correctly account for maintenance
+      const { data: physicalVehiclesData } = await supabase
+        .from("vehicles")
+        .select("car_id, status")
+        .is("is_deleted", false);
+
       const { data: allResData, error: allResError } = await supabase
         .from("reservations")
         .select("*");
@@ -143,7 +144,7 @@ export default function AdminDashboard() {
       if (resError) throw resError;
       setReservations((resData as Reservation[]) || []);
 
-      calculateStats(carsData || [], allResData as Reservation[] || []);
+      calculateStats(carsData || [], allResData as Reservation[] || [], physicalVehiclesData || []);
       prepareChartData(carsData || [], allResData as Reservation[] || []);
     } catch (error) {
       console.error("Erreur chargement données:", error);
@@ -174,7 +175,7 @@ export default function AdminDashboard() {
     return "expired"; // par défaut
   };
 
-  const calculateStats = (vehicles: any[], allReservations: Reservation[]) => {
+  function calculateStats(vehicles: any[], allReservations: Reservation[], physicalVehicles: any[] = []) {
     // SOURCE OF TRUTH: sum of quantities from cars table
     const totalVehicles = vehicles.reduce((sum, v) => sum + Number(v.quantity || 0), 0);
 
@@ -185,8 +186,11 @@ export default function AdminDashboard() {
       return r.status === "accepted" && today >= pickup && today <= returnDate;
     }).length;
 
-    // Available is theoretical: total stock minus active rentals
-    const availableVehicles = Math.max(0, totalVehicles - activeRentals);
+    // Count vehicles currently in maintenance (not available for rental)
+    const maintenanceCount = physicalVehicles.filter(v => v.status === "maintenance").length;
+
+    // Available = total stock minus active rentals minus those in maintenance
+    const availableVehicles = Math.max(0, totalVehicles - activeRentals - maintenanceCount);
 
     const currentMonthStart = startOfMonth(new Date());
     const currentMonthEnd = endOfMonth(new Date());
@@ -232,26 +236,7 @@ export default function AdminDashboard() {
     });
   };
 
-  // FONCTION POUR TRADUIRE LES STATUTS
-  const translateStatus = (status: string) => {
-    return t(`admin_dashboard.recent_reservations.status.${status.toLowerCase()}`, { defaultValue: status });
-  };
-
-  // FONCTION POUR LES COULEURS DES STATUTS
-  const getStatusColorClasses = (status: string) => {
-    const statusColors: { [key: string]: string } = {
-      pending: "bg-yellow-100 text-yellow-800",
-      accepted: "bg-green-100 text-green-800",
-      confirmed: "bg-blue-100 text-blue-800",
-      cancelled: "bg-purple-100 text-purple-800",
-      refused: "bg-red-100 text-red-800",
-      expired: "bg-orange-100 text-orange-800"
-    };
-
-    return statusColors[status.toLowerCase()] || "bg-gray-100 text-gray-800";
-  };
-
-  const prepareChartData = (vehicles: any[], allReservations: Reservation[]) => {
+  function prepareChartData(vehicles: any[], allReservations: Reservation[]) {
     const categoryStats: { [key: string]: number } = {};
     vehicles.forEach(vehicle => {
       const category = vehicle.category;
@@ -265,14 +250,21 @@ export default function AdminDashboard() {
     setCategoryData(categoryChartData);
 
     const monthlyRevenue: { [key: string]: number } = {};
-    const lastXMonths = Array.from({ length: monthsRange }, (_, i) => {
+    const lastXMonthsRevenue = Array.from({ length: revenueRange }, (_, i) => {
       const date = new Date();
-      date.setDate(1); // prevent day-overflow (e.g. Mar 30 - 1m → Feb 30 → Mar 2)
+      date.setDate(1);
       date.setMonth(date.getMonth() - i);
       return date.toISOString().slice(0, 7);
     }).reverse();
 
-    lastXMonths.forEach(month => {
+    const lastXMonthsBooking = Array.from({ length: bookingRange }, (_, i) => {
+      const date = new Date();
+      date.setDate(1);
+      date.setMonth(date.getMonth() - i);
+      return date.toISOString().slice(0, 7);
+    }).reverse();
+
+    lastXMonthsRevenue.forEach(month => {
       monthlyRevenue[month] = 0;
     });
 
@@ -313,14 +305,14 @@ export default function AdminDashboard() {
       return `${monthTranslations[monthIndex]} ${year}`;
     };
 
-    const revenueChartData = lastXMonths.map(month => ({
-      name: formatMonthForChart(month), // ← Utiliser la nouvelle fonction
+    const revenueChartData = lastXMonthsRevenue.map(month => ({
+      name: formatMonthForChart(month),
       value: Math.round(monthlyRevenue[month] / 100) * 100,
     }));
     setRevenueData(revenueChartData);
 
-    const reservationTrend = lastXMonths.map(month => ({
-      name: formatMonthForChart(month), // ← Utiliser la nouvelle fonction
+    const reservationTrend = lastXMonthsBooking.map(month => ({
+      name: formatMonthForChart(month),
       value: allReservations.filter(
         res => res.created_at.slice(0, 7) === month && res.status === "accepted"
       ).length,
@@ -403,27 +395,6 @@ export default function AdminDashboard() {
                 />
               </motion.div>
 
-              {/* Chart Actions */}
-              <div className="flex justify-end mb-4">
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant={monthsRange === 6 ? "default" : "outline"}
-                    className="h-9 px-3 text-sm rounded-lg transition-all duration-200"
-                    onClick={() => setMonthsRange(6)}
-                  >
-                    6 mois
-                  </Button>
-
-                  <Button
-                    variant={monthsRange === 12 ? "default" : "outline"}
-                    className="h-9 px-3 text-sm rounded-lg transition-all duration-200"
-                    onClick={() => setMonthsRange(12)}
-                  >
-                    12 mois
-                  </Button>
-                </div>
-              </div>
-
               {/* Graphiques */}
               <motion.div
                 key={`${i18n.language}-${chartKey}`}
@@ -437,6 +408,26 @@ export default function AdminDashboard() {
                   subtitle={t("admin_dashboard.charts.revenue.subtitle")}
                   icon={TrendingUp}
                   color="green"
+                  action={
+                    <div className="flex items-center bg-slate-100 p-1 rounded-lg gap-0.5">
+                      <button
+                        className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
+                          revenueRange === 6 ? "bg-white shadow text-slate-800" : "text-slate-500 hover:text-slate-700"
+                        }`}
+                        onClick={() => setRevenueRange(6)}
+                      >
+                        6M
+                      </button>
+                      <button
+                        className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
+                          revenueRange === 12 ? "bg-white shadow text-slate-800" : "text-slate-500 hover:text-slate-700"
+                        }`}
+                        onClick={() => setRevenueRange(12)}
+                      >
+                        12M
+                      </button>
+                    </div>
+                  }
                 >
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={revenueData}>
@@ -505,6 +496,26 @@ export default function AdminDashboard() {
                   subtitle={t("admin_dashboard.charts.reservation_trend.subtitle")}
                   icon={Calendar}
                   color="pink"
+                  action={
+                    <div className="flex items-center bg-slate-100 p-1 rounded-lg gap-0.5">
+                      <button
+                        className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
+                          bookingRange === 6 ? "bg-white shadow text-slate-800" : "text-slate-500 hover:text-slate-700"
+                        }`}
+                        onClick={() => setBookingRange(6)}
+                      >
+                        6M
+                      </button>
+                      <button
+                        className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
+                          bookingRange === 12 ? "bg-white shadow text-slate-800" : "text-slate-500 hover:text-slate-700"
+                        }`}
+                        onClick={() => setBookingRange(12)}
+                      >
+                        12M
+                      </button>
+                    </div>
+                  }
                 >
                   <ResponsiveContainer width="100%" height={300}>
                     <AreaChart data={reservationTrendData}>
@@ -579,7 +590,7 @@ function StatCard({ title, value, subtitle, icon: Icon, color }: any) {
   );
 }
 
-function ChartCard({ title, subtitle, icon: Icon, color, children, className }: any) {
+function ChartCard({ title, subtitle, icon: Icon, color, children, className, action }: any) {
   const colorMap: any = {
     blue: "text-blue-600 bg-blue-50",
     green: "text-green-600 bg-green-50",
@@ -588,14 +599,17 @@ function ChartCard({ title, subtitle, icon: Icon, color, children, className }: 
   };
   return (
     <div className={`bg-white rounded-2xl p-6 shadow-sm hover:shadow-md border transition-all ${className || ""}`}>
-      <div className="flex items-center gap-3 mb-4">
-        <div className={`p-2 rounded-lg ${colorMap[color]}`}>
-          <Icon className={`h-5 w-5 ${colorMap[color].split(" ")[0]}`} />
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className={`p-2 rounded-lg ${colorMap[color]}`}>
+            <Icon className={`h-5 w-5 ${colorMap[color].split(" ")[0]}`} />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-slate-900">{title}</h3>
+            <p className="text-sm font-medium text-slate-600">{subtitle}</p>
+          </div>
         </div>
-        <div>
-          <h3 className="text-lg font-bold text-slate-900">{title}</h3>
-          <p className="text-sm font-medium text-slate-600">{subtitle}</p>
-        </div>
+        {action && <div className="shrink-0">{action}</div>}
       </div>
       {children}
     </div>
