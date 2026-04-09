@@ -104,7 +104,7 @@ export const Header = () => {
 
                   <DropdownMenuContent align="end" className="w-56 p-1.5 rounded-xl shadow-xl border-slate-100">
                     <DropdownMenuItem asChild className="rounded-lg focus:bg-blue-50 focus:text-blue-700 py-2.5 no-focus-ring">
-                      <Link to="/mon-compte">{t("profile")}</Link>
+                      <Link to="/profile">{t("profile")}</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild className="rounded-lg focus:bg-blue-50 focus:text-blue-700 py-2.5 no-focus-ring">
                       <Link to="/ma-reservation">{t("my_reservations")}</Link>
@@ -166,7 +166,7 @@ export const Header = () => {
 
             {!authLoading && isAuthenticated ? (
               <div className="space-y-3">
-                <Link to="/mon-compte" className="block text-sm font-semibold text-slate-600" onClick={() => setIsMenuOpen(false)}>{t("profile")}</Link>
+                <Link to="/profile" className="block text-sm font-semibold text-slate-600" onClick={() => setIsMenuOpen(false)}>{t("profile")}</Link>
                 <Link to="/ma-reservation" className="block text-sm font-semibold text-slate-600" onClick={() => setIsMenuOpen(false)}>{t("my_reservations")}</Link>
                 <Button variant="ghost" className="w-full justify-start text-red-500 hover:bg-red-50 hover:text-red-600 p-0 h-auto" onClick={handleSignOut}>
                   <LogOut className="h-4 w-4 mr-2" /> {t("logout")}

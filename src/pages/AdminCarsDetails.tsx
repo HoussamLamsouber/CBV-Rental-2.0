@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { ArrowLeft, Calendar, Trash2, Pencil, CalendarIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { formatDateDisplay } from "@/utils/dateUtils";
 import i18n from "@/i18n";
 import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -136,7 +137,7 @@ export default function AdminVehicleDetail() {
   const [newVehicle, setNewVehicle] = useState({
     matricule: "",
     obd: "",
-    date_obd: format(new Date(), "yyyy-MM-dd"),
+    date_obd: formatDateDisplay(new Date(), "yyyy-MM-dd", i18n.language),
     objet: "",
     status: "available" as 'available' | 'reserved' | 'maintenance'
   });
@@ -418,7 +419,7 @@ export default function AdminVehicleDetail() {
         // 6. Générer les dates pour le calendrier (30 jours)
         const today = new Date();
         const nextDays = Array.from({ length: 30 }, (_, i) =>
-          format(addDays(today, i), "yyyy-MM-dd")
+          formatDateDisplay(addDays(today, i), "yyyy-MM-dd", i18n.language)
         );
         setDates(nextDays);
 
@@ -568,7 +569,7 @@ export default function AdminVehicleDetail() {
       setNewVehicle({
         matricule: "",
         obd: "",
-        date_obd: format(new Date(), "yyyy-MM-dd"),
+        date_obd: formatDateDisplay(new Date(), "yyyy-MM-dd", i18n.language),
         objet: "",
         status: "available"
       });
@@ -896,7 +897,7 @@ export default function AdminVehicleDetail() {
 
   return (
     <>
-      <main className="container bg-gradient-to-b from-blue-50 to-gray-50 mx-auto p-6">
+      <main className="container bg-gray-50 mx-auto p-6">
         {/* En-tête du véhicule */}
         <div className="flex items-start gap-6 mb-6">
           <div className="w-48">
@@ -1094,7 +1095,7 @@ export default function AdminVehicleDetail() {
                         <td className="p-4 font-mono font-semibold">{vehicleItem.matricule}</td>
                         <td className="p-4">{vehicleItem.obd || '-'}</td>
                         <td className="p-4">
-                          {vehicleItem.date_obd ? format(new Date(vehicleItem.date_obd), "dd/MM/yyyy") : '-'}
+                          {vehicleItem.date_obd ? formatDateDisplay(new Date(vehicleItem.date_obd), "dd/MM/yyyy", i18n.language) : '-'}
                         </td>
                         <td className="p-4">
                           {vehicleItem.depot ? (
@@ -1259,8 +1260,8 @@ export default function AdminVehicleDetail() {
                           </div>
                         </td>
                         <td className="p-4">
-                          {format(new Date(reservation.pickup_date), "dd/MM/yyyy")}{" "}-{" "}
-                          {format(new Date(reservation.return_date), "dd/MM/yyyy")}
+                          {formatDateDisplay(new Date(reservation.pickup_date), "dd/MM/yyyy", i18n.language)}{" "}-{" "}
+                          {formatDateDisplay(new Date(reservation.return_date), "dd/MM/yyyy", i18n.language)}
                         </td>
                         <td className="p-4">
                           <span className={`px-2 py-1 rounded text-xs font-medium ${
@@ -1351,7 +1352,7 @@ export default function AdminVehicleDetail() {
                   {dates.map((date) => {
                     const available = getDailyAvailability(date);
                     const reserved = getReservedCountForDate(date);
-                    const isToday = date === format(new Date(), "yyyy-MM-dd");
+                    const isToday = date === formatDateDisplay(new Date(), "yyyy-MM-dd", i18n.language);
                     const isFullyBooked = available === 0;
                     const totalStockCount = Number(vehicle?.quantity || 0);
                     const isPartiallyAvailable = available > 0 && available < totalStockCount;
@@ -1367,12 +1368,12 @@ export default function AdminVehicleDetail() {
                             ? "bg-yellow-50 border-yellow-200 text-yellow-700"
                             : "bg-green-50 border-green-200 text-green-700"
                         } ${isToday ? "ring-2 ring-blue-500 ring-opacity-50 transform scale-105" : ""}`}
-                        title={`${format(new Date(date), "dd/MM/yyyy")}
+                        title={`${formatDateDisplay(new Date(date), "dd/MM/yyyy", i18n.language)}
                         ${available} ${t('admin_vehicle_detail.calendar.available')}
                         ${reserved} ${t('admin_vehicle_detail.messages.vehicles_reserved')}
                         ${t('admin_vehicle_detail.calendar.total_stock')} ${vehicle?.quantity || 0} ${t('admin_vehicle_detail.calendar.vehicles')}`}
                       >
-                        <span className="font-semibold">{format(new Date(date), "dd")}</span>
+                        <span className="font-semibold">{formatDateDisplay(new Date(date), "dd", i18n.language)}</span>
                         <span className="text-[10px] opacity-70">{getTranslatedMonth(date)}</span>
                         <div className="mt-1 flex flex-col items-center space-y-0.5">
                           {/* Indicateur visuel simple */}
@@ -1443,7 +1444,7 @@ export default function AdminVehicleDetail() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-green-600">
-                    {getDailyAvailability(format(new Date(), "yyyy-MM-dd"))}
+                    {getDailyAvailability(formatDateDisplay(new Date(), "yyyy-MM-dd", i18n.language))}
                   </div>
                   <p className="text-sm text-muted-foreground mt-2">
                     {t('admin_vehicle_detail.calendar.out_of')} {vehicle.quantity || 0} {t('admin_vehicle_detail.calendar.total')}
@@ -1527,7 +1528,7 @@ export default function AdminVehicleDetail() {
                         <CalendarIcon className="h-4 w-4 text-slate-400 shrink-0" />
                         <span className={newVehicle.date_obd ? "text-black" : "text-slate-400"}>
                           {newVehicle.date_obd
-                            ? format(new Date(newVehicle.date_obd + "T00:00:00"), "dd/MM/yyyy")
+                            ? formatDateDisplay(new Date(newVehicle.date_obd + "T00:00:00"), "dd/MM/yyyy", i18n.language)
                             : t('admin_vehicle_detail.modals.obd_date_placeholder', 'Select OBD date')}
                         </span>
                       </button>
@@ -1539,7 +1540,7 @@ export default function AdminVehicleDetail() {
                         selected={newVehicle.date_obd ? new Date(newVehicle.date_obd + "T00:00:00") : undefined}
                         onSelect={(date) => {
                           if (date) {
-                            setNewVehicle({ ...newVehicle, date_obd: format(date, "yyyy-MM-dd") });
+                            setNewVehicle({ ...newVehicle, date_obd: formatDateDisplay(date, "yyyy-MM-dd", i18n.language) });
                             setIsCreateObdOpen(false);
                           }
                         }}

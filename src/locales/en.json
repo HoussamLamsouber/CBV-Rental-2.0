@@ -757,6 +757,12 @@
         "subtitle": "Log in to book your vehicle",
         "title": "Authentication",
         "description": "Log in or create a new account",
+        "text1": "EXPLORE THE",
+        "text2": "PREMIUM",
+        "text3": "WAY OF TRAVEL.",
+        "text4": "Join our community of travelers and experience the road like never before. Exclusive cars, seamless booking, and royal treatment.",
+        "text5": "Happy Clients",
+        "text6": "Premium Cars",
         "tabs": {
             "login": "Login",
             "signup": "Sign Up"

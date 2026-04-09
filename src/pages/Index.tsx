@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Footer } from "@/components/Footer";
 import { Hero } from "@/components/Hero";
 import { CarGrid } from "@/components/CarGrid";
 import { SearchData } from "@/components/SearchForm";
@@ -46,7 +45,6 @@ const Index = () => {
         // 2. Filtrage JS de sécurité + logging
         const availableVehicles = (carsData || []).filter(v => {
           const s = Number(v.quantity);
-          console.log(`Home Vehicle ${v.name} stock:`, s);
           return s > 0;
         });
 
@@ -386,8 +384,6 @@ const Index = () => {
           )}
         </div>
       </section>
-
-      <Footer />
     </div>
   );
 };

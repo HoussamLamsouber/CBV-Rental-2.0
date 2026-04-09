@@ -410,7 +410,6 @@ const Offres = () => {
           t={t}
         />
       </main>
-      <Footer />
     </div>
   );
 };

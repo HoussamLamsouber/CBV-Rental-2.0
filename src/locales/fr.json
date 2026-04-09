@@ -757,6 +757,12 @@
         "subtitle": "Connectez-vous pour réserver votre véhicule",
         "title": "Authentification",
         "description": "Connectez-vous ou créez un nouveau compte",
+        "text1": "EXPLOREZ LA MANIÈRE",
+        "text2": "PREMIUM",
+        "text3": "DE VOYAGER.",
+        "text4": "Rejoignez notre communauté de voyageurs et découvrez la route comme jamais auparavant. Des voitures exclusives, une réservation fluide et un traitement royal.",
+        "text5": "Clients satisfaits",
+        "text6": "Voitures Premium",
         "tabs": {
             "login": "Connexion",
             "signup": "Inscription"

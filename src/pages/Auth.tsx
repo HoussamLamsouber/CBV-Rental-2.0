@@ -25,12 +25,12 @@ const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [fullName, setFullName] = useState("");
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isUserAdmin } = useAuth();
   const { t } = useTranslation();
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/");
+      navigate(isUserAdmin ? "/admin/dashboard" : "/");
     }
   }, [isAuthenticated, navigate]);
 
@@ -265,21 +265,21 @@ const Auth = () => {
            </Link>
            
            <h2 className="text-[32px] font-bold text-white leading-tight tracking-tight">
-             EXPLORE THE <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-600">PREMIUM</span> WAY OF TRAVEL.
+             {t("auth.text1")} <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-600">{t("auth.text2")}</span> {t("auth.text3")}
            </h2>
            
            <p className="text-slate-400 text-[14px] font-normal leading-relaxed">
-             Join our community of travelers and experience the road like never before. Exclusive cars, seamless booking, and royal treatment.
+             {t("auth.text4")}
            </p>
 
            <div className="grid grid-cols-2 gap-6 pt-8">
               <div className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
                  <p className="text-[24px] font-bold text-white mb-1">2.5k+</p>
-                 <p className="text-[12px] font-normal text-slate-400 uppercase tracking-widest">Happy Clients</p>
+                 <p className="text-[12px] font-normal text-slate-400 uppercase tracking-widest">{t("auth.text5")}</p>
               </div>
               <div className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
                  <p className="text-[24px] font-bold text-white mb-1">500+</p>
-                 <p className="text-[12px] font-normal text-slate-400 uppercase tracking-widest">Premium Cars</p>
+                 <p className="text-[12px] font-normal text-slate-400 uppercase tracking-widest">{t("auth.text6")}</p>
               </div>
            </div>
         </div>

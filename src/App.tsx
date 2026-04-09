@@ -31,6 +31,8 @@ import { AdminLayout } from './components/AdminLayout';
 import Contact from "./pages/Contact";
 import ScrollToTop from "./components/ScrollToTop";
 
+import { Footer } from './components/Footer';
+
 const queryClient = new QueryClient();
 
 const AppProviders = ({ children }: { children: React.ReactNode }) => (
@@ -39,9 +41,12 @@ const AppProviders = ({ children }: { children: React.ReactNode }) => (
 
 // Layout pour les pages publiques avec Header
 const PublicLayout = ({ children }: { children: React.ReactNode }) => (
-  <div className="min-h-screen bg-gray-50">
+  <div className="min-h-screen bg-gray-50 flex flex-col">
     <Header />
-    {children}
+    <main className="flex-1 pt-24">
+      {children}
+    </main>
+    <Footer />
   </div>
 );
 
@@ -61,16 +66,17 @@ function App() {
               <Route path="/ma-reservation" element={<PublicLayout><MaReservation /></PublicLayout>} />
               <Route path="/about" element={<PublicLayout><About /></PublicLayout>} />
               <Route path="/contact" element={<PublicLayout><Contact /></PublicLayout>} />
-              <Route path="/auth" element={<PublicLayout><Auth /></PublicLayout>} />
-              <Route path="/forgot-password" element={<PublicLayout><ForgotPassword /></PublicLayout>} />
-              <Route path="/reset-password" element={<PublicLayout><ResetPassword /></PublicLayout>} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
 
-              {/* Route spéciale pour MonCompte - sans PublicLayout car géré dans le composant */}
               <Route 
-                path="/mon-compte" 
+                path="/profile" 
                 element={
                   <ProtectedRoute>
-                    <MonCompte />
+                    <PublicLayout>
+                      <MonCompte />
+                    </PublicLayout>
                   </ProtectedRoute>
                 } 
               />
@@ -80,7 +86,7 @@ function App() {
                 path="/changer-mot-de-passe" 
                 element={
                   <ProtectedRoute>
-                    <ChangePassword />
+                      <ChangePassword />
                   </ProtectedRoute>
                 } 
               />
@@ -93,6 +99,16 @@ function App() {
                   <ProtectedRoute adminOnly={true}>
                     <AdminLayout>
                       <AdminDashboard />
+                    </AdminLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/profile" 
+                element={
+                  <ProtectedRoute adminOnly={true}>
+                    <AdminLayout>
+                      <MonCompte />
                     </AdminLayout>
                   </ProtectedRoute>
                 } 

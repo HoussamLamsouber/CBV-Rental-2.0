@@ -12,6 +12,7 @@ import {
   LayoutDashboard
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { formatDateDisplay } from "@/utils/dateUtils";
 import {
   Area,
   AreaChart,
@@ -322,14 +323,14 @@ export default function AdminDashboard() {
 
   const formatDateSafe = (dateString: string) => {
     const date = new Date(dateString);
-    return isNaN(date.getTime()) ? "Date invalide" : format(date, "dd/MM/yyyy");
+    return isNaN(date.getTime()) ? "Date invalide" : formatDateDisplay(date, "dd/MM/yyyy", i18n.language);
   };
 
   const COLORS = ["#2563EB", "#22C55E", "#F59E0B", "#8B5CF6", "#EC4899", "#06B6D4"];
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-50 p-6">
+      <div className="min-h-screen bg-gray-50 p-6">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 10 }}

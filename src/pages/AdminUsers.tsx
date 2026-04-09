@@ -168,7 +168,7 @@ export default function AdminUsers() {
   const clientsCount = profiles.filter(p => p.role === 'client').length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
         {/* En-tête */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">

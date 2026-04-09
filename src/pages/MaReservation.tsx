@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Footer } from "@/components/Footer";
 import type { Database } from "@/integrations/supabase/types";
 import { formatDisplayDate } from "@/utils/dateUtils";
 import { emailJSService } from "@/services/emailJSService";
@@ -480,14 +479,10 @@ const MaReservation = () => {
       </div>
     );
   };
-
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      <main className="container mx-auto px-4 pt-32 pb-6 sm:pb-8 flex-1">
-        {renderContent()}
-      </main>
-      <Footer />
-    </div>
+    <main className="container mx-auto px-4 pt-32 pb-6 sm:pb-8 flex-1">
+      {renderContent()}
+    </main>
   );
 };
 

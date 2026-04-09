@@ -163,7 +163,7 @@ export const AdminHeader = () => {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56 p-1.5 rounded-xl shadow-xl border-slate-100">
             <DropdownMenuItem asChild className="rounded-lg focus:bg-blue-50 focus:text-blue-700 py-2.5 no-focus-ring">
-              <Link to="/mon-compte" className="flex items-center gap-2">
+              <Link to="/admin/profile" className="flex items-center gap-2">
                 <User className="h-4 w-4" />
                 {t("profile")}
               </Link>

@@ -8,11 +8,13 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Lock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function ResetPassword() {
   const { toast } = useToast();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { isUserAdmin } = useAuth();
 
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -60,7 +62,7 @@ export default function ResetPassword() {
   useEffect(() => {
     if (countdown === null) return;
     if (countdown === 0) {
-      navigate("/login", { replace: true });
+      navigate(isUserAdmin ? "/admin" : "/auth", { replace: true });
       return;
     }
 

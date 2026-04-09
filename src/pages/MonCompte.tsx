@@ -1,11 +1,10 @@
-import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { User, Mail, Phone, MapPin, Shield, Calendar as CalendarIcon } from "lucide-react";
+import { User, Mail, Phone, MapPin, Calendar as CalendarIcon } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,12 +12,11 @@ import { useNavigate } from "react-router-dom";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
-import { AdminLayout } from "@/components/AdminLayout";
-import { Header } from '@/components/Header';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import { formatDateDisplay } from "@/utils/dateUtils";
 
 interface UserProfile {
   id: string;
@@ -150,31 +148,19 @@ const MonCompte = () => {
     setUserInfo(prev => ({ ...prev, [id as keyof UserProfile]: value }));
   };
 
-  const PublicLayout = ({ children }: { children: React.ReactNode }) => (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      {children}
-    </div>
-  );
-
-  // Contenu de la page profil
-  const ProfileContent = () => {
-    if (loading && !userInfo.id) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] p-4">
-          <LoadingSpinner message={t('mon_compte.messages.loading_profile')} />
-        </div>
-      );
-    }
-
-    const { firstName, lastName } = getNames(userInfo.full_name);
-    const avatarFallbackText = `${firstName?.[0] || ''}${lastName?.[0] || ''}`;
-
+  // On check le chargement initial uniquement une fois (quand on a pas encore d'ID)
+  if (loading && !userInfo.id) {
     return (
-      <div className={isUserAdmin ? "p-4 lg:p-10" : "min-h-screen bg-[#f8fafc] pt-32"}>
-        <div className={isUserAdmin ? "max-w-5xl mx-auto space-y-10" : "container mx-auto px-6 max-w-5xl space-y-10"}>
-          <div className="max-w-2xl mx-auto w-full space-y-10">
-          
+      <div className="flex items-center justify-center p-4">
+        <LoadingSpinner message={t('mon_compte.messages.loading_profile')} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full py-10 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-2xl mx-auto w-full space-y-10">
+        
           {/* Header Section */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <div className="flex items-center gap-8">
@@ -189,36 +175,36 @@ const MonCompte = () => {
               
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
-                   <h1 className="text-[32px] font-bold text-slate-900 tracking-tight uppercase">
-                     {userInfo.full_name || "Utilisateur"}
-                   </h1>
-                   {userInfo.role === 'admin' && (
-                     <Badge className="bg-slate-900 border-none text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-lg">
-                       Admin
-                     </Badge>
-                   )}
+                  <h1 className="text-[32px] font-bold text-slate-900 tracking-tight uppercase">
+                    {userInfo.full_name || "Utilisateur"}
+                  </h1>
+                  {userInfo.role === 'admin' && (
+                    <Badge className="bg-slate-900 border-none text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-lg">
+                      Admin
+                    </Badge>
+                  )}
                 </div>
-                 <div className="flex flex-wrap items-center gap-4 text-slate-600">
-                     <div className="flex items-center gap-2 text-[12px] font-normal uppercase tracking-wider bg-slate-100 px-3 py-1 rounded-md">
+                <div className="flex flex-wrap items-center gap-4 text-slate-600">
+                    <div className="flex items-center gap-2 text-[12px] font-normal uppercase tracking-wider bg-slate-100 px-3 py-1 rounded-md">
                         <Mail className="w-3 h-3 text-blue-600" />
                         {userInfo.email}
-                     </div>
+                    </div>
                 </div>
               </div>
             </div>
             
             <div className="flex gap-3">
-               <Button 
-                 onClick={() => {
-                   if(isEditing) getProfile();
-                   setIsEditing(!isEditing);
-                 }}
-                 variant={isEditing ? "ghost" : "outline"}
-                 className="h-11 px-6 rounded-xl font-bold text-[10px] uppercase tracking-wider border-slate-200 hover:bg-slate-50 hover:text-slate-900 transition-all"
-               >
-                 {isEditing ? t('mon_compte.actions.cancel') : t('mon_compte.actions.edit')}
-               </Button>
-               {isEditing && (
+              <Button 
+                onClick={() => {
+                  if(isEditing) getProfile();
+                  setIsEditing(!isEditing);
+                }}
+                variant={isEditing ? "ghost" : "outline"}
+                className="h-11 px-6 rounded-xl font-bold text-[10px] uppercase tracking-wider border-slate-200 hover:bg-slate-50 hover:text-slate-900 transition-all"
+              >
+                {isEditing ? t('mon_compte.actions.cancel') : t('mon_compte.actions.edit')}
+              </Button>
+              {isEditing && (
                   <Button 
                     onClick={handleSave} 
                     disabled={saving}
@@ -226,129 +212,110 @@ const MonCompte = () => {
                   >
                     {saving ? t('mon_compte.actions.saving') : t('mon_compte.actions.save')}
                   </Button>
-               )}
+              )}
             </div>
           </div>
 
           <div className="flex justify-center animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
             {/* Main Info Card */}
             <div className="w-full max-w-2xl space-y-8">
-               <Card className="rounded-2xl border-slate-200 shadow-sm overflow-hidden bg-white">
-                 <CardHeader className="p-8 pb-0">
+              <Card className="rounded-2xl border-slate-200 shadow-sm overflow-hidden bg-white">
+                <CardHeader className="p-8 pb-0">
                     <div className="flex items-center gap-3">
-                       <div className="w-1 h-5 bg-blue-600 rounded-full" />
-                       <CardTitle className="text-[18px] font-semibold uppercase tracking-wider text-slate-900">
-                         {t('mon_compte.personal_info')}
-                       </CardTitle>
+                      <div className="w-1 h-5 bg-blue-600 rounded-full" />
+                      <CardTitle className="text-[18px] font-semibold uppercase tracking-wider text-slate-900">
+                        {t('mon_compte.personal_info')}
+                      </CardTitle>
                     </div>
-                 </CardHeader>
-                 <CardContent className="p-8 pt-6 space-y-8">
+                </CardHeader>
+                <CardContent className="p-8 pt-6 space-y-8">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                         <div className="space-y-2">
-                           <Label className="text-[14px] font-medium uppercase tracking-wider text-slate-600 ml-1">{t('mon_compte.fields.full_name')}</Label>
-                           <div className="relative group">
+                          <Label className="text-[14px] font-medium uppercase tracking-wider text-slate-600 ml-1">{t('mon_compte.fields.full_name')}</Label>
+                          <div className="relative group">
                               <Input
-                                 id="full_name"
-                                 value={userInfo.full_name}
-                                 onChange={handleChange}
-                                 disabled={!isEditing}
-                                 placeholder={t('mon_compte.placeholders.full_name') || "Votre nom complet"}
-                                 className="h-11 bg-slate-50/50 border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all pl-10 disabled:opacity-100 disabled:cursor-default text-black"
+                                id="full_name"
+                                value={userInfo.full_name}
+                                onChange={handleChange}
+                                disabled={!isEditing}
+                                placeholder={t('mon_compte.placeholders.full_name') || "Votre nom complet"}
+                                className="h-11 bg-slate-50/50 border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all pl-10 disabled:opacity-100 disabled:cursor-default text-black"
                               />
                               <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                           </div>
+                          </div>
                         </div>
 
                         <div className="space-y-2">
-                           <Label className="text-[14px] font-medium uppercase tracking-wider text-slate-600 ml-1">{t('mon_compte.fields.birth_date')}</Label>
-                           <div className="relative group">
-                             <Popover>
-                               <PopoverTrigger asChild>
-                                 <Button
-                                   disabled={!isEditing}
-                                   variant="outline"
-                                   className={cn(
-                                     "h-11 w-full justify-start text-[14px] font-normal rounded-xl bg-slate-50/50 transition-all pl-10 hover:bg-white hover:text-gray-400 focus:ring-4 focus:ring-blue-500/5 transition-all focus-visible:ring-4 focus-visible:ring-blue-500/5 focus:bg-white disabled:opacity-100 disabled:cursor-default border-none text-black",
-                                     !userInfo.dateNaissance && "text-slate-400"
-                                   )}
-                                 >
-                                   {userInfo.dateNaissance ? format(new Date(userInfo.dateNaissance), "dd/MM/yyyy") : (t('mon_compte.placeholders.birth_date') || (i18n.language === 'fr' ? "Date de naissance" : "Birth Date"))}
-                                 </Button>
-                               </PopoverTrigger>
-                               <PopoverContent className="w-auto p-0 rounded-2xl shadow-xl border-slate-100" align="start">
-                                 <Calendar
-                                   mode="single"
-                                   selected={userInfo.dateNaissance ? new Date(userInfo.dateNaissance) : undefined}
-                                   onSelect={(date) => {
-                                     setUserInfo(prev => ({ ...prev, dateNaissance: date ? date.toISOString().split('T')[0] : '' }));
-                                   }}
-                                   disabled={(date) => date > new Date()}
-                                   captionLayout="dropdown-buttons"
-                                   fromYear={1934}
-                                   toYear={new Date().getFullYear()}
-                                   initialFocus
-                                 />
-                               </PopoverContent>
-                             </Popover>
-                             <CalendarIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                           </div>
-                        </div>
-
-                        <div className="space-y-2">
-                           <Label className="text-[14px] font-medium uppercase tracking-wider text-slate-600 ml-1">{t('mon_compte.fields.phone')}</Label>
+                          <Label className="text-[14px] font-medium uppercase tracking-wider text-slate-600 ml-1">{t('mon_compte.fields.birth_date')}</Label>
                           <div className="relative group">
-                             <Input
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  disabled={!isEditing}
+                                  variant="outline"
+                                  className={cn(
+                                    "h-11 w-full justify-start text-[14px] font-normal rounded-xl bg-slate-50/50 transition-all pl-10 hover:bg-white hover:text-gray-400 focus:ring-4 focus:ring-blue-500/5 transition-all focus-visible:ring-4 focus-visible:ring-blue-500/5 focus:bg-white disabled:opacity-100 disabled:cursor-default border-none text-black",
+                                    !userInfo.dateNaissance && "text-slate-400"
+                                  )}
+                                >
+                                  {userInfo.dateNaissance ? formatDateDisplay(new Date(userInfo.dateNaissance), "dd/MM/yyyy", i18n.language) : (t('mon_compte.placeholders.birth_date') || (i18n.language === 'fr' ? "Date de naissance" : "Birth Date"))}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0 rounded-2xl shadow-xl border-slate-100" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={userInfo.dateNaissance ? new Date(userInfo.dateNaissance) : undefined}
+                                  onSelect={(date) => {
+                                    setUserInfo(prev => ({ ...prev, dateNaissance: date ? date.toISOString().split('T')[0] : '' }));
+                                  }}
+                                  disabled={(date) => date > new Date()}
+                                  captionLayout="dropdown-buttons"
+                                  fromYear={1934}
+                                  toYear={new Date().getFullYear()}
+                                  initialFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            <CalendarIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-[14px] font-medium uppercase tracking-wider text-slate-600 ml-1">{t('mon_compte.fields.phone')}</Label>
+                          <div className="relative group">
+                            <Input
                                 id="telephone"
                                 value={userInfo.telephone}
                                 onChange={handleChange}
                                 disabled={!isEditing}
                                 placeholder={t('mon_compte.placeholders.phone')}
                                 className="h-11 bg-slate-50/50 border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all pl-10 text-black"
-                             />
-                             <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            />
+                            <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                           </div>
-                       </div>
+                      </div>
 
                         <div className="space-y-2 md:col-span-2">
-                           <Label className="text-[14px] font-medium uppercase tracking-wider text-slate-600 ml-1">{t('mon_compte.fields.address')}</Label>
+                          <Label className="text-[14px] font-medium uppercase tracking-wider text-slate-600 ml-1">{t('mon_compte.fields.address')}</Label>
                           <div className="relative group">
-                             <Input
+                            <Input
                                 id="adresse"
                                 value={userInfo.adresse}
                                 onChange={handleChange}
                                 disabled={!isEditing}
                                 placeholder={t('mon_compte.placeholders.address')}
                                 className="h-11 bg-slate-50/50 border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all pl-10 text-black"
-                             />
-                             <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            />
+                            <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                           </div>
-                       </div>
+                      </div>
                     </div>
-                 </CardContent>
-               </Card>
-            </div>
+                </CardContent>
+              </Card>
           </div>
         </div>
       </div>
-      {!isUserAdmin && <Footer />}
     </div>
-    );
-  };
-
-  // Si l'utilisateur est admin, utiliser AdminLayout, sinon afficher normalement (sans Header car géré par App.tsx)
-  if (isUserAdmin) {
-    return (
-      <AdminLayout>
-        <ProfileContent />
-      </AdminLayout>
-    );
-  }
-
-  // Pour les clients, afficher seulement le contenu (le Header est géré par App.tsx)
-  return (
-    <PublicLayout>
-      <ProfileContent />
-    </PublicLayout>
   );
 };
 

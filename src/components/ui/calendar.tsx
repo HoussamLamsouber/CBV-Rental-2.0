@@ -3,6 +3,8 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";
 import { useTranslation } from "react-i18next";
 import { enUS, fr } from "date-fns/locale";
+import { format } from "date-fns";
+import { capitalizeFirstLetter } from "@/utils/dateUtils";
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
@@ -17,6 +19,7 @@ function Calendar({ className, classNames, showOutsideDays = true, colorScheme =
 
   return (
     <DayPicker
+      {...props}
       locale={currentLocale}
       showOutsideDays={showOutsideDays}
       captionLayout="dropdown-buttons"
@@ -80,10 +83,22 @@ function Calendar({ className, classNames, showOutsideDays = true, colorScheme =
         ...classNames,
       }}
       components={{
+        ...props.components,
         IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
         IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
       }}
-      {...props}
+      formatters={{
+        ...props.formatters,
+        formatMonthCaption: (month, options) =>
+          capitalizeFirstLetter(format(month, "MMMM", options)),
+        formatCaption: (date, options) => {
+          const month = format(date, "MMMM", options);
+          const year = format(date, "yyyy", options);
+          return `${capitalizeFirstLetter(month)} ${year}`;
+        },
+        formatWeekdayName: (date, options) =>
+          capitalizeFirstLetter(format(date, "EEEEEE", options)),
+      }}
     />
   );
 }

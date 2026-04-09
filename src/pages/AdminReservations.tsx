@@ -5,6 +5,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { emailJSService } from "@/services/emailJSService";
 import { toast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { formatDateDisplay } from "@/utils/dateUtils";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { DatePicker } from "@/components/ui/DatePicker";
@@ -1573,7 +1574,7 @@ export default function ReservationsAdmin() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center bg-gradient-to-b from-blue-50 to-gray-50 min-h-screen p-4">
+      <div className="flex justify-center items-center bg-gray-50 min-h-screen p-4">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <div className="text-gray-600">{translate('admin_reservations.messages.loading', 'Chargement des réservations...')}</div>
@@ -1583,7 +1584,7 @@ export default function ReservationsAdmin() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-50 p-4 sm:p-6">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
       <div className="max-w-7xl mx-auto">
         <div className="mb-6">
           <div className="flex items-center gap-4 mb-4">
@@ -1717,7 +1718,7 @@ export default function ReservationsAdmin() {
                         variant="filter"
                         className="h-10 px-3 text-sm"
                         selected={filters.date ? new Date(filters.date + "T00:00:00") : undefined}
-                        onSelect={(date) => setFilters({ ...filters, date: date ? format(date, "yyyy-MM-dd") : "" })}
+                        onSelect={(date) => setFilters({ ...filters, date: date ? formatDateDisplay(date, "yyyy-MM-dd", i18n.language) : "" })}
                         placeholder={translate('admin_reservations.filters.select_date', 'Sélectionner une date')}
                       />
                     </div>

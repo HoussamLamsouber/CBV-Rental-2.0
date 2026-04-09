@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { format, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
+import { capitalizeFirstLetter } from "@/utils/dateUtils";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
@@ -214,7 +215,7 @@ const DateTimeField = ({
           )}
         >
           {date
-            ? `${format(date, "dd MMM")} • ${time}`
+            ? `${capitalizeFirstLetter(format(date, "dd MMM"))} • ${time}`
             : placeholder || t("searchForm.selectDateTime")}
         </Button>
       </PopoverTrigger>

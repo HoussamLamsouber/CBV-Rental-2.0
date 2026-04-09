@@ -294,7 +294,7 @@ export default function AdminLocalisations() {
   if (isLoading) {
     return (
       <>
-        <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-50 p-6">
+        <div className="min-h-screen bg-gray-50 p-6">
           <div className="max-w-7xl mx-auto">
             <div className="text-center py-24">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -365,7 +365,7 @@ export default function AdminLocalisations() {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-50 p-6">
+      <div className="min-h-screen bg-gray-50 p-6">
         <div className="max-w-7xl mx-auto">
           {/* En-tête */}
           <div className="mb-8">

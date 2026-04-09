@@ -1,5 +1,4 @@
-import * as React from "react";
-import { format } from "date-fns";
+import { formatDateDisplay } from "@/utils/dateUtils";
 import { Calendar as CalendarIcon, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -49,7 +48,7 @@ export function DatePicker({
           >
             <span className="truncate">
               {selected ? (
-                format(selected, "dd/MM/yyyy")
+                formatDateDisplay(selected, "dd/MM/yyyy", i18n.language)
               ) : (
                 placeholder || t("admin_reservations.filters.select_date")
               )}

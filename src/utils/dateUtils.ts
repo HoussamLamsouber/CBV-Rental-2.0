@@ -1,4 +1,39 @@
 // utils/dateUtils.ts
+import { format } from "date-fns";
+import { fr, enUS } from "date-fns/locale";
+
+/**
+ * Formats a date with capitalization support for French locale.
+ * @param date The date to format
+ * @param formatStr The date-fns format string
+ * @param localeCode The current language code ('fr' or 'en')
+ */
+export const formatDateDisplay = (date: Date, formatStr: string, localeCode: string): string => {
+  const currentLocale = localeCode === 'fr' ? fr : enUS;
+  const formatted = format(date, formatStr, { locale: currentLocale });
+
+  if (localeCode === "fr") {
+    // Capitalize every word that is a "word" (letters only)
+    return formatted
+      .split(" ")
+      .map(word => {
+        // Only capitalize if it contains letters (avoiding numbers like "12")
+        if (/^[a-zàâçéèêëîïôûùüÿñæœ]+$/i.test(word)) {
+          return word.charAt(0).toUpperCase() + word.slice(1);
+        }
+        return word;
+      })
+      .join(" ");
+  }
+
+  return formatted;
+};
+
+// Capitalise the first letter of a string (useful for French day/month names)
+export const capitalizeFirstLetter = (text: string): string => {
+  if (!text) return text;
+  return text.charAt(0).toUpperCase() + text.slice(1);
+};
 
 // Convertir une Date en string YYYY-MM-DD pour la base de données
 export const formatDateForDB = (date: Date): string => {
