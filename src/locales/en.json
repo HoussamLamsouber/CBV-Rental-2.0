@@ -1321,6 +1321,7 @@
         "title": "Localisations Management",
         "subtitle": "Select the localisations that will appear in the homepage search",
         "fields": {
+            "city_name": "City",
             "display_name": "Display Name",
             "technical_value": "Technical Value",
             "type": "Type",
@@ -1371,6 +1372,8 @@
             "display_name": "Display name",
             "display_name_placeholder": "ex: New Airport",
             "display_name_help": "The name that will be displayed to users",
+            "city_helper": "Enter only the city name",
+            "city_placeholder": "Ex: Casablanca",
             "technical_value": "Technical value",
             "technical_value_placeholder": "Generated automatically",
             "technical_value_help": "This value is used in the system",

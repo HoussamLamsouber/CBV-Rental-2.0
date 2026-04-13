@@ -43,7 +43,7 @@ const AppProviders = ({ children }: { children: React.ReactNode }) => (
 const PublicLayout = ({ children }: { children: React.ReactNode }) => (
   <div className="min-h-screen bg-gray-50 flex flex-col">
     <Header />
-    <main className="flex-1 pt-24">
+    <main className="flex-1 pt-20">
       {children}
     </main>
     <Footer />

@@ -18,7 +18,7 @@ const About = () => {
   return (
     <div className="bg-slate-50/50">
       {/* --- Hero Section --- */}
-      <section className="relative py-20 bg-slate-50/50">
+      <section className="relative pb-20 pt-10 bg-slate-50/50">
         <div className="container mx-auto px-6 text-center">
           <motion.h1 
             {...fadeIn}

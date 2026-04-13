@@ -313,7 +313,7 @@ const MaReservation = () => {
 
     if (!reservations.length) {
       return (
-        <div className="flex-1 overflow-y-auto w-full pt-32">
+        <div className="flex-1 overflow-y-auto w-full">
           <div className="max-w-md mx-auto">
             <Calendar className="h-16 w-16 text-slate-300 mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-slate-900 mb-2">
@@ -480,9 +480,9 @@ const MaReservation = () => {
     );
   };
   return (
-    <main className="container mx-auto px-4 pt-32 pb-6 sm:pb-8 flex-1">
+    <div className="container mx-auto px-4 pb-6 sm:pb-8 flex-1">
       {renderContent()}
-    </main>
+    </div>
   );
 };
 

@@ -1321,6 +1321,7 @@
         "title": "Gestion des Localisations",
         "subtitle": "Sélectionnez les localisations qui apparaîtront dans la recherche de la page d'accueil",
         "fields": {
+            "city_name": "Ville",
             "display_name": "Nom affiché",
             "technical_value": "Valeur technique",
             "type": "Type",
@@ -1371,6 +1372,8 @@
             "display_name": "Nom d'affichage",
             "display_name_placeholder": "ex: Nouvel Aéroport",
             "display_name_help": "Le nom qui sera affiché aux utilisateurs",
+            "city_helper": "Entrez uniquement le nom de la ville",
+            "city_placeholder": "Ex: Casablanca",
             "technical_value": "Valeur technique",
             "technical_value_placeholder": "Généré automatiquement",
             "technical_value_help": "Cette valeur est utilisée dans le système",

@@ -279,24 +279,21 @@ const Offres = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 pt-32 pb-20">
-        <div className="container mx-auto px-6">
-          <div className="h-10 w-64 bg-slate-200 animate-pulse rounded-lg mb-4" />
+      <div className="container mx-auto px-6 pb-20">
+        <div className="h-10 w-64 bg-slate-200 animate-pulse rounded-lg mb-4" />
           <div className="h-4 w-96 bg-slate-100 animate-pulse rounded-lg mb-12" />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div key={i} className="h-96 bg-white rounded-2xl border border-slate-100 animate-pulse" />
             ))}
           </div>
-        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 pt-32">
-      <main className="flex-1 container mx-auto px-6 pb-20">
-        <div className="mb-16 space-y-4">
+    <div className="container mx-auto px-6 pb-20">
+      <div className="mb-16 space-y-4">
 
           <h1 className="text-[32px] font-bold text-slate-900 tracking-tight italic">
             {t("offers_page.title")}
@@ -409,7 +406,6 @@ const Offres = () => {
           i18n={i18n}
           t={t}
         />
-      </main>
     </div>
   );
 };

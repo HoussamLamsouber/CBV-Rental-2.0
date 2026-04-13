@@ -33,10 +33,7 @@ export default function AdminLocalisations() {
   const [newLocalisation, setNewLocalisation] = useState({
     localisation_value: "",
     localisation_type: "airport",
-    translations: {
-      fr: "",
-      en: ""
-    }
+    cityName: "",
   });
 
   const [activeLang, setActiveLang] = useState<"fr" | "en">("fr");
@@ -73,12 +70,16 @@ export default function AdminLocalisations() {
 
   useEffect(() => {
     const updateLocalisationValue = async () => {
-      const frName = newLocalisation.translations.fr;
+      const city = newLocalisation.cityName;
 
-      if (!frName) return;
+      if (!city) {
+        setNewLocalisation(prev => ({ ...prev, localisation_value: "" }));
+        setValidation({ isDuplicate: false, isValid: false });
+        return;
+      }
 
       const localisationValue = generateLocalisationValue(
-        frName,
+        city,
         newLocalisation.localisation_type
       );
 
@@ -91,12 +92,12 @@ export default function AdminLocalisations() {
 
       setValidation({
         isDuplicate,
-        isValid: !isDuplicate && !!frName
+        isValid: !isDuplicate && !!city
       });
     };
 
     updateLocalisationValue();
-  }, [newLocalisation.translations.fr, newLocalisation.localisation_type]);
+  }, [newLocalisation.cityName, newLocalisation.localisation_type]);
 
 
 
@@ -220,18 +221,29 @@ export default function AdminLocalisations() {
 
       if (locError) throw locError;
 
+      const frDisplayName = getDisplayNameFromCity(
+        newLocalisation.localisation_type,
+        newLocalisation.cityName,
+        "fr"
+      );
+      const enDisplayName = getDisplayNameFromCity(
+        newLocalisation.localisation_type,
+        newLocalisation.cityName,
+        "en"
+      );
+
       const { error: translationError } = await supabase
         .from("localisation_translations")
         .insert([
           {
             localisation_id: localisationData.id,
             language: "fr",
-            display_name: newLocalisation.translations.fr,
+            display_name: frDisplayName,
           },
           {
             localisation_id: localisationData.id,
             language: "en",
-            display_name: newLocalisation.translations.en,
+            display_name: enDisplayName,
           },
         ]);
 
@@ -244,10 +256,7 @@ export default function AdminLocalisations() {
       setNewLocalisation({
         localisation_value: "",
         localisation_type: "airport",
-        translations: {
-          fr: "",
-          en: ""
-        }
+        cityName: "",
       });
 
       // ✅ Reset validation
@@ -306,23 +315,52 @@ export default function AdminLocalisations() {
     );
   }
 
-  // Fonction pour générer le localisation_value à partir du display_name
-  const generateLocalisationValue = (displayName: string, type: string) => {
-    if (!displayName) return "";
+  const getDisplayNameFromCity = (type: string, city: string, language: string) => {
+    if (!city) return "";
+    
+    // Clean city name from potential prefixes if user typed them
+    const cleanCity = city.replace(/^(gare de |aéroport de |station |airport )/i, "").trim();
 
-    // Nettoyer le nom : minuscules, remplacer espaces par underscores, supprimer accents
-    const cleanName = displayName
+    if (language === "fr") {
+      const startsWithVowel = (str: string) => {
+        if (!str) return false;
+        const firstLetter = str.trim().charAt(0).toLowerCase();
+        return ["a", "e", "i", "o", "u", "y", "h"].includes(firstLetter);
+      };
+
+      const useElision = startsWithVowel(cleanCity);
+
+      if (type === "station") {
+        return useElision ? `Gare d’${cleanCity}` : `Gare de ${cleanCity}`;
+      }
+
+      if (type === "airport") {
+        return useElision ? `Aéroport d’${cleanCity}` : `Aéroport de ${cleanCity}`;
+      }
+    }
+
+    if (language === "en") {
+      return type === "station"
+        ? `${cleanCity} Station`
+        : `${cleanCity} Airport`;
+    }
+    return cleanCity;
+  };
+
+  const generateLocalisationValue = (city: string, type: string) => {
+    if (!city) return "";
+
+    // Prevent duplicate prefix and normalize
+    const cleanCity = city
+      .replace(/^(gare de |aéroport de |station |airport )/i, "")
+      .trim()
       .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '') // Supprimer les accents
-      .replace(/[^a-z0-9\s]/g, '') // Garder seulement lettres, chiffres et espaces
-      .replace(/\s+/g, '_') // Remplacer espaces par underscores
-      .trim();
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, "_");
 
-    // Ajouter le préfixe selon le type
-    const prefix = type === 'airport' ? 'airport_' : 'station_';
-
-    return prefix + cleanName;
+    const prefix = type === "airport" ? "airport_" : "station_";
+    return `${prefix}${cleanCity}`;
   };
 
   // Fonction pour vérifier si un localisation_value existe déjà
@@ -345,7 +383,7 @@ export default function AdminLocalisations() {
   // Fonction pour gérer le changement de type
   const handleLocalisationTypeChange = async (type: string) => {
     const localisationValue = generateLocalisationValue(
-      newLocalisation.translations.fr,
+      newLocalisation.cityName,
       type
     );
 
@@ -359,7 +397,7 @@ export default function AdminLocalisations() {
 
     setValidation({
       isDuplicate,
-      isValid: !isDuplicate && !!newLocalisation.translations.fr
+      isValid: !isDuplicate && !!newLocalisation.cityName
     });
   };
 
@@ -452,42 +490,26 @@ export default function AdminLocalisations() {
                   </select>
                 </div>
                 
-                {/* 2. Display Name */}
+                {/* 2. City Name */}
                 <div className="w-full">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-1">
                     <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                      {t('admin_localisations.fields.display_name')} *
+                      {t('admin_localisations.fields.city_name')} *
                     </Label>
-                    {/* Tabs pour FR / EN inline */}
-                    <div className="flex gap-1 p-0.5 bg-slate-50 rounded text-[10px]">
-                      {["fr", "en"].map((lang) => (
-                        <button
-                          key={lang}
-                          type="button"
-                          onClick={() => setActiveLang(lang as "fr" | "en")}
-                          className={`px-2 py-0.5 rounded font-bold transition-all ${activeLang === lang
-                            ? "bg-white text-blue-600 shadow-sm"
-                            : "text-slate-400 hover:text-slate-600"
-                            }`}
-                        >
-                          {lang.toUpperCase()}
-                        </button>
-                      ))}
-                    </div>
+                    <span className="text-[10px] text-slate-400 italic">
+                      {t('admin_localisations.add_form.city_helper')}
+                    </span>
                   </div>
                   <input
                     className="h-10 px-3 text-sm border border-slate-200 rounded-lg w-full focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all"
-                    value={newLocalisation.translations[activeLang]}
+                    value={newLocalisation.cityName}
                     onChange={(e) =>
                       setNewLocalisation((prev) => ({
                         ...prev,
-                        translations: {
-                          ...prev.translations,
-                          [activeLang]: e.target.value,
-                        },
+                        cityName: e.target.value,
                       }))
                     }
-                    placeholder={`${t('admin_localisations.add_form.name')} ${activeLang.toUpperCase()}`}
+                    placeholder={t('admin_localisations.add_form.city_placeholder')}
                   />
                 </div>
 
@@ -518,13 +540,12 @@ export default function AdminLocalisations() {
                 </div>
 
                 {/* 4. Actions */}
-                <div className="flex gap-2 w-full ml-20">
+                <div className="flex gap-2 w-full">
                   <Button
                     onClick={handleAddLocalisation}
                     className="w-auto px-4 bg-green-600 hover:bg-green-700 h-10 text-sm"
                     disabled={
-                      !newLocalisation.translations.fr ||
-                      !newLocalisation.translations.en ||
+                      !newLocalisation.cityName ||
                       !newLocalisation.localisation_value ||
                       validation.isDuplicate
                     }
@@ -536,10 +557,7 @@ export default function AdminLocalisations() {
                     setNewLocalisation({
                       localisation_value: "",
                       localisation_type: "airport",
-                      translations: {
-                        fr: "",
-                        en: ""
-                      }
+                      cityName: "",
                     });
                     setValidation({
                       isDuplicate: false,
@@ -550,6 +568,35 @@ export default function AdminLocalisations() {
                   </Button>
                 </div>
               </div>
+
+              {/* Preview Section */}
+              {newLocalisation.cityName && (
+                <div className="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+                    {t('admin_localisations.add_form.preview')}
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-slate-400 uppercase font-bold">FR</span>
+                      <p className="text-sm font-medium text-slate-700">
+                        {getDisplayNameFromCity(newLocalisation.localisation_type, newLocalisation.cityName, "fr")}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-slate-400 uppercase font-bold">EN</span>
+                      <p className="text-sm font-medium text-slate-700">
+                        {getDisplayNameFromCity(newLocalisation.localisation_type, newLocalisation.cityName, "en")}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-slate-400 uppercase font-bold">ID</span>
+                      <p className="text-sm font-mono text-blue-600">
+                        {newLocalisation.localisation_value}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

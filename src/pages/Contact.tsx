@@ -15,7 +15,7 @@ export default function Contact() {
   return (
     <>
       {/* Header Section */}
-      <section className="py-16 mb-12">
+      <section className="pb-16 pt-8 mb-12">
         <div className="max-w-7xl mx-auto px-6">
           <motion.div 
             initial={{ opacity: 0, y: -20 }}

@@ -401,7 +401,7 @@ const Auth = () => {
                           onChange={(e) => setFullName(e.target.value)}
                           required
                           disabled={loading}
-                          className="h-10 bg-white border-slate-200 rounded-lg focus:ring-4 focus:ring-blue-500/10 transition-all pl-10 text-sm"
+                          className="h-10 mb-7 bg-white border-slate-200 rounded-lg focus:ring-4 focus:ring-blue-500/10 transition-all pl-10 text-sm"
                           autoComplete="name"
                         />
                         <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -421,7 +421,7 @@ const Auth = () => {
                           onChange={(e) => setSignupEmail(e.target.value)}
                           required
                           disabled={loading}
-                          className="h-10 bg-white border-slate-200 rounded-lg focus:ring-4 focus:ring-blue-500/10 transition-all pl-10 text-sm"
+                          className="h-10 mb-7 bg-white border-slate-200 rounded-lg focus:ring-4 focus:ring-blue-500/10 transition-all pl-10 text-sm"
                           autoComplete="email"
                         />
                         <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -457,7 +457,7 @@ const Auth = () => {
                           {showSignupPassword ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                         </button>
                       </div>
-                      <div className="min-h-[20px] mt-1 pl-1">
+                      <div className="min-h-[10px] mt-1 pl-1">
                         {signupPassword && !isValidPassword && (
                           <p className="text-red-500 text-[10px] sm:text-xs">
                             {t('auth.errors.password_rules')}
