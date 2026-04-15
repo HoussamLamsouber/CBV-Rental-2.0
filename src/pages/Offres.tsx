@@ -41,6 +41,7 @@ const OffersModal = ({
   onClose, 
   currentCar, 
   currentCarOffers, 
+  currentCarSpecialOffer,
   getTranslatedPeriod, 
   i18n, 
   t 
@@ -49,6 +50,7 @@ const OffersModal = ({
   onClose: () => void;
   currentCar: Car | null;
   currentCarOffers: CarOffer[];
+  currentCarSpecialOffer: SpecialOffer | null;
   getTranslatedPeriod: (p: string) => string;
   i18n: any;
   t: any;
@@ -122,8 +124,41 @@ const OffersModal = ({
                  {t("offers_page.specialOffers")}
               </h3>
 
-              {currentCarOffers.length > 0 ? (
+              {!currentCarSpecialOffer && currentCarOffers.length === 0 ? (
+                <div className="py-12 text-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                  <Clock className="h-10 w-10 text-slate-300 mx-auto mb-3" />
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{t("offers_page.noSpecialOffers")}</p>
+                </div>
+              ) : (
                 <div className="space-y-3">
+                  {currentCarSpecialOffer && (
+                    <div className="group flex items-center justify-between p-5 bg-red-50 border-2 border-red-500 rounded-xl transition-all hover:shadow-lg hover:shadow-red-500/10">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center text-red-600">
+                          <Calendar className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <span className="block text-sm font-bold text-red-600 uppercase tracking-tight">
+                            {currentCarSpecialOffer.period}
+                          </span>
+                          {currentCarSpecialOffer.badge_text && (
+                            <span className="block text-[10px] mt-0.5 font-bold text-red-500 uppercase tracking-widest">
+                              {currentCarSpecialOffer.badge_text}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                         <span className="block text-xl font-bold text-red-600">
+                           {currentCarSpecialOffer.price}
+                         </span>
+                         <span className="text-[10px] font-bold text-red-400 uppercase tracking-widest">
+                            MAD
+                          </span>
+                      </div>
+                    </div>
+                  )}
+
                   {currentCarOffers.map((offer, idx) => (
                     <div key={idx} className="group flex items-center justify-between p-5 bg-white border border-slate-100 rounded-xl transition-all hover:border-blue-200 hover:shadow-lg hover:shadow-blue-600/5">
                       <div className="flex items-center gap-4">
@@ -150,11 +185,6 @@ const OffersModal = ({
                     </div>
                   ))}
                 </div>
-              ) : (
-                <div className="py-12 text-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
-                  <Clock className="h-10 w-10 text-slate-300 mx-auto mb-3" />
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{t("offers_page.noSpecialOffers")}</p>
-                </div>
               )}
            </div>
 
@@ -169,10 +199,26 @@ const OffersModal = ({
   );
 };
 
+type SpecialOffer = {
+  id: string;
+  car_id: string;
+  title: string;
+  description: string | null;
+  price: number;
+  period: string;
+  start_date: string;
+  end_date: string;
+  badge_text: string | null;
+  highlight_color: string | null;
+  is_active: boolean;
+  is_deleted: boolean;
+};
+
 const Offres = () => {
   const { t, i18n } = useTranslation();
   const [cars, setCars] = useState<Car[]>([]);
   const [offers, setOffers] = useState<Record<string, CarOffer[]>>({});
+  const [specialOffers, setSpecialOffers] = useState<Record<string, SpecialOffer>>({});
   const [selectedCarId, setSelectedCarId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -193,7 +239,6 @@ const Offres = () => {
         // 2. Double filtrage en JS par sécurité et logging
         const filteredCars = (carsData || []).filter(v => {
           const s = Number(v.quantity);
-          console.log(`Vehicle ${v.name} stock:`, s);
           return s > 0;
         });
 
@@ -221,7 +266,6 @@ const Offres = () => {
 
       const records = data as OfferRecord[];
       const map: Record<string, CarOffer[]> = {};
-      console.log(records);
 
       records.forEach((o) => {
         if (!map[o.car_id]) map[o.car_id] = [];
@@ -255,11 +299,56 @@ const Offres = () => {
       setOffers(map);
     };
 
+    const fetchSpecialOffers = async () => {
+      const { data, error } = await supabase
+        .from("special_offers")
+        .select("*")
+        .eq("is_deleted", false);
+
+      if (error) {
+        console.error("Erreur fetch special_offers:", error);
+        return;
+      }
+
+      console.log("SPECIAL OFFERS:", data);
+
+      if (data) {
+        const records = data as SpecialOffer[];
+        const specialOffersMap: Record<string, SpecialOffer> = {};
+        const now = new Date();
+        
+        records.forEach((offer) => {
+          if (!offer.is_active) return;
+          const start = new Date(offer.start_date);
+          const end = new Date(offer.end_date);
+          
+          if (start <= now && end >= now) {
+            if (!specialOffersMap[offer.car_id]) {
+              specialOffersMap[offer.car_id] = offer;
+            }
+          }
+        });
+
+        console.log("FILTERED (active + in range):", specialOffersMap);
+        setSpecialOffers(specialOffersMap);
+      }
+    };
+
     fetchOffers();
+    fetchSpecialOffers();
   }, []);
 
   const openOffersModal = (carId: string) => setSelectedCarId(carId);
   const closeOffersModal = () => setSelectedCarId(null);
+
+  const isOfferActive = (offer: SpecialOffer): boolean => {
+    if (!offer) return false;
+    const now = new Date().getTime();
+    const start = offer.start_date ? new Date(offer.start_date).getTime() : null;
+    const end = offer.end_date ? new Date(offer.end_date).getTime() : null;
+    console.log("[isOfferActive]", offer.id, { is_active: offer.is_active, start, end, now, startOk: !start || start <= now, endOk: !end || end >= now });
+    return offer.is_active === true && (!start || start <= now) && (!end || end >= now);
+  };
 
   const currentCarOffers = selectedCarId ? offers[selectedCarId] || [] : [];
   const currentCar = selectedCarId ? cars.find((c) => c.id === selectedCarId) : null;
@@ -305,8 +394,14 @@ const Offres = () => {
 
         {cars.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {cars.map((car) => (
-              <div key={car.id} className="group bg-white rounded-2xl border border-slate-100 p-4 transition-all duration-500 hover:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] hover:-translate-y-2 relative overflow-hidden">
+            {cars.map((car) => {
+              const activeSpecialOffer = specialOffers[car.id];
+              console.log(`[Offres render] car=${car.id} activeSpecialOffer=`, activeSpecialOffer ?? 'none');
+              return (
+              <div 
+                key={car.id} 
+                className={`group bg-white rounded-2xl border p-4 transition-all duration-500 hover:-translate-y-2 relative overflow-hidden ${activeSpecialOffer ? "ring-2 ring-red-500 shadow-lg border-transparent" : "border-slate-100 hover:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)]"}`}
+              >
                 {/* Car Image Container */}
                 <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-slate-50 mb-6">
                   <img 
@@ -369,16 +464,15 @@ const Offres = () => {
                   </div>
                 </div>
 
-                {/* Special Offer Indicator */}
-                {offers[car.id] && offers[car.id].length > 0 && (
+                {activeSpecialOffer && activeSpecialOffer.badge_text && (
                   <div className="absolute top-6 left-6 animate-bounce">
-                    <div className="bg-green-500 text-white font-bold text-[9px] px-2 py-1 rounded-md uppercase tracking-tighter shadow-lg shadow-green-500/30">
-                      {offers[car.id].length} {t("offers_page.special_offers", { count: offers[car.id].length })}
+                    <div className="text-white font-bold text-[10px] px-3 py-1.5 rounded-md uppercase tracking-widest shadow-lg flex items-center gap-1.5 bg-red-500 shadow-red-500/40">
+                      {activeSpecialOffer.badge_text}
                     </div>
                   </div>
                 )}
               </div>
-            ))}
+            )})}
           </div>
         ) : (
           <div className="text-center py-32 bg-white rounded-2xl border border-dashed border-slate-200">
@@ -402,6 +496,7 @@ const Offres = () => {
           onClose={closeOffersModal}
           currentCar={currentCar}
           currentCarOffers={currentCarOffers}
+          currentCarSpecialOffer={selectedCarId ? specialOffers[selectedCarId] : null}
           getTranslatedPeriod={getTranslatedPeriod}
           i18n={i18n}
           t={t}

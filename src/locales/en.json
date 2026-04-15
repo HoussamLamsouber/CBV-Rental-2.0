@@ -311,7 +311,7 @@
         "tabs": {
             "availability": "Availability today",
             "vehicles": "Individual vehicles",
-            "offers": "Special offers",
+            "offers": "Offers",
             "reservations": "All reservations",
             "calendar": "Calendar (30d)"
         },
@@ -350,7 +350,7 @@
             "no_depot_assigned": "No depot assigned"
         },
         "offers_management": {
-            "special_offers": "Special offers",
+            "special_offers": "Offers",
             "add_offer": "Add offer",
             "period": "Period",
             "price": "Price",
@@ -930,7 +930,7 @@
         "refresh": "Refresh Page",
         "standardPrice": "Standard price",
         "dailyRental": "Daily rental",
-        "specialOffers": "Special offers",
+        "specialOffers": "Offers",
         "noSpecialOffers": "No special offers available",
         "checkStandardRates": "Check our standard rates",
         "bookNow": "Book Now",

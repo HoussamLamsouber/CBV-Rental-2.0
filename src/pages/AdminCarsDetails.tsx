@@ -11,12 +11,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { ArrowLeft, Calendar, Trash2, Pencil, CalendarIcon } from "lucide-react";
+import { ArrowLeft, Calendar, Trash2, Pencil, CalendarIcon, Edit } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { formatDateDisplay } from "@/utils/dateUtils";
 import i18n from "@/i18n";
 import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { DateTimeField } from "@/components/SearchForm";
 
 type CarRow = {
   id: string;
@@ -110,7 +111,7 @@ export default function AdminVehicleDetail() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [activeTab, setActiveTab] = useState<'availability' | 'vehicles' | 'offers' | 'reservations' | 'calendar'>('availability');
+  const [activeTab, setActiveTab] = useState<'availability' | 'vehicles' | 'offers' | 'special_offers' | 'reservations' | 'calendar'>('availability');
   const [locationsMap, setLocationsMap] = useState<Record<string, string>>({});
   type Offer = {
     id: string;
@@ -121,6 +122,40 @@ export default function AdminVehicleDetail() {
   };
   const { i18n } = useTranslation();
   const [offers, setOffers] = useState<Offer[]>([]);
+  
+  type SpecialOffer = {
+    id: string;
+    car_id: string;
+    title: string;
+    description: string | null;
+    price: number;
+    period: string;
+    start_date: string;
+    end_date: string;
+    badge_text: string | null;
+    highlight_color: string | null;
+    is_active: boolean;
+    is_deleted: boolean;
+    created_at?: string;
+  };
+  const [specialOffers, setSpecialOffers] = useState<SpecialOffer[]>([]);
+  const [isCreateSpecialOfferModalOpen, setIsCreateSpecialOfferModalOpen] = useState(false);
+  const [editingSpecialOfferId, setEditingSpecialOfferId] = useState<string | null>(null);
+  const [newSpecialOffer, setNewSpecialOffer] = useState({
+    title: "",
+    description: "",
+    price: "",
+    period: "",
+    badge_text: "",
+    is_active: true
+  });
+  
+  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [startTime, setStartTime] = useState("");
+  const [endDate, setEndDate] = useState<Date | undefined>();
+  const [endTime, setEndTime] = useState("");
+  const [isActive, setIsActive] = useState(true);
+  
   const [isCreateOfferModalOpen, setIsCreateOfferModalOpen] = useState(false);
   const [isCreateVehicleModalOpen, setIsCreateVehicleModalOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
@@ -221,6 +256,8 @@ export default function AdminVehicleDetail() {
     setEditingVehicle(null);
 
     await fetchVehicles(); // refresh propre
+    console.log("ALL SPECIAL OFFERS:", specialOffers);
+    console.log("NOW:", new Date());
   };
 
   
@@ -415,6 +452,7 @@ export default function AdminVehicleDetail() {
 
         // 5. Charger les offres du véhicule
         await loadOffers();
+        await loadSpecialOffers();
 
         // 6. Générer les dates pour le calendrier (30 jours)
         const today = new Date();
@@ -471,6 +509,25 @@ export default function AdminVehicleDetail() {
     
     setOffers(sorted);
   };
+
+  const loadSpecialOffers = async () => {
+    if (!id) return;
+    
+    const { data: specialOffersData, error } = await supabase
+      .from("special_offers")
+      .select("*")
+      .eq("car_id", id)
+      .eq("is_deleted", false)
+      .order("created_at", { ascending: false });
+      
+    if (error) {
+      console.error("Erreur chargement offres spéciales:", error);
+      return;
+    }
+
+    setSpecialOffers(specialOffersData || []);
+  };
+
 
   // Fonctions pour le calendrier de disponibilité
   const isDateInReservation = (date: string, reservation: ReservationRow) => {
@@ -852,6 +909,139 @@ export default function AdminVehicleDetail() {
     }
   };
 
+  const handleCreateSpecialOffer = async () => {
+    if (
+      !newSpecialOffer.title?.trim() ||
+      !newSpecialOffer.price ||
+      !newSpecialOffer.period?.trim() ||
+      !startDate || !startTime ||
+      !endDate || !endTime
+    ) {
+      toast({
+        title: t('admin_vehicle_detail.messages.missing_fields'),
+        description: "Veuillez sélectionner la date et l'heure de début et de fin",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const combineDateTime = (date: Date, time: string) => {
+      const [hours, minutes] = time.split(":").map(Number);
+      const d = new Date(date);
+      d.setHours(hours);
+      d.setMinutes(minutes);
+      d.setSeconds(0);
+      d.setMilliseconds(0);
+      return d.toISOString();
+    };
+
+    const formattedStartDate = combineDateTime(startDate!, startTime);
+    const formattedEndDate = combineDateTime(endDate!, endTime);
+
+    if (new Date(formattedStartDate) >= new Date(formattedEndDate)) {
+      toast({
+        title: "Dates invalides",
+        description: "La date de fin doit être après la date de début",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSaving(true);
+    try {
+      console.log("isActive sent:", isActive);
+
+      if (editingSpecialOfferId) {
+        const { error } = await supabase
+          .from("special_offers")
+          .update({
+            title: newSpecialOffer.title,
+            description: newSpecialOffer.description || null,
+            price: Number(newSpecialOffer.price),
+            period: newSpecialOffer.period,
+            start_date: formattedStartDate,
+            end_date: formattedEndDate,
+            badge_text: newSpecialOffer.badge_text || null,
+            highlight_color: "#EF4444",
+            is_active: isActive
+          })
+          .eq("id", editingSpecialOfferId);
+
+        if (error) throw error;
+        toast({ title: "Succès", description: "Offre spéciale modifiée avec succès" });
+      } else {
+        const { error } = await supabase
+          .from("special_offers")
+          .insert([{
+            car_id: id,
+            title: newSpecialOffer.title,
+            description: newSpecialOffer.description || null,
+            price: Number(newSpecialOffer.price),
+            period: newSpecialOffer.period,
+            start_date: formattedStartDate,
+            end_date: formattedEndDate,
+            badge_text: newSpecialOffer.badge_text || null,
+            highlight_color: "#EF4444",
+            is_active: isActive
+          }]);
+
+        if (error) throw error;
+        toast({ title: "Succès", description: "Offre spéciale créée avec succès" });
+      }
+
+      setNewSpecialOffer({
+        title: "",
+        description: "",
+        price: "",
+        period: "",
+        badge_text: "",
+        is_active: true
+      });
+      setStartDate(undefined);
+      setStartTime("");
+      setEndDate(undefined);
+      setEndTime("");
+      setIsActive(true);
+      setEditingSpecialOfferId(null);
+      setIsCreateSpecialOfferModalOpen(false);
+      await loadSpecialOffers();
+    } catch (err: any) {
+      console.error(err);
+      toast({ title: t("error"), description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteSpecialOffer = async (offerId: string) => {
+    if (!confirm(t('admin_vehicle_detail.messages.confirm_archive_offer'))) return;
+
+    try {
+      const { error } = await supabase
+        .from("special_offers")
+        .update({
+          is_deleted: true,
+          deleted_at: new Date().toISOString()
+        })
+        .eq("id", offerId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: "Offre spéciale supprimée",
+      });
+      await loadSpecialOffers();
+    } catch (error: any) {
+      console.error("Erreur suppression offre spéciale:", error);
+      toast({
+        title: t("error"),
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   // RETOURS CONDITIONNELS FINAUX
   if (!id) { 
     return <div><main className="container mx-auto p-6">{t('admin_vehicle_detail.messages.missing_id')}</main></div>;
@@ -963,6 +1153,16 @@ export default function AdminVehicleDetail() {
               onClick={() => setActiveTab('offers')}
             >
               {t('admin_vehicle_detail.tabs.offers')} ({offers.length})
+            </button>
+            <button
+              className={`py-2 px-1 font-medium text-sm border-b-2 transition-colors ${
+                activeTab === 'special_offers'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+              onClick={() => setActiveTab('special_offers')}
+            >
+              Offres Spéciales ({specialOffers.length})
             </button>
             <button
               className={`py-2 px-1 font-medium text-sm border-b-2 transition-colors ${
@@ -1318,6 +1518,139 @@ export default function AdminVehicleDetail() {
               {allReservations.length === 0 && (
                 <div className="p-8 text-center text-gray-500">
                   {t('admin_vehicle_detail.reservations.no_reservations')}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Onglet Offres Spéciales */}
+        {activeTab === 'special_offers' && (
+          <>
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-xl font-semibold">Offres Spéciales</h2>
+              <Button onClick={() => {
+                setEditingSpecialOfferId(null);
+                setNewSpecialOffer({
+                  title: "",
+                  description: "",
+                  price: "",
+                  period: "",
+                  badge_text: "",
+                  is_active: true
+                });
+                
+                const now = new Date();
+                const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+                setStartDate(now);
+                setStartTime("09:00");
+                setEndDate(nextWeek);
+                setEndTime("23:59");
+                setIsActive(true);
+
+                setIsCreateSpecialOfferModalOpen(true);
+              }}>
+                + Créer offre spéciale
+              </Button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+              {specialOffers.map((offer) => {
+                const now = new Date();
+                const isOfferActive = offer.is_active && offer.start_date && offer.end_date && new Date(offer.start_date) <= now && new Date(offer.end_date) >= now;
+                return (
+                  <Card key={offer.id} className={`overflow-hidden ${isOfferActive ? 'ring-2 ring-red-500' : 'opacity-70'}`}>
+                    <div className="h-2 w-full" style={{ backgroundColor: offer.highlight_color || '#3b82f6' }} />
+                    <CardHeader className="pb-3">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle className="text-lg">{offer.title}</CardTitle>
+                          {offer.badge_text && (
+                            <span className="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold text-white uppercase" style={{ backgroundColor: offer.highlight_color || '#3b82f6' }}>
+                              {offer.badge_text}
+                            </span>
+                          )}
+                        </div>
+                        <span className={`px-2 py-1 text-xs font-bold rounded-full uppercase ${isOfferActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                          {isOfferActive ? 'Actif' : 'Inactif'}
+                        </span>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2 mb-4">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">Prix:</span>
+                          <span className="font-bold">{offer.price} MAD</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">Période:</span>
+                          <span className="font-medium">{offer.period}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">Du:</span>
+                          <span>{offer.start_date ? formatDateDisplay(new Date(offer.start_date), "dd/MM/yyyy", i18n.language) : "-"}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">Au:</span>
+                          <span>{offer.end_date ? formatDateDisplay(new Date(offer.end_date), "dd/MM/yyyy", i18n.language) : "-"}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="w-full flex-1"
+                          onClick={() => {
+                            const extractTime = (date: string): string => {
+                              if (!date) return "";
+                              const d = new Date(date);
+                              return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+                            };
+
+                            if (offer?.start_date) {
+                              setStartDate(new Date(offer.start_date));
+                              setStartTime(extractTime(offer.start_date));
+                            }
+                            if (offer?.end_date) {
+                              setEndDate(new Date(offer.end_date));
+                              setEndTime(extractTime(offer.end_date));
+                            }
+
+                            setNewSpecialOffer({
+                              title: offer.title,
+                              description: offer.description || "",
+                              price: offer.price.toString(),
+                              period: offer.period,
+                              badge_text: offer.badge_text || "",
+                              is_active: Boolean(offer.is_active)
+                            });
+                            setIsActive(Boolean(offer.is_active));
+                            setIsCreateSpecialOfferModalOpen(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Modifier
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          size="sm" 
+                          className="w-full flex-1"
+                          onClick={() => handleDeleteSpecialOffer(offer.id)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Archiver
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+              
+              {specialOffers.length === 0 && (
+                <div className="col-span-full p-8 text-center text-gray-500 bg-white rounded-lg border border-dashed">
+                  Aucune offre spéciale pour ce véhicule.
                 </div>
               )}
             </div>
@@ -1745,6 +2078,123 @@ export default function AdminVehicleDetail() {
                 </Button>
                 <Button onClick={handleCreateOffer} disabled={saving}>
                   {saving ? t('admin_vehicle_detail.modals.creating_offer') : t('admin_vehicle_detail.modals.create_offer')}
+                </Button>
+              </div>
+            </Dialog.Panel>
+          </div>
+        </Dialog>
+
+        {/* Modal de création / édition d'offre spéciale */}
+        <Dialog open={isCreateSpecialOfferModalOpen} onClose={() => {
+          setIsCreateSpecialOfferModalOpen(false);
+          setEditingSpecialOfferId(null);
+        }} className="relative z-50">
+          <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+          <div className="fixed inset-0 flex items-center justify-center p-4">
+            <Dialog.Panel className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+              <Dialog.Title className="text-lg font-semibold mb-4">
+                {editingSpecialOfferId ? "Modifier l'offre spéciale" : "Ajouter une offre spéciale"}
+              </Dialog.Title>
+
+              <div className="space-y-4">
+                <div>
+                  <Label>Titre (ex: Spécial Été)</Label>
+                  <Input
+                    value={newSpecialOffer.title}
+                    onChange={(e) => setNewSpecialOffer({ ...newSpecialOffer, title: e.target.value })}
+                    placeholder="Titre de l'offre"
+                  />
+                </div>
+                
+                <div>
+                  <Label>Description</Label>
+                  <Input
+                    value={newSpecialOffer.description}
+                    onChange={(e) => setNewSpecialOffer({ ...newSpecialOffer, description: e.target.value })}
+                    placeholder="Description optionnelle"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Période (ex: 2 mois)</Label>
+                    <Input
+                      value={newSpecialOffer.period}
+                      onChange={(e) => setNewSpecialOffer({ ...newSpecialOffer, period: e.target.value })}
+                      placeholder="Période"
+                    />
+                  </div>
+                  <div>
+                    <Label>Prix (MAD)</Label>
+                    <Input
+                      type="number"
+                      value={newSpecialOffer.price}
+                      onChange={(e) => setNewSpecialOffer({ ...newSpecialOffer, price: e.target.value })}
+                      placeholder="Prix total"
+                    />
+                  </div>
+                </div>
+
+                {/* Date de début */}
+                <div className="space-y-1">
+                  <Label>Date de début</Label>
+                  <div className="border rounded-md px-3 py-2">
+                    <DateTimeField
+                      date={startDate}
+                      time={startTime}
+                      onDateChange={setStartDate}
+                      onTimeChange={setStartTime}
+                      placeholder="Choisir la date de début"
+                      colorScheme="default"
+                    />
+                  </div>
+                </div>
+
+                {/* Date de fin */}
+                <div className="space-y-1">
+                  <Label>Date de fin</Label>
+                  <div className="border rounded-md px-3 py-2">
+                    <DateTimeField
+                      date={endDate}
+                      time={endTime}
+                      onDateChange={setEndDate}
+                      onTimeChange={setEndTime}
+                      placeholder="Choisir la date de fin"
+                      colorScheme="default"
+                    />
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <Label>Badge (ex: 🔥 Hot)</Label>
+                  <Input
+                    value={newSpecialOffer.badge_text}
+                    onChange={(e) => setNewSpecialOffer({ ...newSpecialOffer, badge_text: e.target.value })}
+                    placeholder="Texte du badge"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 mt-2">
+                  <input
+                    type="checkbox"
+                    id="is_active"
+                    checked={isActive}
+                    onChange={(e) => setIsActive(e.target.checked)}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <Label htmlFor="is_active" className="cursor-pointer">Offre active</Label>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 mt-6">
+                <Button variant="secondary" onClick={() => {
+                  setIsCreateSpecialOfferModalOpen(false);
+                  setEditingSpecialOfferId(null);
+                }}>
+                  Annuler
+                </Button>
+                <Button onClick={handleCreateSpecialOffer} disabled={saving}>
+                  {saving ? "Sauvegarde..." : (editingSpecialOfferId ? "Modifier l'offre" : "Créer l'offre")}
                 </Button>
               </div>
             </Dialog.Panel>

@@ -311,7 +311,7 @@
         "tabs": {
             "availability": "Disponibilité aujourd'hui",
             "vehicles": "Véhicules individuels",
-            "offers": "Offres spéciales",
+            "offers": "Offres",
             "reservations": "Toutes les réservations",
             "calendar": "Calendrier (30j)"
         },
@@ -350,7 +350,7 @@
             "no_depot_assigned": "Aucun dépôt assigné"
         },
         "offers_management": {
-            "special_offers": "Offres spéciales",
+            "special_offers": "Offres",
             "add_offer": "Ajouter une offre",
             "period": "Période",
             "price": "Prix",
@@ -930,7 +930,7 @@
         "refresh": "Actualiser la page",
         "standardPrice": "Prix standard",
         "dailyRental": "Location à la journée",
-        "specialOffers": "Offres spéciales",
+        "specialOffers": "Offres",
         "noSpecialOffers": "Aucune offre spéciale disponible",
         "checkStandardRates": "Consultez nos tarifs standards",
         "bookNow": "Réserver",

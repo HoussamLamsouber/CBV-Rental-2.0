@@ -156,7 +156,7 @@ const AutoCompleteInput = ({
   );
 };
 
-const DateTimeField = ({
+export const DateTimeField = ({
   date,
   time,
   onDateChange,
