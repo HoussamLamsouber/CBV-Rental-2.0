@@ -66,7 +66,7 @@ export const Header = () => {
 
         <nav className="hidden md:flex items-center gap-10">
           {navLink("/", t("home"))}
-          {navLink("/offres", t("offers"))}
+          {navLink("/offres", t("offers.nav"))}
           {navLink("/about", t("about"))}
           {navLink("/contact", t("contact.label"))}
         </nav>
@@ -157,7 +157,7 @@ export const Header = () => {
           <div className="bg-white/95 backdrop-blur-xl border border-slate-100 rounded-2xl shadow-xl p-6 space-y-4">
             <div className="flex flex-col space-y-1">
               {navLink("/", t("home"))}
-              {navLink("/offres", t("offers"))}
+              {navLink("/offres", t("offers.nav"))}
               {navLink("/about", t("about"))}
               {navLink("/contact", t("contact.label"))}
             </div>

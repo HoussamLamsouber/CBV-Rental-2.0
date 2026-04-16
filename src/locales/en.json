@@ -8,7 +8,10 @@
         "manual": "Manual"
     },
     "home": "Home",
-    "offers": "Offers",
+    "offers": {
+        "nav": "Offers",
+        "special": "Special offer"
+    },
     "my_reservations": "My bookings",
     "about": "About",
     "admin": "Administration",
@@ -1409,6 +1412,7 @@
             "generated_automatically": "Generated automatically"
         }
     },
+
     "specialOffers": {
         "title": "Special Offers",
         "titleFr": "Offer name (FR)",

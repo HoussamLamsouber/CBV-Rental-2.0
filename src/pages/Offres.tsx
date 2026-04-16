@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Car, Tag, Calendar, X, ArrowRight, Clock } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Car {
   id: string;
@@ -132,13 +133,23 @@ const OffersModal = ({
               ) : (
                 <div className="space-y-3">
                   {currentCarSpecialOffer && (
-                    <div className="group flex items-center justify-between p-5 bg-red-50 border-2 border-red-500 rounded-xl transition-all hover:shadow-lg hover:shadow-red-500/10">
+                    <div className={cn(
+                      "group relative flex items-center justify-between p-5 border-2 transition-all duration-300",
+                      "border-red-400 bg-red-50/40 shadow-md rounded-xl hover:scale-[1.01]"
+                    )}>
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center text-red-600">
+                        <div className="w-10 h-10 rounded-xl bg-red-100 group-hover:bg-red-600 group-hover:text-white flex items-center justify-center text-red-600">
                           <Calendar className="h-5 w-5" />
                         </div>
                         <div>
-                          <span className="block text-sm font-bold text-red-600 uppercase tracking-tight">
+                          <div className="mb-1">
+                            <p className="text-xs font-bold text-red-600 uppercase tracking-wide">
+                              {i18n.language === "fr"
+                                ? (currentCarSpecialOffer.title_fr || currentCarSpecialOffer.title_en || currentCarSpecialOffer.title)
+                                : (currentCarSpecialOffer.title_en || currentCarSpecialOffer.title_fr || currentCarSpecialOffer.title)}
+                            </p>
+                          </div>
+                          <span className="block text-sm font-bold text-slate-900 uppercase tracking-tight">
                             {i18n.language === "fr" 
                               ? (currentCarSpecialOffer.period_fr || currentCarSpecialOffer.period_en || currentCarSpecialOffer.period) 
                               : (currentCarSpecialOffer.period_en || currentCarSpecialOffer.period_fr || currentCarSpecialOffer.period)}
@@ -150,9 +161,13 @@ const OffersModal = ({
                            {currentCarSpecialOffer.price}
                          </span>
                          <span className="block text-[10px] uppercase font-bold text-red-600">
-                          MAD{(i18n.language === "fr" ? currentCarSpecialOffer.price_label_fr : currentCarSpecialOffer.price_label_en) || ""}
+                           MAD{(i18n.language === "fr" ? currentCarSpecialOffer.price_label_fr : currentCarSpecialOffer.price_label_en) || ""}
                          </span>
                       </div>
+                      
+                      <span className="absolute -top-2 -right-2 text-[10px] font-bold bg-red-600 text-white px-2 py-1 rounded-full shadow-lg z-10">
+                        {t("offers.special")}
+                      </span>
                     </div>
                   )}
 
