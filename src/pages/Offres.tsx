@@ -139,22 +139,19 @@ const OffersModal = ({
                         </div>
                         <div>
                           <span className="block text-sm font-bold text-red-600 uppercase tracking-tight">
-                            {currentCarSpecialOffer.period}
+                            {i18n.language === "fr" 
+                              ? (currentCarSpecialOffer.period_fr || currentCarSpecialOffer.period_en || currentCarSpecialOffer.period) 
+                              : (currentCarSpecialOffer.period_en || currentCarSpecialOffer.period_fr || currentCarSpecialOffer.period)}
                           </span>
-                          {currentCarSpecialOffer.badge_text && (
-                            <span className="block text-[10px] mt-0.5 font-bold text-red-500 uppercase tracking-widest">
-                              {currentCarSpecialOffer.badge_text}
-                            </span>
-                          )}
                         </div>
                       </div>
                       <div className="text-right">
                          <span className="block text-xl font-bold text-red-600">
                            {currentCarSpecialOffer.price}
                          </span>
-                         <span className="text-[10px] font-bold text-red-400 uppercase tracking-widest">
-                            MAD
-                          </span>
+                         <span className="block text-[10px] uppercase font-bold text-red-600">
+                          MAD{(i18n.language === "fr" ? currentCarSpecialOffer.price_label_fr : currentCarSpecialOffer.price_label_en) || ""}
+                         </span>
                       </div>
                     </div>
                   )}
@@ -203,7 +200,6 @@ type SpecialOffer = {
   id: string;
   car_id: string;
   title: string;
-  description: string | null;
   price: number;
   period: string;
   start_date: string;
@@ -212,6 +208,12 @@ type SpecialOffer = {
   highlight_color: string | null;
   is_active: boolean;
   is_deleted: boolean;
+  price_label_fr?: string | null;
+  price_label_en?: string | null;
+  title_fr?: string | null;
+  title_en?: string | null;
+  period_fr?: string | null;
+  period_en?: string | null;
 };
 
 const Offres = () => {

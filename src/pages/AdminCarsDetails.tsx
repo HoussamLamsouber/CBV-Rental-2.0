@@ -127,7 +127,6 @@ export default function AdminVehicleDetail() {
     id: string;
     car_id: string;
     title: string;
-    description: string | null;
     price: number;
     period: string;
     start_date: string;
@@ -137,13 +136,18 @@ export default function AdminVehicleDetail() {
     is_active: boolean;
     is_deleted: boolean;
     created_at?: string;
+    price_label_fr?: string | null;
+    price_label_en?: string | null;
+    title_fr?: string | null;
+    title_en?: string | null;
+    period_fr?: string | null;
+    period_en?: string | null;
   };
   const [specialOffers, setSpecialOffers] = useState<SpecialOffer[]>([]);
   const [isCreateSpecialOfferModalOpen, setIsCreateSpecialOfferModalOpen] = useState(false);
   const [editingSpecialOfferId, setEditingSpecialOfferId] = useState<string | null>(null);
   const [newSpecialOffer, setNewSpecialOffer] = useState({
     title: "",
-    description: "",
     price: "",
     period: "",
     badge_text: "",
@@ -154,6 +158,12 @@ export default function AdminVehicleDetail() {
   const [startTime, setStartTime] = useState("");
   const [endDate, setEndDate] = useState<Date | undefined>();
   const [endTime, setEndTime] = useState("");
+  const [priceLabelFr, setPriceLabelFr] = useState("");
+  const [priceLabelEn, setPriceLabelEn] = useState("");
+  const [titleFr, setTitleFr] = useState("");
+  const [titleEn, setTitleEn] = useState("");
+  const [periodFr, setPeriodFr] = useState("");
+  const [periodEn, setPeriodEn] = useState("");
   const [isActive, setIsActive] = useState(true);
   
   const [isCreateOfferModalOpen, setIsCreateOfferModalOpen] = useState(false);
@@ -949,59 +959,79 @@ export default function AdminVehicleDetail() {
 
     setSaving(true);
     try {
-      console.log("isActive sent:", isActive);
-
-      if (editingSpecialOfferId) {
+      if (editingSpecialOfferId !== null) {
         const { error } = await supabase
           .from("special_offers")
           .update({
             title: newSpecialOffer.title,
-            description: newSpecialOffer.description || null,
+            title_fr: titleFr || null,
+            title_en: titleEn || null,
             price: Number(newSpecialOffer.price),
             period: newSpecialOffer.period,
+            period_fr: periodFr || null,
+            period_en: periodEn || null,
             start_date: formattedStartDate,
             end_date: formattedEndDate,
+            price_label_fr: priceLabelFr || null,
+            price_label_en: priceLabelEn || null,
             badge_text: newSpecialOffer.badge_text || null,
             highlight_color: "#EF4444",
             is_active: isActive
           })
           .eq("id", editingSpecialOfferId);
 
-        if (error) throw error;
-        toast({ title: "Succès", description: "Offre spéciale modifiée avec succès" });
+        if (error) {
+          console.error("Update error:", error);
+          throw error;
+        }
+        toast({ title: t("specialOffers.successUpdate") });
       } else {
         const { error } = await supabase
           .from("special_offers")
           .insert([{
             car_id: id,
             title: newSpecialOffer.title,
-            description: newSpecialOffer.description || null,
+            title_fr: titleFr || null,
+            title_en: titleEn || null,
             price: Number(newSpecialOffer.price),
             period: newSpecialOffer.period,
+            period_fr: periodFr || null,
+            period_en: periodEn || null,
             start_date: formattedStartDate,
             end_date: formattedEndDate,
+            price_label_fr: priceLabelFr || null,
+            price_label_en: priceLabelEn || null,
             badge_text: newSpecialOffer.badge_text || null,
             highlight_color: "#EF4444",
             is_active: isActive
           }]);
 
-        if (error) throw error;
-        toast({ title: "Succès", description: "Offre spéciale créée avec succès" });
+        if (error) {
+          console.error("Insert error:", error);
+          throw error;
+        }
+        toast({ title: t("specialOffers.successCreate") });
       }
 
+      setEditingSpecialOfferId(null);
       setNewSpecialOffer({
         title: "",
-        description: "",
         price: "",
         period: "",
         badge_text: "",
         is_active: true
       });
       setStartDate(undefined);
-      setStartTime("");
+      setStartTime("09:00");
       setEndDate(undefined);
-      setEndTime("");
-      setIsActive(true);
+      setEndTime("09:00");
+      setPriceLabelFr("");
+      setPriceLabelEn("");
+      setTitleFr("");
+      setTitleEn("");
+      setPeriodFr("");
+      setPeriodEn("");
+      setIsActive(false);
       setEditingSpecialOfferId(null);
       setIsCreateSpecialOfferModalOpen(false);
       await loadSpecialOffers();
@@ -1162,7 +1192,7 @@ export default function AdminVehicleDetail() {
               }`}
               onClick={() => setActiveTab('special_offers')}
             >
-              Offres Spéciales ({specialOffers.length})
+              {t("specialOffers.title")} ({specialOffers.length})
             </button>
             <button
               className={`py-2 px-1 font-medium text-sm border-b-2 transition-colors ${
@@ -1527,13 +1557,12 @@ export default function AdminVehicleDetail() {
         {/* Onglet Offres Spéciales */}
         {activeTab === 'special_offers' && (
           <>
-            <div className="flex justify-between items-center mb-3">
-              <h2 className="text-xl font-semibold">Offres Spéciales</h2>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold">{t("specialOffers.title")}</h2>
               <Button onClick={() => {
                 setEditingSpecialOfferId(null);
                 setNewSpecialOffer({
                   title: "",
-                  description: "",
                   price: "",
                   period: "",
                   badge_text: "",
@@ -1546,12 +1575,14 @@ export default function AdminVehicleDetail() {
                 setStartDate(now);
                 setStartTime("09:00");
                 setEndDate(nextWeek);
-                setEndTime("23:59");
-                setIsActive(true);
+                setEndTime("09:00");
+                setPriceLabelFr("");
+                setPriceLabelEn("");
+                setIsActive(false);
 
                 setIsCreateSpecialOfferModalOpen(true);
               }}>
-                + Créer offre spéciale
+                + {t("specialOffers.createButton")}
               </Button>
             </div>
             
@@ -1565,7 +1596,11 @@ export default function AdminVehicleDetail() {
                     <CardHeader className="pb-3">
                       <div className="flex justify-between items-start">
                         <div>
-                          <CardTitle className="text-lg">{offer.title}</CardTitle>
+                          <CardTitle className="text-lg">
+                            {i18n.language === "fr" 
+                              ? (offer.title_fr || offer.title_en || offer.title) 
+                              : (offer.title_en || offer.title_fr || offer.title)}
+                          </CardTitle>
                           {offer.badge_text && (
                             <span className="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold text-white uppercase" style={{ backgroundColor: offer.highlight_color || '#3b82f6' }}>
                               {offer.badge_text}
@@ -1573,26 +1608,30 @@ export default function AdminVehicleDetail() {
                           )}
                         </div>
                         <span className={`px-2 py-1 text-xs font-bold rounded-full uppercase ${isOfferActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                          {isOfferActive ? 'Actif' : 'Inactif'}
+                          {isOfferActive ? t("status.active") : t("status.inactive")}
                         </span>
                       </div>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2 mb-4">
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-500">Prix:</span>
+                          <span className="text-gray-500">{t("specialOffers.price")}:</span>
                           <span className="font-bold">{offer.price} MAD</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-500">Période:</span>
-                          <span className="font-medium">{offer.period}</span>
+                          <span className="text-gray-500">{t("specialOffers.period")}:</span>
+                          <span className="font-medium">
+                            {i18n.language === "fr" 
+                              ? (offer.period_fr || offer.period_en || offer.period) 
+                              : (offer.period_en || offer.period_fr || offer.period)}
+                          </span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-500">Du:</span>
+                          <span className="text-gray-500">{t("specialOffers.from")}:</span>
                           <span>{offer.start_date ? formatDateDisplay(new Date(offer.start_date), "dd/MM/yyyy", i18n.language) : "-"}</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-500">Au:</span>
+                          <span className="text-gray-500">{t("specialOffers.to")}:</span>
                           <span>{offer.end_date ? formatDateDisplay(new Date(offer.end_date), "dd/MM/yyyy", i18n.language) : "-"}</span>
                         </div>
                       </div>
@@ -1618,20 +1657,26 @@ export default function AdminVehicleDetail() {
                               setEndTime(extractTime(offer.end_date));
                             }
 
+                            setEditingSpecialOfferId(offer.id);
                             setNewSpecialOffer({
                               title: offer.title,
-                              description: offer.description || "",
                               price: offer.price.toString(),
                               period: offer.period,
                               badge_text: offer.badge_text || "",
                               is_active: Boolean(offer.is_active)
                             });
+                            setPriceLabelFr(offer.price_label_fr || "");
+                            setPriceLabelEn(offer.price_label_en || "");
+                            setTitleFr(offer.title_fr || "");
+                            setTitleEn(offer.title_en || "");
+                            setPeriodFr(offer.period_fr || "");
+                            setPeriodEn(offer.period_en || "");
                             setIsActive(Boolean(offer.is_active));
                             setIsCreateSpecialOfferModalOpen(true);
                           }}
                         >
                           <Edit className="h-4 w-4 mr-2" />
-                          Modifier
+                          {t("admin_vehicles.actions.edit")}
                         </Button>
                         <Button 
                           variant="destructive" 
@@ -1640,7 +1685,7 @@ export default function AdminVehicleDetail() {
                           onClick={() => handleDeleteSpecialOffer(offer.id)}
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
-                          Archiver
+                          {t("specialOffers.delete")}
                         </Button>
                       </div>
                     </CardContent>
@@ -1650,7 +1695,7 @@ export default function AdminVehicleDetail() {
               
               {specialOffers.length === 0 && (
                 <div className="col-span-full p-8 text-center text-gray-500 bg-white rounded-lg border border-dashed">
-                  Aucune offre spéciale pour ce véhicule.
+                  {t("specialOffers.empty")}
                 </div>
               )}
             </div>
@@ -2093,58 +2138,78 @@ export default function AdminVehicleDetail() {
           <div className="fixed inset-0 flex items-center justify-center p-4">
             <Dialog.Panel className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
               <Dialog.Title className="text-lg font-semibold mb-4">
-                {editingSpecialOfferId ? "Modifier l'offre spéciale" : "Ajouter une offre spéciale"}
+                {editingSpecialOfferId ? t("specialOffers.edit") : t("specialOffers.create")}
               </Dialog.Title>
 
               <div className="space-y-4">
-                <div>
-                  <Label>Titre (ex: Spécial Été)</Label>
-                  <Input
-                    value={newSpecialOffer.title}
-                    onChange={(e) => setNewSpecialOffer({ ...newSpecialOffer, title: e.target.value })}
-                    placeholder="Titre de l'offre"
-                  />
-                </div>
-                
-                <div>
-                  <Label>Description</Label>
-                  <Input
-                    value={newSpecialOffer.description}
-                    onChange={(e) => setNewSpecialOffer({ ...newSpecialOffer, description: e.target.value })}
-                    placeholder="Description optionnelle"
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>{t("specialOffers.titleFr")}</Label>
+                    <Input
+                      value={titleFr}
+                      onChange={(e) => setTitleFr(e.target.value)}
+                      placeholder={t("specialOffers.titleFr")}
+                    />
+                  </div>
+                  <div>
+                    <Label>{t("specialOffers.titleEn")}</Label>
+                    <Input
+                      value={titleEn}
+                      onChange={(e) => setTitleEn(e.target.value)}
+                      placeholder={t("specialOffers.titleEn")}
+                    />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Période (ex: 2 mois)</Label>
+                    <Label>{t("specialOffers.periodFr")}</Label>
                     <Input
-                      value={newSpecialOffer.period}
-                      onChange={(e) => setNewSpecialOffer({ ...newSpecialOffer, period: e.target.value })}
-                      placeholder="Période"
+                      value={periodFr}
+                      onChange={(e) => setPeriodFr(e.target.value)}
+                      placeholder={t("specialOffers.periodFr")}
                     />
                   </div>
                   <div>
-                    <Label>Prix (MAD)</Label>
+                    <Label>{t("specialOffers.periodEn")}</Label>
+                    <Input
+                      value={periodEn}
+                      onChange={(e) => setPeriodEn(e.target.value)}
+                      placeholder={t("specialOffers.periodEn")}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>{t("specialOffers.pricePlaceholder")}</Label>
                     <Input
                       type="number"
                       value={newSpecialOffer.price}
                       onChange={(e) => setNewSpecialOffer({ ...newSpecialOffer, price: e.target.value })}
-                      placeholder="Prix total"
+                      placeholder={t("specialOffers.pricePlaceholder")}
+                    />
+                  </div>
+                  <div>
+                    <Label>{t("specialOffers.badge")}</Label>
+                    <Input
+                      value={newSpecialOffer.badge_text}
+                      onChange={(e) => setNewSpecialOffer({ ...newSpecialOffer, badge_text: e.target.value })}
+                      placeholder={t("specialOffers.badgePlaceholder")}
                     />
                   </div>
                 </div>
 
                 {/* Date de début */}
                 <div className="space-y-1">
-                  <Label>Date de début</Label>
+                  <Label>{t("specialOffers.startDate")}</Label>
                   <div className="border rounded-md px-3 py-2">
                     <DateTimeField
                       date={startDate}
                       time={startTime}
                       onDateChange={setStartDate}
                       onTimeChange={setStartTime}
-                      placeholder="Choisir la date de début"
+                      placeholder={t("specialOffers.startDatePlaceholder")}
                       colorScheme="default"
                     />
                   </div>
@@ -2152,26 +2217,38 @@ export default function AdminVehicleDetail() {
 
                 {/* Date de fin */}
                 <div className="space-y-1">
-                  <Label>Date de fin</Label>
+                  <Label>{t("specialOffers.endDate")}</Label>
                   <div className="border rounded-md px-3 py-2">
                     <DateTimeField
                       date={endDate}
                       time={endTime}
                       onDateChange={setEndDate}
                       onTimeChange={setEndTime}
-                      placeholder="Choisir la date de fin"
+                      placeholder={t("specialOffers.endDatePlaceholder")}
                       colorScheme="default"
                     />
                   </div>
                 </div>
 
-                <div className="mb-4">
-                  <Label>Badge (ex: 🔥 Hot)</Label>
-                  <Input
-                    value={newSpecialOffer.badge_text}
-                    onChange={(e) => setNewSpecialOffer({ ...newSpecialOffer, badge_text: e.target.value })}
-                    placeholder="Texte du badge"
-                  />
+
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>{t("specialOffers.priceLabelFr")}</Label>
+                    <Input
+                      value={priceLabelFr}
+                      onChange={(e) => setPriceLabelFr(e.target.value)}
+                      placeholder={t("specialOffers.priceLabelPlaceholderFr")}
+                    />
+                  </div>
+                  <div>
+                    <Label>{t("specialOffers.priceLabelEn")}</Label>
+                    <Input
+                      value={priceLabelEn}
+                      onChange={(e) => setPriceLabelEn(e.target.value)}
+                      placeholder={t("specialOffers.priceLabelPlaceholderEn")}
+                    />
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-2 mt-2">
@@ -2182,7 +2259,7 @@ export default function AdminVehicleDetail() {
                     onChange={(e) => setIsActive(e.target.checked)}
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
-                  <Label htmlFor="is_active" className="cursor-pointer">Offre active</Label>
+                  <Label htmlFor="is_active" className="cursor-pointer">{t("specialOffers.isActive")}</Label>
                 </div>
               </div>
 
@@ -2191,10 +2268,10 @@ export default function AdminVehicleDetail() {
                   setIsCreateSpecialOfferModalOpen(false);
                   setEditingSpecialOfferId(null);
                 }}>
-                  Annuler
+                  {t("specialOffers.cancel")}
                 </Button>
                 <Button onClick={handleCreateSpecialOffer} disabled={saving}>
-                  {saving ? "Sauvegarde..." : (editingSpecialOfferId ? "Modifier l'offre" : "Créer l'offre")}
+                  {saving ? t("admin_vehicle_detail.messages.loading") : (editingSpecialOfferId ? t("specialOffers.updateButton") : t("specialOffers.createButton"))}
                 </Button>
               </div>
             </Dialog.Panel>
