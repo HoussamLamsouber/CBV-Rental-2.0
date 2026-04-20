@@ -372,16 +372,6 @@ const Auth = () => {
                   >
                     {loading ? t('auth.buttons.logging_in') : t('auth.buttons.login')}
                   </Button>
-
-                  <div className="mt-4 text-center">
-                    <button
-                      type="button"
-                      onClick={() => navigate("/admin")}
-                      className="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-blue-600 transition-colors underline underline-offset-4"
-                    >
-                      {t('auth.admin_link.button')}
-                    </button>
-                  </div>
                 </form>
               </div>
             </TabsContent>
@@ -517,22 +507,11 @@ const Auth = () => {
                     >
                       {loading ? t('auth.buttons.signing_up') : t('auth.buttons.signup')}
                     </Button>
-
-                    <div className="mt-4 text-center">
-                      <button
-                        type="button"
-                        onClick={() => navigate("/admin")}
-                        className="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-blue-600 transition-colors underline underline-offset-4"
-                      >
-                        {t('auth.admin_link.button')}
-                      </button>
-                    </div>
                   </div>
                 </form>
               </div>
             </TabsContent>
           </Tabs>
-
         </div>
       </div>
     </div>
