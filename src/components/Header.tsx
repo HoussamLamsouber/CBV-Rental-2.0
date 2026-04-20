@@ -66,7 +66,7 @@ export const Header = () => {
 
         <nav className="hidden md:flex items-center gap-10">
           {navLink("/", t("home"))}
-          {navLink("/offres", t("offers.nav"))}
+          {navLink("/offers", t("offers.nav"))}
           {navLink("/about", t("about"))}
           {navLink("/contact", t("contact.label"))}
         </nav>
@@ -107,7 +107,7 @@ export const Header = () => {
                       <Link to="/profile">{t("profile")}</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild className="rounded-lg focus:bg-blue-50 focus:text-blue-700 py-2.5 no-focus-ring">
-                      <Link to="/ma-reservation">{t("my_reservations")}</Link>
+                      <Link to="/my-reservation">{t("my_reservations")}</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild className="rounded-lg focus:bg-blue-50 focus:text-blue-700 py-2.5 no-focus-ring">
                       <Link to="/changer-mot-de-passe">{t("change_password")}</Link>

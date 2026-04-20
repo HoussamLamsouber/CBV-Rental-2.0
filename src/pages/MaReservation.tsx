@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Database } from "@/integrations/supabase/types";
 import { formatDisplayDate } from "@/utils/dateUtils";
 import { emailJSService } from "@/services/emailJSService";
+import { getReservationStatus } from "@/utils/reservationStatus";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -35,6 +36,7 @@ type ReservationWithProfile = ReservationRow & {
   client_phone?: string | null;
   pickup_location_name?: string;
   return_location_name?: string;
+  computed_status: string;
 };
 
 const MaReservation = () => {
@@ -126,6 +128,11 @@ const MaReservation = () => {
         client_phone: profileData?.telephone,
         pickup_location_name: locationMap.get(reservation.pickup_location) || reservation.pickup_location,
         return_location_name: locationMap.get(reservation.return_location) || reservation.return_location,
+        computed_status: getReservationStatus({
+          status: reservation.status,
+          start_date: reservation.pickup_date,
+          end_date: reservation.return_date
+        })
       }));
 
       setReservations(reservationsWithProfile);
@@ -233,29 +240,7 @@ const MaReservation = () => {
   //   return now > returnDateTime;
   // };
 
-  const getReservationState = (res: ReservationWithProfile) => {
-    const now = new Date();
 
-    const pickupDateTime = new Date(res.pickup_date);
-    if (res.pickup_time) {
-      const [hours, minutes] = res.pickup_time.split(":").map(Number);
-      pickupDateTime.setHours(hours, minutes, 0, 0);
-    } else {
-      pickupDateTime.setHours(0, 0, 0, 0);
-    }
-
-    const returnDateTime = new Date(res.return_date);
-    if (res.return_time) {
-      const [hours, minutes] = res.return_time.split(":").map(Number);
-      returnDateTime.setHours(hours, minutes, 0, 0);
-    } else {
-      returnDateTime.setHours(23, 59, 59, 999);
-    }
-
-    if (now < pickupDateTime) return "upcoming";
-    if (now >= pickupDateTime && now <= returnDateTime) return "active";
-    return "completed";
-  };
 
   const getTranslatedCategory = (category: string) => {
     const categoryTranslation = t(`offers_page.categories.${category}`);
@@ -266,38 +251,21 @@ const MaReservation = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      pending: { 
-        label: t('ma_reservation.status.pending'), 
-        color: "bg-yellow-100 text-yellow-800" 
-      },
-      accepted: { 
-        label: t('ma_reservation.status.accepted'), 
-        color: "bg-green-100 text-green-800" 
-      },
-      active: { 
-        label: t('ma_reservation.status.active'), 
-        color: "bg-blue-100 text-blue-800" 
-      },
-      completed: { 
-        label: t('ma_reservation.status.completed'), 
-        color: "bg-gray-100 text-gray-800" 
-      },
-      refused: { 
-        label: t('ma_reservation.status.refused'), 
-        color: "bg-red-100 text-red-800" 
-      },
-      cancelled: { 
-        label: t('ma_reservation.status.cancelled'), 
-        color: "bg-red-100 text-red-800" 
-      }
+    const colors = {
+      pending: "bg-yellow-200 text-yellow-800",
+      upcoming: "bg-blue-200 text-blue-800",
+      active: "bg-green-200 text-green-800",
+      completed: "bg-gray-200 text-gray-800",
+      refused: "bg-red-200 text-red-800",
+      cancelled: "bg-orange-200 text-orange-800",
+      expired: "bg-purple-200 text-purple-800"
     };
 
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+    const colorClass = colors[status as keyof typeof colors] || "bg-yellow-200 text-yellow-800";
     
     return (
-      <Badge variant="secondary" className={cn("px-3 py-1 rounded-lg text-[12px] font-bold uppercase tracking-widest border-none transition-colors", config.color)}>
-        {config.label}
+      <Badge variant="secondary" className={cn("px-3 py-1 rounded-lg text-[12px] font-bold uppercase tracking-widest border-none transition-colors", colorClass)}>
+        {t(`reservationStatus.${status}`)}
       </Badge>
     );
   };
@@ -353,17 +321,18 @@ const MaReservation = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {reservations.map(res => (
             <Card key={res.id} className="group overflow-hidden border-slate-200 hover:shadow-xl hover:shadow-blue-600/5 transition-all duration-500 rounded-2xl bg-white">
-               <CardContent className="p-0">
-                  <div className="flex flex-col sm:flex-row h-full">
+               <CardContent className="p-0 h-full">
+                  <div className="flex flex-col sm:flex-row items-stretch h-full">
                      {/* Car Image Section */}
-                     <div className="sm:w-2/5 relative overflow-hidden bg-slate-100 aspect-video sm:aspect-auto">
+                     <div className="sm:w-2/5 relative overflow-hidden bg-slate-100 flex items-center justify-center">
                         <img 
                           src={res.car_image || "/placeholder-car.jpg"} 
                           alt={res.car_name} 
-                          className="w-full h-full object-contain object-center scale-95 transition-transform duration-700 group-hover:scale-105"
+                          className="w-full h-full object-contain object-center block transition-transform duration-700 hover:scale-110"
+                          style={{ display: "block" }}
                         />
                         <div className="absolute top-4 left-4">
-                           {getStatusBadge(res.status)}
+                           {getStatusBadge(res.computed_status as any)}
                         </div>
                      </div>
 
@@ -426,9 +395,7 @@ const MaReservation = () => {
 
                         <div className="mt-6">
                           {(() => {
-                            const state = getReservationState(res);
-                            const isCancellableStatus = res.status === 'pending' || res.status === 'accepted';
-                            const showCancelButton = isCancellableStatus && state === "upcoming";
+                            const showCancelButton = res.computed_status === 'upcoming' || res.computed_status === 'pending';
 
                             if (showCancelButton) {
                               return (
@@ -454,11 +421,13 @@ const MaReservation = () => {
                             } else {
                                let messageKey = 'ma_reservation.messages.cannot_cancel';
                                
-                               if (res.status === 'cancelled' || res.status === 'refused') {
-                                   messageKey = 'ma_reservation.messages.cannot_cancel';
-                               } else if (state === 'active' || res.status === 'active') {
+                               if (res.computed_status === 'refused') {
+                                   messageKey = 'ma_reservation.messages.cannot_refused';
+                               } else if (res.computed_status === 'active') {
                                    messageKey = 'ma_reservation.messages.cannot_cancel_active';
-                               } else if (state === 'completed' || res.status === 'completed') {
+                               } else if (res.computed_status === 'expired') {
+                                   messageKey = 'ma_reservation.messages.cannot_cancel_passed';
+                               } else if (res.computed_status === 'completed') {
                                    messageKey = 'ma_reservation.messages.cannot_cancel_completed';
                                }
 

@@ -8,6 +8,16 @@
         "manual": "Manuelle"
     },
     "home": "Accueil",
+    "reservationStatus": {
+        "pending": "En attente",
+        "accepted": "Acceptée",
+        "refused": "Refusée",
+        "cancelled": "Annulée",
+        "expired": "Expirée",
+        "active": "En cours",
+        "completed": "Terminée",
+        "upcoming": "À venir"
+    },
     "offers": {
         "nav": "Offres",
         "special": "Offre spéciale"
@@ -901,7 +911,8 @@
             "no_reservations_guest": "Vous n'avez pas de réservation en cours.",
             "reservations_found": "{count} réservation(s) trouvée(s)",
             "cannot_cancel": "Cette réservation ne peut pas être annulée",
-            "cannot_cancel_passed": "Cette réservation ne peut pas être annulée - la période de location est terminée",
+            "cannot_refused": "Cette réservation ne peut pas être annulée, elle a été refusée.",
+            "cannot_cancel_passed": "Cette réservation ne peut pas être annulée, elle n'a pas été traitée.",
             "cannot_cancel_active": "Cette réservation est en cours et ne peut pas être annulée.",
             "cannot_cancel_completed": "Cette réservation ne peut pas être annulée car la période de location est terminée.",
             "from_date": "Du {date}",
@@ -933,7 +944,7 @@
         "refresh": "Actualiser la page",
         "standardPrice": "Prix standard",
         "dailyRental": "Location à la journée",
-        "specialOffers": "Offres",
+        "specialOffers": "Offres spéciales",
         "noSpecialOffers": "Aucune offre spéciale disponible",
         "checkStandardRates": "Consultez nos tarifs standards",
         "bookNow": "Réserver",

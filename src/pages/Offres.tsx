@@ -121,90 +121,102 @@ const OffersModal = ({
 
            <div className="space-y-4">
               <h3 className="text-xs font-bold text-slate-900 uppercase tracking-[0.3em] flex items-center gap-2 mb-2">
-                 <div className="w-1.5 h-6 bg-blue-600 rounded-full" />
+                 <div className="w-1.5 h-6 bg-red-600 rounded-full" />
                  {t("offers_page.specialOffers")}
               </h3>
 
-              {!currentCarSpecialOffer && currentCarOffers.length === 0 ? (
-                <div className="py-12 text-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
-                  <Clock className="h-10 w-10 text-slate-300 mx-auto mb-3" />
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{t("offers_page.noSpecialOffers")}</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {currentCarSpecialOffer && (
-                    <div className={cn(
-                      "group relative flex items-center justify-between p-5 border-2 transition-all duration-300",
-                      "border-red-400 bg-red-50/40 shadow-md rounded-xl hover:scale-[1.01]"
-                    )}>
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-red-100 group-hover:bg-red-600 group-hover:text-white flex items-center justify-center text-red-600">
-                          <Calendar className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <div className="mb-1">
-                            <p className="text-xs font-bold text-red-600 uppercase tracking-wide">
-                              {i18n.language === "fr"
-                                ? (currentCarSpecialOffer.title_fr || currentCarSpecialOffer.title_en || currentCarSpecialOffer.title)
-                                : (currentCarSpecialOffer.title_en || currentCarSpecialOffer.title_fr || currentCarSpecialOffer.title)}
-                            </p>
-                          </div>
-                          <span className="block text-sm font-bold text-slate-900 uppercase tracking-tight">
-                            {i18n.language === "fr" 
-                              ? (currentCarSpecialOffer.period_fr || currentCarSpecialOffer.period_en || currentCarSpecialOffer.period) 
-                              : (currentCarSpecialOffer.period_en || currentCarSpecialOffer.period_fr || currentCarSpecialOffer.period)}
-                          </span>
-                        </div>
+              {currentCarSpecialOffer ? (
+                <div className={cn(
+                  "group relative flex items-center justify-between p-5 border-2 transition-all duration-300",
+                  "border-red-400 bg-red-50/40 shadow-md rounded-xl hover:scale-[1.01]"
+                )}>
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-red-100 group-hover:bg-red-600 group-hover:text-white flex items-center justify-center text-red-600">
+                      <Calendar className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <div className="mb-1">
+                        <p className="text-xs font-bold text-red-600 uppercase tracking-wide">
+                          {i18n.language === "fr"
+                            ? (currentCarSpecialOffer.title_fr || currentCarSpecialOffer.title_en || currentCarSpecialOffer.title)
+                            : (currentCarSpecialOffer.title_en || currentCarSpecialOffer.title_fr || currentCarSpecialOffer.title)}
+                        </p>
                       </div>
-                      <div className="text-right">
-                         <span className="block text-xl font-bold text-red-600">
-                           {currentCarSpecialOffer.price}
-                         </span>
-                         <span className="block text-[10px] uppercase font-bold text-red-600">
-                           MAD{(i18n.language === "fr" ? currentCarSpecialOffer.price_label_fr : currentCarSpecialOffer.price_label_en) || ""}
-                         </span>
-                      </div>
-                      
-                      <span className="absolute -top-2 -right-2 text-[10px] font-bold bg-red-600 text-white px-2 py-1 rounded-full shadow-lg z-10">
-                        {t("offers.special")}
+                      <span className="block text-sm font-bold text-slate-900 uppercase tracking-tight">
+                        {i18n.language === "fr" 
+                          ? (currentCarSpecialOffer.period_fr || currentCarSpecialOffer.period_en || currentCarSpecialOffer.period) 
+                          : (currentCarSpecialOffer.period_en || currentCarSpecialOffer.period_fr || currentCarSpecialOffer.period)}
                       </span>
                     </div>
-                  )}
+                  </div>
+                  <div className="text-right">
+                    <span className="block text-xl font-bold text-red-600">
+                      {currentCarSpecialOffer.price}
+                    </span>
+                    <span className="block text-[10px] uppercase font-bold text-red-600">
+                      MAD{(i18n.language === "fr" ? currentCarSpecialOffer.price_label_fr : currentCarSpecialOffer.price_label_en) || ""}
+                    </span>
+                  </div>
 
-                  {currentCarOffers.map((offer, idx) => (
-                    <div key={idx} className="group flex items-center justify-between p-5 bg-white border border-slate-100 rounded-xl transition-all hover:border-blue-200 hover:shadow-lg hover:shadow-blue-600/5">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                          <Calendar className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <span className="block text-sm font-bold text-slate-900 uppercase tracking-tight">
-                            {getTranslatedPeriod(offer.period)}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                         <span className="block text-xl font-bold text-blue-600">
-                           {offer.price.value}
-                         </span>
-                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                            MAD/
-                            {i18n.language === "fr"
-                              ? offer.price.fr || offer.price.en
-                              : offer.price.en || offer.price.fr}
-                          </span>
-                      </div>
-                    </div>
-                  ))}
+                  <span className="absolute -top-2 -right-2 text-[10px] font-bold bg-red-600 text-white px-2 py-1 rounded-full shadow-lg z-10">
+                    {t("offers.special")}
+                  </span>
+                </div>
+              ) : (
+                <div className="py-6 text-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                  <Clock className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                    {t("offers_page.noSpecialOffers")}
+                  </p>
                 </div>
               )}
-           </div>
 
-           <Button asChild className="w-full h-16 bg-slate-900 text-white font-bold text-xs uppercase tracking-[0.2em] rounded-xl shadow-xl hover:bg-blue-600 transition-all">
-              <Link to="/" onClick={onClose}>
-                 {t("offers_page.bookNow")}
-              </Link>
-           </Button>
+              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-[0.3em] flex items-center gap-2 mt-4 mb-2">
+                <div className="w-1.5 h-6 bg-blue-600 rounded-full" />
+                {t("offers_page.offers")}
+              </h3>
+
+              {currentCarOffers.length > 0 ? (
+                currentCarOffers.map((offer, idx) => (
+                  <div key={idx} className="group flex items-center justify-between p-5 bg-white border border-slate-100 rounded-xl transition-all hover:border-blue-200 hover:shadow-lg hover:shadow-blue-600/5">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                        <Calendar className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <span className="block text-sm font-bold text-slate-900 uppercase tracking-tight">
+                          {getTranslatedPeriod(offer.period)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="block text-xl font-bold text-blue-600">
+                        {offer.price.value}
+                      </span>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                        MAD/
+                        {i18n.language === "fr"
+                          ? offer.price.fr || offer.price.en
+                          : offer.price.en || offer.price.fr}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="py-6 text-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                  <Clock className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                    {t("offers_page.noOffers")}
+                  </p>
+                </div>
+              )}
+          </div>
+
+          <Button asChild className="w-full h-16 bg-slate-900 text-white font-bold text-xs uppercase tracking-[0.2em] rounded-xl shadow-xl hover:bg-blue-600 transition-all">
+            <Link to="/" onClick={onClose}>
+              {t("offers_page.bookNow")}
+            </Link>
+          </Button>
         </div>
       </div>
     </div>
@@ -327,8 +339,6 @@ const Offres = () => {
         return;
       }
 
-      console.log("SPECIAL OFFERS:", data);
-
       if (data) {
         const records = data as SpecialOffer[];
         const specialOffersMap: Record<string, SpecialOffer> = {};
@@ -346,7 +356,6 @@ const Offres = () => {
           }
         });
 
-        console.log("FILTERED (active + in range):", specialOffersMap);
         setSpecialOffers(specialOffersMap);
       }
     };
@@ -413,7 +422,6 @@ const Offres = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {cars.map((car) => {
               const activeSpecialOffer = specialOffers[car.id];
-              console.log(`[Offres render] car=${car.id} activeSpecialOffer=`, activeSpecialOffer ?? 'none');
               return (
               <div 
                 key={car.id} 

@@ -8,6 +8,16 @@
         "manual": "Manual"
     },
     "home": "Home",
+    "reservationStatus": {
+        "pending": "Pending",
+        "accepted": "Accepted",
+        "refused": "Refused",
+        "cancelled": "Cancelled",
+        "expired": "Expired",
+        "active": "Active",
+        "completed": "Completed",
+        "upcoming": "Upcoming"
+    },
     "offers": {
         "nav": "Offers",
         "special": "Special offer"
@@ -901,7 +911,8 @@
             "no_reservations_guest": "You don't have any current reservations.",
             "reservations_found": "{count} reservation(s) found",
             "cannot_cancel": "This reservation cannot be canceled",
-            "cannot_cancel_passed": "This reservation cannot be canceled - the rental period is over",
+            "cannot_refused": "This reservation cannot be canceled, it was refused.",
+            "cannot_cancel_passed": "This reservation cannot be canceled, it was not treated.",
             "cannot_cancel_active": "This reservation is currently in progress and cannot be cancelled.",
             "cannot_cancel_completed": "This reservation cannot be cancelled because the rental period is finished.",
             "from_date": "From {date}",
@@ -933,7 +944,7 @@
         "refresh": "Refresh Page",
         "standardPrice": "Standard price",
         "dailyRental": "Daily rental",
-        "specialOffers": "Offers",
+        "specialOffers": "Special offers",
         "noSpecialOffers": "No special offers available",
         "checkStandardRates": "Check our standard rates",
         "bookNow": "Book Now",

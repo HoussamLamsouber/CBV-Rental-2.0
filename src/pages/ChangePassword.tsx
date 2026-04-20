@@ -83,7 +83,7 @@ export default function ChangePassword() {
         <Card className="w-full max-w-md bg-white shadow-2xl shadow-slate-900/5 border border-slate-200 rounded-2xl overflow-hidden relative">
           <button
             type="button"
-            onClick={() => navigate(isUserAdmin ? "/admin/profile" : "/profile")}
+            onClick={() => navigate(-1)}
             className="
               absolute left-4 top-4
               h-9 w-9

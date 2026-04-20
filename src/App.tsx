@@ -62,8 +62,8 @@ function App() {
             <Routes>
               {/* Site client - avec Header public */}
               <Route path="/" element={<PublicLayout><Index /></PublicLayout>} />
-              <Route path="/offres" element={<PublicLayout><Offres /></PublicLayout>} />
-              <Route path="/ma-reservation" element={<PublicLayout><MaReservation /></PublicLayout>} />
+              <Route path="/offers" element={<PublicLayout><Offres /></PublicLayout>} />
+              <Route path="/my-reservation" element={<PublicLayout><MaReservation /></PublicLayout>} />
               <Route path="/about" element={<PublicLayout><About /></PublicLayout>} />
               <Route path="/contact" element={<PublicLayout><Contact /></PublicLayout>} />
               <Route path="/auth" element={<Auth />} />

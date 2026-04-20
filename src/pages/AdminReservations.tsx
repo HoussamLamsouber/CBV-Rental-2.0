@@ -9,6 +9,7 @@ import { formatDateDisplay } from "@/utils/dateUtils";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { DatePicker } from "@/components/ui/DatePicker";
+import { getReservationStatus } from "@/utils/reservationStatus";
 
 export default function ReservationsAdmin() {
   const [reservations, setReservations] = useState([]);
@@ -263,7 +264,6 @@ export default function ReservationsAdmin() {
             }
           }
 
-          const businessStatus = calculateBusinessStatus(reservation);
 
           return {
             id: reservation.id,
@@ -284,7 +284,11 @@ export default function ReservationsAdmin() {
               )?.display_name ?? "—",
             total_price: reservation.total_price,
             status: reservation.status,
-            business_status: businessStatus,
+            computed_status: getReservationStatus({
+              status: reservation.status,
+              start_date: reservation.pickup_date,
+              end_date: reservation.return_date
+            }),
             created_at: reservation.created_at,
             updated_at: reservation.updated_at,
             user_id: reservation.user_id,
@@ -305,31 +309,7 @@ export default function ReservationsAdmin() {
     }
   }
 
-  function calculateBusinessStatus(reservation: any) {
-    const now = new Date();
-    const pickupDateTime = new Date(`${reservation.pickup_date}T${reservation.pickup_time}`);
-    const returnDateTime = new Date(`${reservation.return_date}T${reservation.return_time || "23:59:59"}`);
 
-    if (reservation.status === 'pending' && now > pickupDateTime) {
-      return 'expired';
-    }
-
-    if (reservation.status === 'refused' || reservation.status === 'pending') {
-      return reservation.status;
-    }
-
-    if (reservation.status === 'accepted') {
-      if (now < pickupDateTime) {
-        return 'accepted'; // Acceptée mais pas encore active
-      } else if (now >= pickupDateTime && now <= returnDateTime) {
-        return 'active'; // En cours
-      } else if (now > returnDateTime) {
-        return 'completed'; // Terminée
-      }
-    }
-
-    return reservation.status;
-  }
 
   const [userProfile, setUserProfile] = useState(null);
   useEffect(() => {
@@ -1124,59 +1104,31 @@ export default function ReservationsAdmin() {
   }, [i18n.language]);
 
   const getReservationsCountByStatus = (status: string) => {
-    let filteredReservations = reservations;
+    let list = reservations;
+    
+    if (filters.date) {
+      // Apply the same logic as filter for consistency
+      const selectedDate = new Date(filters.date);
+      selectedDate.setHours(0, 0, 0, 0);
+      list = list.filter(r => {
+        const p = new Date(r.pickup_date);
+        const ret = new Date(r.return_date);
+        p.setHours(0, 0, 0, 0);
+        ret.setHours(0, 0, 0, 0);
+        return p <= selectedDate && ret >= selectedDate;
+      });
+    }
 
     if (userId) {
-      filteredReservations = filteredReservations.filter(r => r.user_id === userId);
+      list = list.filter(r => r.user_id === userId);
     }
 
-    if (status === 'active' || status === 'completed' || status === 'expired') {
-      return filteredReservations.filter(r => r.business_status === status).length;
-    }
-
-    if (status === 'pending') {
-      return filteredReservations.filter(r => r.status === 'pending' && r.business_status !== 'expired').length;
-    }
-
-    // Pour "accepted", on ne compte que celles qui sont acceptées mais pas encore actives
-    if (status === 'accepted') {
-      return filteredReservations.filter(r =>
-        r.status === 'accepted' && r.business_status === 'accepted'
-      ).length;
-    }
-
-    // Ajouter le cas pour les réservations annulées
-    if (status === 'cancelled') {
-      return filteredReservations.filter(r => r.status === 'cancelled').length;
-    }
-
-    return filteredReservations.filter(r => r.status === status).length;
+    return list.filter(r => r.computed_status === status).length;
   };
 
   const filteredReservations = reservations.filter((reservation) => {
-    let displayStatus;
-
-    if (activeTab === 'expired') {
-      displayStatus = reservation.business_status;
-      if (displayStatus !== 'expired') return false;
-    } else if (['active', 'completed'].includes(activeTab)) {
-      displayStatus = reservation.business_status;
-      if (displayStatus !== activeTab) return false;
-    } else if (activeTab === 'cancelled') {
-      displayStatus = reservation.status;
-      if (displayStatus !== 'cancelled') return false;
-    } else if (activeTab === 'accepted') {
-      // MODIFICATION: Seulement les réservations acceptées mais pas encore actives
-      if (reservation.status !== 'accepted' || reservation.business_status !== 'accepted') {
-        return false;
-      }
-    } else {
-      displayStatus = reservation.status;
-      if (displayStatus !== activeTab) return false;
-
-      if (activeTab === 'pending' && reservation.business_status === 'expired') {
-        return false;
-      }
+    if (activeTab !== "all" && reservation.computed_status !== activeTab) {
+      return false;
     }
 
     if (userId && reservation.user_id !== userId) {
@@ -1245,43 +1197,43 @@ export default function ReservationsAdmin() {
   const tabs = [
     {
       key: "pending",
-      label: translate('admin_reservations.status.pending', 'En attente'),
+      label: t('reservationStatus.pending'),
       count: getReservationsCountByStatus("pending"),
       icon: "⏳"
     },
     {
       key: "accepted",
-      label: translate('admin_reservations.status.accepted', 'Acceptées'),
+      label: t('reservationStatus.accepted'),
       count: getReservationsCountByStatus("accepted"),
       icon: "✅"
     },
     {
       key: "active",
-      label: translate('admin_reservations.status.active', 'Actives'),
+      label: t('reservationStatus.active'),
       count: getReservationsCountByStatus("active"),
       icon: "🚗"
     },
     {
       key: "completed",
-      label: translate('admin_reservations.status.completed', 'Terminées'),
+      label: t('reservationStatus.completed'),
       count: getReservationsCountByStatus("completed"),
       icon: "🏁"
     },
     {
       key: "expired",
-      label: translate('admin_reservations.status.expired', 'Expirées'),
+      label: t('reservationStatus.expired'),
       count: getReservationsCountByStatus("expired"),
       icon: "⏱️"
     },
     {
       key: "refused",
-      label: translate('admin_reservations.status.refused', 'Refusées'),
+      label: t('reservationStatus.refused'),
       count: getReservationsCountByStatus("refused"),
       icon: "❌"
     },
     {
       key: "cancelled",
-      label: translate('admin_reservations.status.cancelled', 'Annulées'),
+      label: t('reservationStatus.cancelled'),
       count: getReservationsCountByStatus("cancelled"),
       icon: "🚫"
     },
@@ -1486,41 +1438,31 @@ export default function ReservationsAdmin() {
                   </td>
 
                   <td className="px-4 py-3">
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${reservation.business_status === "pending"
-                      ? "bg-yellow-100 text-yellow-800"
-                      : reservation.business_status === "accepted"
-                        ? "bg-blue-100 text-blue-800"
-                        : reservation.business_status === "active"
-                          ? "bg-green-100 text-green-800"
-                          : reservation.business_status === "completed"
-                            ? "bg-gray-100 text-gray-800"
-                            : reservation.business_status === "expired"
-                              ? "bg-orange-100 text-orange-800"
-                              : reservation.status === "cancelled"
-                                ? "bg-purple-100 text-purple-800"
-                                : "bg-red-100 text-red-800"
-                      }`}>
-                      {reservation.business_status === "pending" && "⏳"}
-                      {reservation.business_status === "accepted" && "✅"}
-                      {reservation.business_status === "active" && "🚗"}
-                      {reservation.business_status === "completed" && "🏁"}
-                      {reservation.business_status === "expired" && "💀"}
-                      {reservation.status === "cancelled" && "🚫"}
-                      {reservation.business_status === "refused" && "❌"}
+                    <span className={cn(
+                      "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium",
+                      reservation.computed_status === "pending" && "bg-yellow-100 text-yellow-800",
+                      reservation.computed_status === "accepted" && "bg-blue-100 text-blue-800",
+                      reservation.computed_status === "active" && "bg-green-100 text-green-800",
+                      reservation.computed_status === "completed" && "bg-gray-100 text-gray-800",
+                      reservation.computed_status === "expired" && "bg-orange-100 text-orange-800",
+                      reservation.computed_status === "cancelled" && "bg-purple-100 text-purple-800",
+                      reservation.computed_status === "refused" && "bg-red-100 text-red-800",
+                    )}>
+                      {reservation.computed_status === "pending" && "⏳"}
+                      {reservation.computed_status === "accepted" && "✅"}
+                      {reservation.computed_status === "active" && "🚗"}
+                      {reservation.computed_status === "completed" && "🏁"}
+                      {reservation.computed_status === "expired" && "💀"}
+                      {reservation.computed_status === "cancelled" && "🚫"}
+                      {reservation.computed_status === "refused" && "❌"}
                       <span className="ml-1 hidden sm:inline">
-                        {reservation.business_status === "pending" && translate('admin_reservations.status.pending', 'En attente')}
-                        {reservation.business_status === "accepted" && translate('admin_reservations.status.accepted', 'Acceptée')}
-                        {reservation.business_status === "active" && translate('admin_reservations.status.active', 'Active')}
-                        {reservation.business_status === "completed" && translate('admin_reservations.status.completed', 'Terminée')}
-                        {reservation.business_status === "expired" && translate('admin_reservations.status.expired', 'Expirée')}
-                        {reservation.status === "cancelled" && translate('admin_reservations.status.cancelled', 'Annulée')}
-                        {reservation.business_status === "refused" && translate('admin_reservations.status.refused', 'Refusée')}
+                        {t(`reservationStatus.${reservation.computed_status}`)}
                       </span>
                     </span>
                   </td>
 
                   <td className="px-4 py-3">
-                    {reservation.status === "pending" && reservation.business_status !== "expired" && (
+                    {reservation.status === "pending" && reservation.computed_status !== "expired" && (
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleAcceptReservation(reservation)}
@@ -1538,7 +1480,7 @@ export default function ReservationsAdmin() {
                     )}
 
                     {/* Bouton pour changer de véhicule - SEULEMENT pour les réservations acceptées mais pas encore actives */}
-                    {reservation.status === "accepted" && reservation.business_status === "accepted" && reservation.assigned_vehicle_id && (
+                    {reservation.status === "accepted" && reservation.computed_status === "accepted" && reservation.assigned_vehicle_id && (
                       <button
                         onClick={() => handleChangeVehicle(reservation)}
                         className="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 transition-colors"
@@ -1548,13 +1490,13 @@ export default function ReservationsAdmin() {
                     )}
 
 
-                    {reservation.business_status === "expired" && (
+                    {reservation.computed_status === "expired" && (
                       <div className="text-xs text-orange-600 italic">
                         {translate('admin_reservations.messages.expired_reservation', 'Réservation expirée')}
                       </div>
                     )}
 
-                    {(reservation.status !== "pending" && reservation.business_status !== "expired") && (
+                    {(reservation.status !== "pending" && reservation.computed_status !== "expired") && (
                       <div className="text-xs text-gray-500 italic flex flex-col gap-0.5">
                         <span className="font-medium text-slate-600 not-italic">
                           {translate('admin_reservations.reservation.reservation_date', 'Date de réservation')}:

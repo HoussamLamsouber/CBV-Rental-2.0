@@ -53,7 +53,7 @@ export const Footer = () => {
             <h4 className="text-white font-semibold text-xs uppercase tracking-wider mb-6">{t("navigation")}</h4>
             <ul className="space-y-4 text-sm font-medium">
               <li><Link to="/" className="hover:text-blue-500 transition-colors">{t("home")}</Link></li>
-              <li><Link to="/offres" className="hover:text-blue-500 transition-colors">{t("offers.nav")}</Link></li>
+              <li><Link to="/offers" className="hover:text-blue-500 transition-colors">{t("offers.nav")}</Link></li>
               <li><Link to="/about" className="hover:text-blue-500 transition-colors">{t("about")}</Link></li>
               <li><Link to="/contact" className="hover:text-blue-500 transition-colors">{t("contact.label")}</Link></li>
             </ul>
