@@ -15,8 +15,7 @@
         "cancelled": "Cancelled",
         "expired": "Expired",
         "active": "Active",
-        "completed": "Completed",
-        "upcoming": "Upcoming"
+        "completed": "Completed"
     },
     "offers": {
         "nav": "Offers",
@@ -85,6 +84,7 @@
     "saving": "Saving",
     "redirecting_in": "Redirecting to home in",
     "common": {
+        "me": "Me",
         "months": {
             "jan": "Jan",
             "feb": "Feb",
@@ -259,7 +259,9 @@
         },
         "vehicle_modal": {
             "title": "Assign a vehicle",
+            "change_vehicle_title": "Change the vehicle",
             "subtitle": "Select the vehicle to assign to this reservation",
+            "change_vehicle_subtitle": "Select the vehicle to assign to this reservation",
             "no_vehicles": "No vehicles available",
             "no_vehicles_desc": "All vehicles of this model are reserved for this period.",
             "cancel": "Cancel",
@@ -488,6 +490,7 @@
         }
     },
     "admin_users": {
+        "cannot_delete_self": "You cannot delete your own account",
         "title": "User Management",
         "access_denied": "Access denied",
         "admin_required": "You must be an administrator to access this page.",

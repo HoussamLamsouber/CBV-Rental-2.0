@@ -124,6 +124,15 @@ export default function AdminUsers() {
   };
 
   const handleDeleteUser = async (profileId: string, email: string, userRole: string) => {
+    if (user && user.email === email) {
+      toast({
+        title: t("error"),
+        description: t("admin_users.cannot_delete_self"),
+        variant: "destructive"
+      });
+      return;
+    }
+
     const roleText = userRole === 'admin' ? t('admin_users.roles.admin') : t('admin_users.roles.client');
 
     if (!confirm(t('admin_users.messages.confirm_delete_user', { email, role: roleText }))) {
@@ -271,6 +280,11 @@ export default function AdminUsers() {
                         {/* Name */}
                         <td className="px-4 py-3 font-medium">
                           {profile.full_name || t('admin_users.messages.not_provided')}
+                          {user?.email === profile.email && (
+                            <span className="ml-2 text-xs text-blue-500 font-bold">
+                              ({t("common.me")})
+                            </span>
+                          )}
                         </td>
 
                         {/* Email */}

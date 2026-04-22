@@ -23,7 +23,7 @@ export const getReservationStatus = (reservation: {
 
   // Logic for accepted reservations
   if (dbStatus === "accepted") {
-    if (now < start) return "upcoming";
+    if (now < start) return "accepted";
     if (now >= start && now <= end) return "active";
     if (now > end) return "completed";
   }

@@ -629,6 +629,7 @@ export default function ReservationsAdmin() {
             registration_number: vehicle.matricule,
             depot_info: depotInfo,
             depot_city: depotInfo?.city,
+            depot_name: depotInfo?.name,
             depot_address: depotInfo?.address,
             depot_phone: vehicle.depots?.phone,
             isAvailable: isVehicleAvailable
@@ -1452,7 +1453,7 @@ export default function ReservationsAdmin() {
                       {reservation.computed_status === "accepted" && "✅"}
                       {reservation.computed_status === "active" && "🚗"}
                       {reservation.computed_status === "completed" && "🏁"}
-                      {reservation.computed_status === "expired" && "💀"}
+                      {reservation.computed_status === "expired" && "⏱️"}
                       {reservation.computed_status === "cancelled" && "🚫"}
                       {reservation.computed_status === "refused" && "❌"}
                       <span className="ml-1 hidden sm:inline">
@@ -1920,7 +1921,7 @@ export default function ReservationsAdmin() {
                               <div className="flex items-center gap-2 text-gray-700 mb-1">
                                 <MapPin className="h-4 w-4 text-gray-400" />
                                 <span className="font-medium">
-                                  {translate('admin_reservations.vehicle_modal.depot', 'Dépôt')}:
+                                  {translate('admin_reservations.vehicle_modal.depot', 'Dépôt')} : {vehicle.depot_name}
                                 </span>
                               </div>
                               {vehicle.depot_address && (

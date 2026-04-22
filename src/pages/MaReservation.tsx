@@ -253,7 +253,7 @@ const MaReservation = () => {
   const getStatusBadge = (status: string) => {
     const colors = {
       pending: "bg-yellow-200 text-yellow-800",
-      upcoming: "bg-blue-200 text-blue-800",
+      accepted: "bg-blue-200 text-blue-800",
       active: "bg-green-200 text-green-800",
       completed: "bg-gray-200 text-gray-800",
       refused: "bg-red-200 text-red-800",
@@ -395,7 +395,7 @@ const MaReservation = () => {
 
                         <div className="mt-6">
                           {(() => {
-                            const showCancelButton = res.computed_status === 'upcoming' || res.computed_status === 'pending';
+                            const showCancelButton = res.computed_status === 'accepted' || res.computed_status === 'pending';
 
                             if (showCancelButton) {
                               return (

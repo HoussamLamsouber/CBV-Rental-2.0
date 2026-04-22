@@ -334,7 +334,7 @@ const Index = () => {
           user={user}
           onReserved={() => {
             setShowModal(false);
-            navigate("/ma-reservation");
+            navigate("/my-reservation");
           }}
         />
       )}

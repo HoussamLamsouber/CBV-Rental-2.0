@@ -15,8 +15,7 @@
         "cancelled": "Annulée",
         "expired": "Expirée",
         "active": "En cours",
-        "completed": "Terminée",
-        "upcoming": "À venir"
+        "completed": "Terminée"
     },
     "offers": {
         "nav": "Offres",
@@ -85,6 +84,7 @@
     "saving": "Enregistrement",
     "redirecting_in": "Redirection vers la page d'accueil dans",
     "common": {
+        "me": "Moi",
         "months": {
             "jan": "Jan",
             "feb": "Fév",
@@ -259,7 +259,9 @@
         },
         "vehicle_modal": {
             "title": "Attribuer un véhicule",
+            "change_vehicle_title": "Changer le véhicule",
             "subtitle": "Sélectionnez le véhicule à attribuer à cette réservation",
+            "change_vehicle_subtitle": "Sélectionnez le véhicule à attribuer à cette réservation",
             "no_vehicles": "Aucun véhicule disponible",
             "no_vehicles_desc": "Tous les véhicules de ce modèle sont réservés pour cette période.",
             "cancel": "Annuler",
@@ -488,6 +490,7 @@
         }
     },
     "admin_users": {
+        "cannot_delete_self": "Vous ne pouvez pas supprimer votre propre compte",
         "title": "Gestion des Utilisateurs",
         "access_denied": "Accès refusé",
         "admin_required": "Vous devez être administrateur pour accéder à cette page.",
