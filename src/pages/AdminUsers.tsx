@@ -22,6 +22,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/utils";
 
 type Profile = {
   id: string;
@@ -124,7 +125,8 @@ export default function AdminUsers() {
   };
 
   const handleDeleteUser = async (profileId: string, email: string, userRole: string) => {
-    if (user && user.email === email) {
+    const isCurrentUser = (user && user.id === profileId) || (user && user.email === email);
+    if (isCurrentUser) {
       toast({
         title: t("error"),
         description: t("admin_users.cannot_delete_self"),
@@ -274,14 +276,19 @@ export default function AdminUsers() {
                   </thead>
 
                   <tbody>
-                    {filteredProfiles.map(profile => (
-                      <tr key={profile.id} className="border-b last:border-0">
+                    {filteredProfiles.map(profile => {
+                      const isCurrentUser = (user?.id === profile.id) || (user?.email === profile.email);
+                      return (
+                      <tr key={profile.id} className={cn(
+                        "border-b last:border-0",
+                        isCurrentUser && "bg-blue-50/40"
+                      )}>
 
                         {/* Name */}
                         <td className="px-4 py-3 font-medium">
                           {profile.full_name || t('admin_users.messages.not_provided')}
-                          {user?.email === profile.email && (
-                            <span className="ml-2 text-xs text-blue-500 font-bold">
+                          {isCurrentUser && (
+                            <span className="ml-2 px-2 py-2 text-[10px] font-bold bg-blue-100 text-blue-600 rounded-full uppercase tracking-wider">
                               ({t("common.me")})
                             </span>
                           )}
@@ -341,8 +348,18 @@ export default function AdminUsers() {
 
                             <button
                               onClick={() => handleDeleteUser(profile.id, profile.email, profile.role)}
-                              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                              title={t('admin_users.actions.delete_user')}
+                              disabled={isCurrentUser}
+                              className={cn(
+                                "p-2 rounded-lg transition-colors",
+                                isCurrentUser
+                                  ? "opacity-40 cursor-not-allowed text-gray-400"
+                                  : "text-gray-400 hover:text-red-600 hover:bg-red-50"
+                              )}
+                              title={
+                                isCurrentUser
+                                  ? t('admin_users.cannot_delete_self')
+                                  : t('admin_users.actions.delete_user')
+                              }
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
@@ -351,7 +368,7 @@ export default function AdminUsers() {
                         </td>
 
                       </tr>
-                    ))}
+                    )})}
                   </tbody>
 
                 </table>

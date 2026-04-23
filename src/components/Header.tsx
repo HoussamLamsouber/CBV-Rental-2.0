@@ -167,7 +167,7 @@ export const Header = () => {
             {!authLoading && isAuthenticated ? (
               <div className="space-y-3">
                 <Link to="/profile" className="block text-sm font-semibold text-slate-600" onClick={() => setIsMenuOpen(false)}>{t("profile")}</Link>
-                <Link to="/ma-reservation" className="block text-sm font-semibold text-slate-600" onClick={() => setIsMenuOpen(false)}>{t("my_reservations")}</Link>
+                <Link to="/my-reservation" className="block text-sm font-semibold text-slate-600" onClick={() => setIsMenuOpen(false)}>{t("my_reservations")}</Link>
                 <Button variant="ghost" className="w-full justify-start text-red-500 hover:bg-red-50 hover:text-red-600 p-0 h-auto" onClick={handleSignOut}>
                   <LogOut className="h-4 w-4 mr-2" /> {t("logout")}
                 </Button>
