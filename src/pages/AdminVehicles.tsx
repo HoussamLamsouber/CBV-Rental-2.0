@@ -570,8 +570,8 @@ export default function AdminVehicles() {
             </div>
           ) : (
             // Vue tableau uniquement
-            <div className="overflow-hidden bg-white rounded-xl shadow-sm border border-gray-100">
-              <table className="min-w-full divide-y divide-gray-200">
+            <div className="overflow-x-auto md:overflow-visible">
+              <table className="w-full min-w-[1000px] md:min-w-full text-left md:border md:border-gray-100 md:rounded-xl md:shadow-sm md:bg-white md:overflow-hidden">
                 <thead className="bg-slate-50/80 border-b border-slate-200">
                   <tr>
                     <th className="px-6 py-4 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
@@ -597,10 +597,10 @@ export default function AdminVehicles() {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody>
                   {filteredVehicles.map((vehicle) => (
                     <tr key={vehicle.id} className="hover:bg-gray-50/50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <img
                             src={vehicle.image_url || "/placeholder-car.jpg"}
@@ -610,13 +610,13 @@ export default function AdminVehicles() {
                           <span className="text-sm font-medium text-gray-900">{vehicle.name}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                      <td className="px-6 py-4 text-sm text-gray-700">
                         {t(`admin_vehicles.categories.${vehicle.category}`)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      <td className="px-6 py-4 text-sm font-medium text-gray-900">
                         {vehicle.price} MAD
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getAvailabilityColor(vehicle.available_now ?? 0, vehicle.quantity)
                           }`}>
                           {vehicle.available_now === 0
@@ -624,34 +624,34 @@ export default function AdminVehicles() {
                             : `${vehicle.available_now}/${vehicle.quantity}`}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                      <td className="px-6 py-4 text-sm text-gray-700">
                         {vehicle.seats || '-'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                      <td className="px-6 py-4 text-sm text-gray-700">
                         {t(`admin_vehicles.fuel_types.${vehicle.fuel}`)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex justify-center gap-1">
+                      <td className="px-6 py-4 text-center">
+                        <div className="flex flex-wrap justify-start md:justify-center gap-2">
                           <Link
                             to={`/admin/vehicle/${vehicle.id}`}
-                            className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                            className="p-3 md:p-2 min-w-[40px] min-h-[40px] flex items-center justify-center text-gray-500 md:text-gray-400 hover:text-green-600 hover:bg-green-50 bg-slate-50 md:bg-transparent border md:border-none rounded-lg transition-colors"
                             title={t('admin_vehicles.actions.view_details')}
                           >
-                            <Car className="h-4 w-4" />
+                            <Car className="h-4 w-4 md:h-5 md:w-5 lg:h-4 lg:w-4" />
                           </Link>
                           <button
                             onClick={() => handleEditVehicle(vehicle)}
-                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            className="p-3 md:p-2 min-w-[40px] min-h-[40px] flex items-center justify-center text-gray-500 md:text-gray-400 hover:text-blue-600 hover:bg-blue-50 bg-slate-50 md:bg-transparent border md:border-none rounded-lg transition-colors"
                             title={t('admin_vehicles.actions.edit')}
                           >
-                            <Edit className="h-4 w-4" />
+                            <Edit className="h-4 w-4 md:h-5 md:w-5 lg:h-4 lg:w-4" />
                           </button>
                           <button
                             onClick={() => handleDeleteVehicle(vehicle)}
-                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            className="p-3 md:p-2 min-w-[40px] min-h-[40px] flex items-center justify-center text-gray-500 md:text-gray-400 hover:text-red-600 hover:bg-red-50 bg-slate-50 md:bg-transparent border md:border-none rounded-lg transition-colors"
                             title={t('admin_vehicles.actions.delete')}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4 md:h-5 md:w-5 lg:h-4 lg:w-4" />
                           </button>
                         </div>
                       </td>

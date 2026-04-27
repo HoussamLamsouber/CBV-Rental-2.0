@@ -179,7 +179,7 @@ export default function AdminUsers() {
   const clientsCount = profiles.filter(p => p.role === 'client').length;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
         {/* En-tête */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
@@ -197,8 +197,8 @@ export default function AdminUsers() {
         </div>
 
         {/* Onglets */}
-        <div className="border-b mb-6">
-          <div className="flex space-x-8">
+        <div className="border-b mb-6 overflow-x-auto hover-scrollbar">
+          <div className="flex space-x-4 md:space-x-8 min-w-max pb-1">
             <button
               className={`py-2 px-1 font-medium text-sm border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'admins'
                   ? 'border-primary text-primary'
@@ -224,7 +224,7 @@ export default function AdminUsers() {
 
         {/* Barre de recherche */}
         <Card className="mb-6">
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
               <Input
@@ -243,10 +243,10 @@ export default function AdminUsers() {
             <LoadingSpinner message={t('admin_users.messages.loading_users')} />
           </div>
         ) : (
-          <Card>
+          <Card className="border-none shadow-none md:border md:shadow-sm bg-transparent md:bg-card">
             <CardContent className="p-0">
-              <div className="w-full overflow-x-auto">
-                <table className="w-full text-sm table-fixed">
+              <div className="w-full overflow-x-auto md:overflow-visible">
+                <table className="w-full text-sm min-w-[800px] md:min-w-full">
                   <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-500 text-[11px] uppercase tracking-widest">
                     <tr>
                       <th className="text-left px-4 py-3 font-semibold">
@@ -280,7 +280,7 @@ export default function AdminUsers() {
                       const isCurrentUser = (user?.id === profile.id) || (user?.email === profile.email);
                       return (
                       <tr key={profile.id} className={cn(
-                        "border-b last:border-0",
+                        "hover:bg-slate-50 transition-colors",
                         isCurrentUser && "bg-blue-50/40"
                       )}>
 
@@ -295,7 +295,7 @@ export default function AdminUsers() {
                         </td>
 
                         {/* Email */}
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 text-slate-600 md:text-slate-900">
                           <div className="flex items-center gap-2">
                             <Mail className="h-4 w-4 text-slate-400" />
                             <span className="truncate max-w-[200px]">
@@ -305,7 +305,7 @@ export default function AdminUsers() {
                         </td>
 
                         {/* Phone */}
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 text-slate-600 md:text-slate-900">
                           {profile.telephone ? (
                             <div className="flex items-center gap-2">
                               <Phone className="h-4 w-4 text-slate-400" />
@@ -327,7 +327,7 @@ export default function AdminUsers() {
                         </td>
 
                         {/* Date */}
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 text-slate-500 md:text-slate-900">
                           <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4 text-slate-400" />
                             {formatDateTime(profile.created_at)}
@@ -335,22 +335,22 @@ export default function AdminUsers() {
                         </td>
 
                         {/* Actions */}
-                        <td className="w-[120px] px-4 py-3">
-                          <div className="flex justify-center gap-1">
+                        <td className="px-4 py-3 text-center">
+                          <div className="flex flex-wrap justify-start md:justify-center gap-2">
 
                             <button
                               onClick={() => navigate(`/admin/reservations?user=${profile.id}`)}
-                              className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              className="p-3 md:p-2 min-w-[40px] min-h-[40px] flex items-center justify-center text-gray-500 md:text-gray-400 hover:text-blue-600 hover:bg-blue-50 bg-slate-50 md:bg-transparent rounded-lg transition-colors border md:border-none"
                               title={t('admin_users.actions.view_reservations')}
                             >
-                              <Eye className="h-4 w-4" />
+                              <Eye className="h-4 w-4 md:h-5 md:w-5 lg:h-4 lg:w-4" />
                             </button>
 
                             <button
                               onClick={() => handleDeleteUser(profile.id, profile.email, profile.role)}
                               disabled={isCurrentUser}
                               className={cn(
-                                "p-2 rounded-lg transition-colors",
+                                "p-3 md:p-2 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg transition-colors border md:border-none",
                                 isCurrentUser
                                   ? "opacity-40 cursor-not-allowed text-gray-400"
                                   : "text-gray-400 hover:text-red-600 hover:bg-red-50"
@@ -361,7 +361,7 @@ export default function AdminUsers() {
                                   : t('admin_users.actions.delete_user')
                               }
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-4 w-4 md:h-5 md:w-5 lg:h-4 lg:w-4" />
                             </button>
 
                           </div>

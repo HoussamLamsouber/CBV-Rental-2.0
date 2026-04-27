@@ -1319,33 +1319,33 @@ export default function ReservationsAdmin() {
 
   const TableView = ({ reservations }: { reservations: any[] }) => (
     <div className="flex flex-col min-h-[500px]">
-      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
+      <div className="bg-white rounded-lg shadow-sm border">
+        <div className="w-full md:overflow-visible overflow-x-auto">
+          <table className="w-full md:min-w-0 min-w-[700px] table-auto">
             <thead className="bg-slate-50/80 border-b border-slate-200">
               <tr>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
+                <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest whitespace-nowrap">
                   {translate('admin_reservations.reservation.vehicle', 'Véhicule')}
                 </th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
+                <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest whitespace-nowrap">
                   {translate('admin_reservations.vehicle_info.title', 'Véhicule attribué')}
                 </th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
+                <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest whitespace-nowrap">
                   {translate('admin_reservations.reservation.pickup', 'Période')}
                 </th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
+                <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest whitespace-nowrap">
                   {translate('admin_reservations.reservation.location', 'Lieux')}
                 </th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
+                <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest whitespace-nowrap">
                   {translate('admin_reservations.reservation.contact', 'Contact')}
                 </th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
+                <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest whitespace-nowrap">
                   {translate('admin_reservations.reservation.total_price', 'Prix')}
                 </th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
+                <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest whitespace-nowrap">
                   {translate('admin_reservations.reservation.status', 'Statut')}
                 </th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
+                <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest whitespace-nowrap">
                   {translate('admin_reservations.actions.title', 'Infos')}
                 </th>
               </tr>
@@ -1367,10 +1367,10 @@ export default function ReservationsAdmin() {
                         </div>
                       )}
                       <div className="min-w-0">
-                        <div className="font-medium text-gray-900 text-sm truncate">
+                        <div className="font-medium text-gray-900 text-sm truncate max-w-[120px]">
                           {reservation.car_name}
                         </div>
-                        <div className="text-xs text-gray-500 truncate">
+                        <div className="text-xs text-gray-500 truncate max-w-[120px]">
                           {reservation.profiles?.full_name || reservation.guest_name || translate('admin_reservations.reservation.unidentified', 'Client non identifié')}
                           {reservation.guest_name && (
                             <span className="ml-1 text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded">
@@ -1424,10 +1424,10 @@ export default function ReservationsAdmin() {
                   </td>
 
                   <td className="px-4 py-3">
-                    <div className="text-sm text-gray-900 truncate">
+                    <div className="text-sm text-gray-900 truncate max-w-[120px]">
                       {reservation.guest_email || reservation.profiles?.email}
                     </div>
-                    <div className="text-sm text-gray-600 truncate">
+                    <div className="text-sm text-gray-600 truncate max-w-[120px]">
                       {reservation.guest_phone || reservation.profiles?.telephone || translate('admin_reservations.reservation.not_provided', 'Non renseigné')}
                     </div>
                   </td>
@@ -1438,9 +1438,9 @@ export default function ReservationsAdmin() {
                     </div>
                   </td>
 
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 whitespace-nowrap">
                     <span className={cn(
-                      "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium",
+                      "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap",
                       reservation.computed_status === "pending" && "bg-yellow-100 text-yellow-800",
                       reservation.computed_status === "accepted" && "bg-blue-100 text-blue-800",
                       reservation.computed_status === "active" && "bg-green-100 text-green-800",
@@ -1484,7 +1484,7 @@ export default function ReservationsAdmin() {
                     {reservation.status === "accepted" && reservation.computed_status === "accepted" && reservation.assigned_vehicle_id && (
                       <button
                         onClick={() => handleChangeVehicle(reservation)}
-                        className="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 transition-colors"
+                        className="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 transition-colors whitespace-nowrap"
                       >
                         {translate('admin_reservations.actions.change_vehicle', 'Changer véhicule')}
                       </button>
@@ -1499,10 +1499,10 @@ export default function ReservationsAdmin() {
 
                     {(reservation.status !== "pending" && reservation.computed_status !== "expired") && (
                       <div className="text-xs text-gray-500 italic flex flex-col gap-0.5">
-                        <span className="font-medium text-slate-600 not-italic">
+                        <span className="font-medium text-slate-600 not-italic whitespace-nowrap">
                           {translate('admin_reservations.reservation.reservation_date', 'Date de réservation')}:
                         </span>
-                        <span>{formatDateTime(reservation.created_at)}</span>
+                        <span className="whitespace-nowrap">{formatDateTime(reservation.created_at)}</span>
                       </div>
                     )}
                   </td>
@@ -1692,13 +1692,13 @@ export default function ReservationsAdmin() {
         )}
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <div className="bg-white rounded-lg shadow-sm border overflow-x-auto flex-1">
-            <div className="flex min-w-max w-full">
+          <div className="bg-white rounded-lg shadow-sm border w-full md:overflow-visible overflow-x-auto flex-1">
+            <div className="flex md:flex-wrap flex-nowrap whitespace-nowrap gap-2 min-w-max w-full">
               {tabs.map((tab) => (
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
-                  className={`flex items-center justify-center gap-2 px-4 py-3 font-medium text-sm border-b-2 transition-colors whitespace-nowrap flex-1 min-w-0 ${activeTab === tab.key
+                  className={`flex-shrink-0 px-4 py-2 flex items-center justify-center gap-2 font-medium text-sm border-b-2 transition-colors whitespace-nowrap flex-1 min-w-0 ${activeTab === tab.key
                     ? "border-blue-600 text-blue-600 bg-blue-50"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                     }`}

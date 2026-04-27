@@ -1152,10 +1152,10 @@ export default function AdminVehicleDetail() {
         <hr className="my-4" />
 
         {/* Onglets */}
-        <div className="border-b mb-6">
-          <div className="flex space-x-8">
+        <div className="border-b mb-6 w-full md:overflow-visible overflow-x-auto">
+          <div className="flex md:flex-wrap flex-nowrap whitespace-nowrap gap-2 md:space-x-8 min-w-max pb-1">
             <button
-              className={`py-2 px-1 font-medium text-sm border-b-2 transition-colors ${
+              className={`flex-shrink-0 px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
                 activeTab === 'availability'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -1165,7 +1165,7 @@ export default function AdminVehicleDetail() {
               {t('admin_vehicle_detail.tabs.availability')}
             </button>
             <button
-              className={`py-2 px-1 font-medium text-sm border-b-2 transition-colors ${
+              className={`flex-shrink-0 px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
                 activeTab === 'vehicles'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -1175,7 +1175,7 @@ export default function AdminVehicleDetail() {
               {t('admin_vehicle_detail.tabs.vehicles')} ({vehicles.length})
             </button>
             <button
-              className={`py-2 px-1 font-medium text-sm border-b-2 transition-colors ${
+              className={`flex-shrink-0 px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
                 activeTab === 'offers'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -1185,7 +1185,7 @@ export default function AdminVehicleDetail() {
               {t('admin_vehicle_detail.tabs.offers')} ({offers.length})
             </button>
             <button
-              className={`py-2 px-1 font-medium text-sm border-b-2 transition-colors ${
+              className={`flex-shrink-0 px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
                 activeTab === 'special_offers'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -1195,7 +1195,7 @@ export default function AdminVehicleDetail() {
               {t("specialOffers.title")} ({specialOffers.length})
             </button>
             <button
-              className={`py-2 px-1 font-medium text-sm border-b-2 transition-colors ${
+              className={`flex-shrink-0 px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
                 activeTab === 'reservations'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -1205,7 +1205,7 @@ export default function AdminVehicleDetail() {
               {t('admin_vehicle_detail.tabs.reservations')} ({allReservations.length})
             </button>
             <button
-              className={`py-2 px-1 font-medium text-sm border-b-2 transition-colors ${
+              className={`flex-shrink-0 px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
                 activeTab === 'calendar'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -1302,94 +1302,94 @@ export default function AdminVehicleDetail() {
             </div>
 
             {/* Tableau des véhicules */}
-            <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="p-4 text-left font-semibold">{t('admin_vehicle_detail.vehicles_management.license_plate')}</th>
-                    <th className="p-4 text-left font-semibold">{t('admin_vehicle_detail.vehicles_management.obd_code')}</th>
-                    <th className="p-4 text-left font-semibold">{t('admin_vehicle_detail.vehicles_management.obd_date')}</th>
-                    <th className="p-4 text-left font-semibold">{t('admin_vehicle_detail.vehicles_management.depot')}</th>
-                    <th className="p-4 text-left font-semibold">{t('admin_vehicle_detail.vehicles_management.object')}</th>
-                    <th className="p-4 text-left font-semibold">{t('admin_vehicle_detail.vehicles_management.status')}</th>
-                    <th className="p-4 text-left font-semibold">{t('admin_vehicle_detail.vehicles_management.change_status')}</th>
-                    <th className="p-4 text-left font-semibold">{t('admin_vehicle_detail.vehicles_management.actions')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {vehicles.map((vehicleItem) => {
-                    const statusInfo = getVehicleStatus(vehicleItem);
-                    
-                    return (
-                      <tr key={vehicleItem.id} className="border-b hover:bg-gray-50">
-                        <td className="p-4 font-mono font-semibold">{vehicleItem.matricule}</td>
-                        <td className="p-4">{vehicleItem.obd || '-'}</td>
-                        <td className="p-4">
-                          {vehicleItem.date_obd ? formatDateDisplay(new Date(vehicleItem.date_obd), "dd/MM/yyyy", i18n.language) : '-'}
-                        </td>
-                        <td className="p-4">
-                          {vehicleItem.depot ? (
-                            <div className="space-y-1">
-                              <div className="font-medium text-sm">{vehicleItem.depot.name}</div>
-                              <div className="text-xs text-gray-600">{vehicleItem.depot.city}</div>
-                              {vehicleItem.depot.address && (
-                                <div className="text-xs text-gray-500 truncate max-w-xs">
-                                  {vehicleItem.depot.address}
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-gray-400 italic text-sm">
-                              {t('admin_vehicle_detail.vehicles_management.no_depot_assigned')}
+            <div className="bg-white rounded-lg border shadow-sm">
+              <div className="w-full md:overflow-visible overflow-x-auto">
+                <table className="w-full md:min-w-0 min-w-[800px] table-auto">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="p-4 text-left font-semibold whitespace-nowrap">{t('admin_vehicle_detail.vehicles_management.license_plate')}</th>
+                      <th className="p-4 text-left font-semibold whitespace-nowrap">{t('admin_vehicle_detail.vehicles_management.obd_code')}</th>
+                      <th className="p-4 text-left font-semibold whitespace-nowrap">{t('admin_vehicle_detail.vehicles_management.obd_date')}</th>
+                      <th className="p-4 text-left font-semibold whitespace-nowrap">{t('admin_vehicle_detail.vehicles_management.depot')}</th>
+                      <th className="p-4 text-left font-semibold whitespace-nowrap">{t('admin_vehicle_detail.vehicles_management.object')}</th>
+                      <th className="p-4 text-left font-semibold whitespace-nowrap">{t('admin_vehicle_detail.vehicles_management.status')}</th>
+                      <th className="p-4 text-left font-semibold whitespace-nowrap">{t('admin_vehicle_detail.vehicles_management.change_status')}</th>
+                      <th className="p-4 text-left font-semibold whitespace-nowrap">{t('admin_vehicle_detail.vehicles_management.actions')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {vehicles.map((vehicleItem) => {
+                      const statusInfo = getVehicleStatus(vehicleItem);
+                      
+                      return (
+                        <tr key={vehicleItem.id} className="border-b hover:bg-gray-50">
+                          <td className="p-4 font-mono font-semibold">{vehicleItem.matricule}</td>
+                          <td className="p-4">{vehicleItem.obd || '-'}</td>
+                          <td className="p-4">
+                            {vehicleItem.date_obd ? formatDateDisplay(new Date(vehicleItem.date_obd), "dd/MM/yyyy", i18n.language) : '-'}
+                          </td>
+                          <td className="p-4">
+                            {vehicleItem.depot ? (
+                              <div className="space-y-1">
+                                <div className="font-medium text-sm">{vehicleItem.depot.name}</div>
+                                <div className="text-xs text-gray-600">{vehicleItem.depot.city}</div>
+                                {vehicleItem.depot.address && (
+                                  <div className="text-xs text-gray-500 truncate max-w-[120px]">
+                                    {vehicleItem.depot.address}
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-gray-400 italic text-sm">
+                                {t('admin_vehicle_detail.vehicles_management.no_depot_assigned')}
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-4">{vehicleItem.objet || '-'}</td>
+                          <td className="p-4">
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusInfo.color}`}>
+                              {statusInfo.icon} {statusInfo.text}
                             </span>
-                          )}
-                        </td>
-                        <td className="p-4">{vehicleItem.objet || '-'}</td>
-                        <td className="p-4">
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusInfo.color}`}>
-                            {statusInfo.icon} {statusInfo.text}
-                          </span>
-                        </td>
-                        <td className="p-4">
-                          <select 
-                            value={vehicleItem.status}
-                            onChange={(e) => handleChangeVehicleStatus(vehicleItem.id, e.target.value as any)}
-                            className="text-sm border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          >
-                            <option value="available">{t('admin_vehicle_detail.status.available')}</option>
-                            <option value="reserved">{t('admin_vehicle_detail.status.reserved')}</option>
-                            <option value="maintenance">{t('admin_vehicle_detail.status.maintenance')}</option>
-                          </select>
-                        </td>
-                        <td className="p-4">
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() => handleEdit(vehicleItem)}
+                          </td>
+                          <td className="p-4">
+                            <select 
+                              value={vehicleItem.status}
+                              onChange={(e) => handleChangeVehicleStatus(vehicleItem.id, e.target.value as any)}
+                              className="text-sm border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
-                              <Pencil className="w-4 h-4" />
-                            </Button>
+                              <option value="available">{t('admin_vehicle_detail.status.available')}</option>
+                              <option value="reserved">{t('admin_vehicle_detail.status.reserved')}</option>
+                              <option value="maintenance">{t('admin_vehicle_detail.status.maintenance')}</option>
+                            </select>
+                          </td>
+                          <td className="p-4">
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => handleEdit(vehicleItem)}
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </Button>
 
-                            <Button
-                              variant="destructive"
-                              size="icon"
-                              onClick={() => handleDeleteVehicle(vehicleItem.id, vehicleItem.matricule)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </td>
-
-
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                              <Button
+                                variant="destructive"
+                                size="icon"
+                                onClick={() => handleDeleteVehicle(vehicleItem.id, vehicleItem.matricule)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
 
               {vehicles.length === 0 && (
-                <div className="p-8 text-center text-gray-500">
+                <div className="p-8 text-center text-gray-500 border-t">
                   <div className="text-4xl mb-4">🚗</div>
                   <p>{t('admin_vehicle_detail.vehicles_management.no_vehicles')}</p>
                   <Button 
@@ -1463,90 +1463,92 @@ export default function AdminVehicleDetail() {
           <>
             <h2 className="text-xl font-semibold mb-3">{t('admin_vehicle_detail.reservations.all_reservations')}</h2>
             
-            <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="p-4 text-left">ID</th>
-                    <th className="p-4 text-left">{t('admin_vehicle_detail.reservations.client')}</th>
-                    <th className="p-4 text-left">{t('admin_vehicle_detail.reservations.period')}</th>
-                    <th className="p-4 text-left">{t('admin_vehicle_detail.reservations.status')}</th>
-                    <th className="p-4 text-left">{t('admin_vehicle_detail.reservations.assigned_vehicle', 'Véhicule attribué')}</th>
-                    <th className="p-4 text-left">{t('admin_vehicle_detail.reservations.localisations')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {allReservations.map((reservation) => {
-                    const clientInfo = getClientInfo(reservation);
-                    
-                    return (
-                      <tr key={reservation.id} className="border-b hover:bg-gray-50">
-                        <td className="p-4 font-mono text-sm">{reservation.id.slice(0, 8)}...</td>
-                        <td className="p-4">
-                          <div className="space-y-1">
-                            <div className="font-medium">{clientInfo.name}</div>
-                            <div className="text-sm text-gray-600">{clientInfo.email}</div>
-                            <div className="text-xs text-gray-500">{clientInfo.type}</div>
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          {formatDateDisplay(new Date(reservation.pickup_date), "dd/MM/yyyy", i18n.language)}{" "}-{" "}
-                          {formatDateDisplay(new Date(reservation.return_date), "dd/MM/yyyy", i18n.language)}
-                        </td>
-                        <td className="p-4">
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${
-                            reservation.status === 'accepted' 
-                              ? 'bg-green-100 text-green-800' 
-                              : reservation.status === 'pending'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}>
-                            {reservation.status === 'accepted' ? '✅ ' + t('admin_reservations.status.accepted') : 
-                            reservation.status === 'pending' ? '⏳ ' + t('admin_reservations.status.pending') : 
-                            '❌ ' + t('admin_reservations.status.refused')}
-                          </span>
-                        </td>
-                        <td className="p-4">
-                          {reservation.vehicles ? (
-                            <div className="flex items-center gap-2">
-                              <div className="min-w-0">
-                                <div className="font-mono font-semibold text-sm text-gray-900 truncate">
-                                  {reservation.vehicles.matricule}
+            <div className="bg-white rounded-lg border shadow-sm">
+              <div className="w-full md:overflow-visible overflow-x-auto">
+                <table className="w-full md:min-w-0 min-w-[800px] table-auto">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="p-4 text-left whitespace-nowrap">ID</th>
+                      <th className="p-4 text-left whitespace-nowrap">{t('admin_vehicle_detail.reservations.client')}</th>
+                      <th className="p-4 text-left whitespace-nowrap">{t('admin_vehicle_detail.reservations.period')}</th>
+                      <th className="p-4 text-left whitespace-nowrap">{t('admin_vehicle_detail.reservations.status')}</th>
+                      <th className="p-4 text-left whitespace-nowrap">{t('admin_vehicle_detail.reservations.assigned_vehicle', 'Véhicule attribué')}</th>
+                      <th className="p-4 text-left whitespace-nowrap">{t('admin_vehicle_detail.reservations.localisations')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {allReservations.map((reservation) => {
+                      const clientInfo = getClientInfo(reservation);
+                      
+                      return (
+                        <tr key={reservation.id} className="border-b hover:bg-gray-50">
+                          <td className="p-4 font-mono text-sm">{reservation.id.slice(0, 8)}...</td>
+                          <td className="p-4">
+                            <div className="space-y-1">
+                              <div className="font-medium">{clientInfo.name}</div>
+                              <div className="text-sm text-gray-600">{clientInfo.email}</div>
+                              <div className="text-xs text-gray-500">{clientInfo.type}</div>
+                            </div>
+                          </td>
+                          <td className="p-4 truncate max-w-[120px]">
+                            {formatDateDisplay(new Date(reservation.pickup_date), "dd/MM/yyyy", i18n.language)}{" "}-{" "}
+                            {formatDateDisplay(new Date(reservation.return_date), "dd/MM/yyyy", i18n.language)}
+                          </td>
+                          <td className="p-4">
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                              reservation.status === 'accepted' 
+                                ? 'bg-green-100 text-green-800' 
+                                : reservation.status === 'pending'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {reservation.status === 'accepted' ? '✅ ' + t('admin_reservations.status.accepted') : 
+                              reservation.status === 'pending' ? '⏳ ' + t('admin_reservations.status.pending') : 
+                              '❌ ' + t('admin_reservations.status.refused')}
+                            </span>
+                          </td>
+                          <td className="p-4">
+                            {reservation.vehicles ? (
+                              <div className="flex items-center gap-2">
+                                <div className="min-w-0">
+                                  <div className="font-mono font-semibold text-sm text-gray-900 truncate">
+                                    {reservation.vehicles.matricule}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          ) : reservation.assigned_vehicle_id ? (
-                            <div className="flex items-center gap-2 text-amber-600">
-                              <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
-                                <span className="text-xs">⚠️</span>
+                            ) : reservation.assigned_vehicle_id ? (
+                              <div className="flex items-center gap-2 text-amber-600">
+                                <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
+                                  <span className="text-xs">⚠️</span>
+                                </div>
+                                <div className="text-sm italic">
+                                  {t('admin_vehicle_detail.reservations.vehicle_not_loaded', 'Véhicule non chargé')}
+                                </div>
                               </div>
-                              <div className="text-sm italic">
-                                {t('admin_vehicle_detail.reservations.vehicle_not_loaded', 'Véhicule non chargé')}
+                            ) : (
+                              <div className="flex items-center gap-2 text-gray-400">
+                                <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                                  <span className="text-xs">—</span>
+                                </div>
+                                <div className="text-sm italic">
+                                  {t('admin_vehicle_detail.reservations.no_vehicle_assigned', 'Aucun véhicule')}
+                                </div>
                               </div>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2 text-gray-400">
-                              <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                                <span className="text-xs">—</span>
-                              </div>
-                              <div className="text-sm italic">
-                                {t('admin_vehicle_detail.reservations.no_vehicle_assigned', 'Aucun véhicule')}
-                              </div>
-                            </div>
-                          )}
-                        </td>
-                        <td className="p-4 text-sm">
-                          {translateLocation(reservation.pickup_location)}{" "}→{" "}
-                          {translateLocation(reservation.return_location)}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                            )}
+                          </td>
+                          <td className="p-4 text-sm truncate max-w-[120px]">
+                            {translateLocation(reservation.pickup_location)}{" "}→{" "}
+                            {translateLocation(reservation.return_location)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
               
               {allReservations.length === 0 && (
-                <div className="p-8 text-center text-gray-500">
+                <div className="p-8 text-center text-gray-500 border-t">
                   {t('admin_vehicle_detail.reservations.no_reservations')}
                 </div>
               )}

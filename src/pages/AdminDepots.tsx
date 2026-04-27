@@ -694,8 +694,8 @@ export default function AdminDepots() {
           </div>
         ) : (
           // Vue tableau uniquement
-          <div className="overflow-hidden bg-white rounded-xl shadow-sm border border-gray-100">
-            <table className="min-w-full divide-y divide-gray-200">
+          <div className="bg-transparent md:bg-white rounded-xl shadow-none md:shadow-sm border-none md:border overflow-x-auto md:overflow-visible border-gray-100">
+            <table className="min-w-[1000px] md:min-w-full divide-y-0 md:divide-y divide-gray-200">
               <thead className="bg-slate-50/80 border-b border-slate-200">
                 <tr>
                   <th className="px-6 py-4 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
@@ -721,7 +721,7 @@ export default function AdminDepots() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody>
                 {filteredDepots.map((depot) => {
                   const translation = getTranslation(depot);
 
@@ -743,7 +743,7 @@ export default function AdminDepots() {
                         {translation?.city}
                       </td>
 
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                      <td className="px-6 py-4 whitespace-normal md:whitespace-nowrap text-sm text-gray-700">
                         {translation?.address}
                       </td>
 
@@ -752,7 +752,7 @@ export default function AdminDepots() {
                       </td>
 
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {depot.email || "-"}
+                        <span className="truncate">{depot.email || "-"}</span>
                       </td>
 
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -766,25 +766,25 @@ export default function AdminDepots() {
                         </span>
                       </td>
 
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex justify-center gap-1">
+                      <td className="px-6 py-4 text-center">
+                        <div className="flex justify-start md:justify-center gap-2">
                           <button
                             onClick={() => openVehiclesModal(depot)}
-                            className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                            className="p-3 md:p-2 min-w-[40px] min-h-[40px] bg-slate-50 md:bg-transparent border md:border-none text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors flex items-center justify-center"
                           >
                             <Car className="h-4 w-4" />
                           </button>
 
                           <button
                             onClick={() => openEditModal(depot)}
-                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            className="p-3 md:p-2 min-w-[40px] min-h-[40px] bg-slate-50 md:bg-transparent border md:border-none text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex items-center justify-center"
                           >
                             <Edit className="h-4 w-4" />
                           </button>
 
                           <button
                             onClick={() => handleDeleteDepot(depot.id)}
-                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            className="p-3 md:p-2 min-w-[40px] min-h-[40px] bg-slate-50 md:bg-transparent border md:border-none text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>

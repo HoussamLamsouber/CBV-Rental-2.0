@@ -91,6 +91,16 @@ export default function AdminDashboard() {
   const [chartKey, setChartKey] = useState(0);
   const [revenueRange, setRevenueRange] = useState(6);
   const [bookingRange, setBookingRange] = useState(6);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -430,30 +440,32 @@ export default function AdminDashboard() {
                     </div>
                   }
                 >
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={revenueData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis
-                        dataKey="name"
-                        tick={{ fontSize: 12 }}
-                      />
-                      <YAxis
-                        tick={{ fontSize: 12 }}
-                        tickFormatter={(value) => `${value} MAD`}
-                      />
-                      <Tooltip
-                        formatter={(value: number) => [
-                          `${value.toLocaleString()} MAD`,
-                          t("admin_dashboard.charts.revenue.tooltip")
-                        ]}
-                      />
-                      <Bar
-                        dataKey="value"
-                        fill="#2563EB"
-                        name={t("admin_dashboard.charts.revenue.tooltip")}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <div className="w-full h-[220px] md:h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={revenueData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis
+                          dataKey="name"
+                          tick={{ fontSize: 12 }}
+                        />
+                        <YAxis
+                          tick={{ fontSize: 12 }}
+                          tickFormatter={(value) => `${value} MAD`}
+                        />
+                        <Tooltip
+                          formatter={(value: number) => [
+                            `${value.toLocaleString()} MAD`,
+                            t("admin_dashboard.charts.revenue.tooltip")
+                          ]}
+                        />
+                        <Bar
+                          dataKey="value"
+                          fill="#2563EB"
+                          name={t("admin_dashboard.charts.revenue.tooltip")}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
                 </ChartCard>
 
                 <ChartCard
@@ -462,33 +474,57 @@ export default function AdminDashboard() {
                   icon={Car}
                   color="blue"
                 >
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={categoryData}
-                        labelLine={false}
-                        label={({ name, percent }) =>
-                          `${name} ${(percent * 100).toFixed(0)}%`
-                        }
-                        outerRadius={100}
-                        dataKey="value"
-                        nameKey="name"
-                      >
-                        {categoryData.map((entry, index) => (
-                          <Cell
-                            key={`cell-${entry.name}-${index}`}
-                            fill={COLORS[index % COLORS.length]}
+                  <div className="w-full h-[280px] md:h-[320px] flex items-center justify-center">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart margin={{ top: 20, right: 30, left: 30, bottom: 20 }}>
+                        <Pie
+                          data={categoryData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ name, percent }) => 
+                            isMobile 
+                              ? `${(percent * 100).toFixed(0)}%` 
+                              : `${name} ${(percent * 100).toFixed(0)}%`
+                          }
+                          outerRadius={90}
+                          dataKey="value"
+                          nameKey="name"
+                        >
+                          {categoryData.map((entry, index) => (
+                            <Cell
+                              key={`cell-${entry.name}-${index}`}
+                              fill={COLORS[index % COLORS.length]}
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          formatter={(value: number) => [
+                            value,
+                            t("admin_dashboard.charts.categories.tooltip")
+                          ]}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* External Legend for Mobile */}
+                  <div className="mt-4 md:hidden space-y-2">
+                    {categoryData.map((entry, index) => (
+                      <div key={entry.name} className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: COLORS[index % COLORS.length] }}
                           />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        formatter={(value: number) => [
-                          value,
-                          t("admin_dashboard.charts.categories.tooltip")
-                        ]}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
+                          <span className="text-slate-700">{entry.name}</span>
+                        </div>
+                        <span className="font-semibold text-slate-900">
+                          {entry.value} ({((entry.value / categoryData.reduce((sum, item) => sum + item.value, 0)) * 100).toFixed(0)}%)
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </ChartCard>
 
                 <ChartCard
@@ -518,45 +554,47 @@ export default function AdminDashboard() {
                     </div>
                   }
                 >
-                  <ResponsiveContainer width="100%" height={300}>
-                    <AreaChart data={reservationTrendData}>
-                      <defs>
-                        <linearGradient id="vividGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#EC4899" stopOpacity={0.8} />
-                          <stop offset="100%" stopColor="#F9A8D4" stopOpacity={0.1} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                      <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#6B7280' }} />
-                      <YAxis tick={{ fontSize: 12, fill: '#6B7280' }} />
-                      <Tooltip
-                        formatter={(value: number) => [value, t("admin_dashboard.charts.reservation_trend.tooltip")]}
-                        contentStyle={{ borderRadius: '8px', backgroundColor: '#fff', borderColor: '#E5E7EB' }}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="value"
-                        stroke="none"
-                        fill="url(#vividGradient)"
-                        fillOpacity={1}
-                        isAnimationActive={true}
-                        animationDuration={2000}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="value"
-                        stroke="#EC4899"
-                        strokeWidth={3}
-                        dot={{ r: 0 }}
-                        activeDot={{ r: 6 }}
-                        name={t("admin_dashboard.charts.reservation_trend.tooltip")}
-                        isAnimationActive={true}
-                        animationDuration={2000}
-                        animationEasing="ease-out"
-                        animationBegin={300}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
+                  <div className="w-full h-[250px] md:h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={reservationTrendData}>
+                        <defs>
+                          <linearGradient id="vividGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#EC4899" stopOpacity={0.8} />
+                            <stop offset="100%" stopColor="#F9A8D4" stopOpacity={0.1} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                        <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#6B7280' }} />
+                        <YAxis tick={{ fontSize: 12, fill: '#6B7280' }} />
+                        <Tooltip
+                          formatter={(value: number) => [value, t("admin_dashboard.charts.reservation_trend.tooltip")]}
+                          contentStyle={{ borderRadius: '8px', backgroundColor: '#fff', borderColor: '#E5E7EB' }}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="value"
+                          stroke="none"
+                          fill="url(#vividGradient)"
+                          fillOpacity={1}
+                          isAnimationActive={true}
+                          animationDuration={2000}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="value"
+                          stroke="#EC4899"
+                          strokeWidth={3}
+                          dot={{ r: 0 }}
+                          activeDot={{ r: 6 }}
+                          name={t("admin_dashboard.charts.reservation_trend.tooltip")}
+                          isAnimationActive={true}
+                          animationDuration={2000}
+                          animationEasing="ease-out"
+                          animationBegin={300}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
                 </ChartCard>
               </motion.div>
             </>
