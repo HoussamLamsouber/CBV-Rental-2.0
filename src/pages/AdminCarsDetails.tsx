@@ -18,6 +18,9 @@ import i18n from "@/i18n";
 import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DateTimeField } from "@/components/SearchForm";
+import { getReservationStatus } from "@/utils/reservationStatus";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 type CarRow = {
   id: string;
@@ -74,6 +77,7 @@ type Vehicle = {
   status?: string;
   created_at: string;
   depot_id?: string;
+  db_status?: string;
 
   depots?: {
     id: string;
@@ -197,7 +201,7 @@ export default function AdminVehicleDetail() {
   const fetchVehicles = async () => {
     if (!id) return;
 
-    const { data } = await supabase
+    const { data: vehiclesData } = await supabase
       .from("vehicles")
       .select(`
         *,
@@ -217,14 +221,42 @@ export default function AdminVehicleDetail() {
       .is("is_deleted", false)
       .order("matricule");
 
+    // 🔥 SÉCURITÉ : Récupérer les réservations actives/futures pour forcer le statut "reserved"
+    const now = new Date();
 
-    const mapped = data?.map(v => {
+    const { data: activeRes } = await supabase
+      .from("reservations")
+      .select("assigned_vehicle_id, pickup_date, pickup_time, return_date, return_time")
+      .eq("car_id", id)
+      .eq("status", "accepted");
+
+    const reservedIds = new Set(
+      (activeRes || [])
+        .filter(res => {
+          if (!res.assigned_vehicle_id) return false;
+          
+          // Reconstitution du pickup et return datetime
+          const pickup = new Date(`${res.pickup_date}T${res.pickup_time}`);
+          const returnDate = new Date(`${res.return_date}T${res.return_time}`);
+          
+          // Un véhicule est bloqué SI nous sommes entre le pickup et le return
+          return now >= pickup && now <= returnDate;
+        })
+        .map(r => r.assigned_vehicle_id)
+    );
+
+    const mapped = (vehiclesData || [])?.map(v => {
       const tr = v.depots?.depot_translations?.find(
-        t => t.language_code === i18n.language
+        (t: any) => t.language_code === i18n.language
       );
+
+      // Force "reserved" if assigned to an active reservation (Source of Truth)
+      const forcedStatus = reservedIds.has(v.id) ? 'reserved' : v.status;
 
       return {
         ...v,
+        status: forcedStatus,
+        db_status: v.status, // Base status from DB for calendar logic
         depot: {
           id: v.depots?.id,
           phone: v.depots?.phone,
@@ -298,47 +330,8 @@ export default function AdminVehicleDetail() {
           setVehicle(vData as CarRow);
         }
 
-        // 2. Charger les véhicules individuels avec leurs dépôts
-        const { data: vehiclesData, error } = await supabase
-          .from("vehicles")
-          .select(`
-            *,
-            depots (
-              id,
-              phone,
-              email,
-              depot_translations (
-                name,
-                city,
-                address,
-                language_code
-              )
-            )
-          `)
-          .eq("car_id", id)
-          .is("is_deleted", false)
-          .order("matricule");
-
-        const vehicles = vehiclesData?.map(v => {
-          const tr = v.depots?.depot_translations?.find(
-            t => t.language_code === i18n.language
-          );
-
-          return {
-            ...v,
-            depot: {
-              id: v.depots?.id,
-              phone: v.depots?.phone,
-              email: v.depots?.email,
-              name: tr?.name ?? "—",
-              city: tr?.city ?? "—",
-              address: tr?.address ?? "—"
-            }
-          };
-        });
-
-
-        setVehicles(vehicles || []);
+        // 2. Charger les véhicules individuels avec sécurité
+        await fetchVehicles();
 
         const { data: locations } = await supabase
           .from("localisation_translations")
@@ -541,11 +534,19 @@ export default function AdminVehicleDetail() {
 
   // Fonctions pour le calendrier de disponibilité
   const isDateInReservation = (date: string, reservation: ReservationRow) => {
-    const currentDate = new Date(date);
-    const pickupDate = new Date(reservation.pickup_date);
-    const returnDate = new Date(reservation.return_date);
+    // Reconstitution des moments limites de la journée sur le calendrier
+    const startOfDay = new Date(`${date}T00:00:00`);
+    const endOfDay = new Date(`${date}T23:59:59`);
     
-    return currentDate >= pickupDate && currentDate <= returnDate;
+    // Reconstitution précise du pickup et return datetime pour la réservation
+    // On utilise "00:00:00" / "23:59:59" comme fallback si l'heure est manquante
+    const pickupDatetime = new Date(`${reservation.pickup_date}T${reservation.pickup_time || '00:00:00'}`);
+    const returnDatetime = new Date(`${reservation.return_date}T${reservation.return_time || '23:59:59'}`);
+    
+    // RÈGLE : Une journée est "Bloquée" dans le calendrier SEULEMENT SI
+    // la réservation couvre toute la plage [00h00, 23h59].
+    // Si elle finit pendant la journée (ex: 09h00), la journée n'est pas bloquée visuellement (disponible).
+    return pickupDatetime <= startOfDay && returnDatetime >= endOfDay;
   };
 
   const getReservedCountForDate = (date: string) => {
@@ -557,13 +558,32 @@ export default function AdminVehicleDetail() {
   const getDailyAvailability = (date: string) => {
     if (!vehicle) return 0;
 
+    // Si le modèle global est marqué indisponible
     if (!vehicle.available) {
       return 0;
     }
 
-    const reserved = getReservedCountForDate(date);
-    const totalCount = Number(vehicle.quantity || 0);
-    return Math.max(0, totalCount - reserved);
+    // 1. Identifier les unités bloquées manuellement (maintenance ou reserved en DB)
+    // Ces unités sont indisponibles pour TOUTES les dates.
+    const manuallyBlockedUnits = vehicles.filter(v => 
+      v.status === "maintenance" || v.db_status === "reserved"
+    );
+    const manuallyBlockedIds = new Set(manuallyBlockedUnits.map(v => v.id));
+
+    // 2. Compter les réservations pour cette date spécifique
+    // On ne compte que les réservations assignées à des unités qui ne sont pas déjà bloquées manuellement
+    // pour éviter le double comptage.
+    const reservedOnDateCount = acceptedReservations.filter(r => 
+      r.assigned_vehicle_id && 
+      !manuallyBlockedIds.has(r.assigned_vehicle_id) && 
+      isDateInReservation(date, r)
+    ).length;
+
+    // Source de Vérité : on utilise le nombre d'unités physiques réelles
+    const totalPhysicalUnits = vehicles.length;
+    const totalUnavailable = manuallyBlockedUnits.length + reservedOnDateCount;
+
+    return Math.max(0, totalPhysicalUnits - totalUnavailable);
   };
 
   // Fonction pour obtenir les informations du client
@@ -732,6 +752,7 @@ export default function AdminVehicleDetail() {
 
   // Compter les véhicules par statut
   const getVehicleStats = () => {
+    // Force counting from the actual vehicles array (Source of Truth)
     const stats = {
       total: vehicles.length,
       available: vehicles.filter(v => v.status === 'available').length,
@@ -800,14 +821,31 @@ export default function AdminVehicleDetail() {
 
       if (error) throw error;
 
-      // Mettre à jour l'état local
-      setVehicles(prev => 
-        prev.map(vehicle => 
-          vehicle.id === vehicleId 
-            ? { ...vehicle, status: newStatus }
-            : vehicle
-        )
-      );
+      // 🔥 PROTECTION : Empêcher le passage à "available" si une réservation active ou future est assignée
+      if (newStatus === 'available') {
+        const now = new Date();
+
+        const hasActiveReservation = allReservations.some(res => {
+          if (res.status !== 'accepted' && res.status !== 'active') return false;
+          
+          const returnDate = new Date(`${res.return_date}T${res.return_time}`);
+          return res.assigned_vehicle_id === vehicleId && returnDate >= now;
+        });
+
+        if (hasActiveReservation) {
+          toast({
+            title: t('admin_reservations.toast.error', 'Action bloquée'),
+            description: "Ce véhicule est actuellement assigné à une réservation active et ne peut pas être marqué comme disponible.",
+            variant: "destructive",
+          });
+          // Recharger pour annuler le changement visuel potentiel
+          await fetchVehicles();
+          return;
+        }
+      }
+
+      // Recharger pour assurer la cohérence (Source of Truth)
+      await fetchVehicles();
 
       toast({
         title: t('admin_vehicle_detail.messages.status_updated'),
@@ -1135,10 +1173,10 @@ export default function AdminVehicleDetail() {
 
             {/* Stock affiché simplement sans input */}
             <div className="mb-4">
-              <label className="block text-sm text-gray-600 mb-1">{t('admin_vehicle_detail.vehicle_info.total_stock')} : {vehicle.quantity || 0}</label>
+              <label className="block text-sm text-gray-600 mb-1">{t('admin_vehicle_detail.vehicle_info.total_stock')} : {vehicles.length}</label>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-500">
-                  ({t('admin_vehicle_detail.vehicle_info.auto_sync')} {vehicle.quantity || 0} {t('admin_vehicle_detail.vehicle_info.vehicles_active')})
+                  ({t('admin_vehicle_detail.vehicle_info.auto_sync')} {vehicles.length} {t('admin_vehicle_detail.vehicle_info.vehicles_active')})
                 </span>
               </div>
             </div>
@@ -1482,30 +1520,50 @@ export default function AdminVehicleDetail() {
                       
                       return (
                         <tr key={reservation.id} className="border-b hover:bg-gray-50">
-                          <td className="p-4 font-mono text-sm">{reservation.id.slice(0, 8)}...</td>
+                          <td className="p-4 font-mono text-sm">
+                            <span className="truncate max-w-[160px] block" title={reservation.id}>
+                              {reservation.id}
+                            </span>
+                          </td>
                           <td className="p-4">
                             <div className="space-y-1">
-                              <div className="font-medium">{clientInfo.name}</div>
-                              <div className="text-sm text-gray-600">{clientInfo.email}</div>
+                              <div className="font-medium truncate max-w-[160px]" title={clientInfo.name}>{clientInfo.name}</div>
+                              <div className="text-sm text-gray-600 truncate max-w-[160px]" title={clientInfo.email}>{clientInfo.email}</div>
                               <div className="text-xs text-gray-500">{clientInfo.type}</div>
                             </div>
                           </td>
-                          <td className="p-4 truncate max-w-[120px]">
-                            {formatDateDisplay(new Date(reservation.pickup_date), "dd/MM/yyyy", i18n.language)}{" "}-{" "}
-                            {formatDateDisplay(new Date(reservation.return_date), "dd/MM/yyyy", i18n.language)}
+                          <td className="p-4">
+                            <div className="truncate max-w-[160px]" title={`${formatDateDisplay(new Date(reservation.pickup_date), "dd/MM/yyyy", i18n.language)} - ${formatDateDisplay(new Date(reservation.return_date), "dd/MM/yyyy", i18n.language)}`}>
+                              {formatDateDisplay(new Date(reservation.pickup_date), "dd/MM/yyyy", i18n.language)}{" "}-{" "}
+                              {formatDateDisplay(new Date(reservation.return_date), "dd/MM/yyyy", i18n.language)}
+                            </div>
                           </td>
                           <td className="p-4">
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${
-                              reservation.status === 'accepted' 
-                                ? 'bg-green-100 text-green-800' 
-                                : reservation.status === 'pending'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}>
-                              {reservation.status === 'accepted' ? '✅ ' + t('admin_reservations.status.accepted') : 
-                              reservation.status === 'pending' ? '⏳ ' + t('admin_reservations.status.pending') : 
-                              '❌ ' + t('admin_reservations.status.refused')}
-                            </span>
+                            {(() => {
+                              const computedStatus = getReservationStatus({
+                                status: reservation.status,
+                                start_date: reservation.pickup_date,
+                                end_date: reservation.return_date
+                              });
+
+                              const colors = {
+                                pending: "bg-yellow-200 text-yellow-800",
+                                accepted: "bg-blue-200 text-blue-800",
+                                active: "bg-green-200 text-green-800",
+                                completed: "bg-gray-200 text-gray-800",
+                                refused: "bg-red-200 text-red-800",
+                                cancelled: "bg-orange-200 text-orange-800",
+                                expired: "bg-purple-200 text-purple-800"
+                              };
+
+                              const colorClass = colors[computedStatus as keyof typeof colors] || "bg-yellow-200 text-yellow-800";
+                              
+                              return (
+                                <Badge variant="secondary" className={cn("px-3 py-1 rounded-lg text-[12px] font-bold uppercase tracking-widest border-none transition-colors", colorClass)}>
+                                  {t(`reservationStatus.${computedStatus}`)}
+                                </Badge>
+                              );
+                            })()}
                           </td>
                           <td className="p-4">
                             {reservation.vehicles ? (
@@ -1536,9 +1594,11 @@ export default function AdminVehicleDetail() {
                               </div>
                             )}
                           </td>
-                          <td className="p-4 text-sm truncate max-w-[120px]">
-                            {translateLocation(reservation.pickup_location)}{" "}→{" "}
-                            {translateLocation(reservation.return_location)}
+                          <td className="p-4 text-sm">
+                            <div className="truncate max-w-[160px]" title={`${translateLocation(reservation.pickup_location)} → ${translateLocation(reservation.return_location)}`}>
+                              {translateLocation(reservation.pickup_location)}{" "}→{" "}
+                              {translateLocation(reservation.return_location)}
+                            </div>
                           </td>
                         </tr>
                       );

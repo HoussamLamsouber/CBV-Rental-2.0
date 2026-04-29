@@ -49,6 +49,9 @@ interface Reservation {
   guest_email?: string;
   guest_phone?: string;
   total_amount?: number;
+  assigned_vehicle_id?: string | null;
+  pickup_time: string;
+  return_time: string;
 }
 
 interface DashboardStats {
@@ -134,10 +137,10 @@ export default function AdminDashboard() {
       if (carsError) throw carsError;
       setVehicles(carsData || []);
 
-      // Fetch physical vehicle statuses to correctly account for maintenance
+      // Fetch physical vehicle statuses to correctly account for maintenance and manual status
       const { data: physicalVehiclesData } = await supabase
         .from("vehicles")
-        .select("car_id, status")
+        .select("id, car_id, status")
         .is("is_deleted", false);
 
       const { data: allResData, error: allResError } = await supabase
@@ -187,21 +190,39 @@ export default function AdminDashboard() {
   };
 
   function calculateStats(vehicles: any[], allReservations: Reservation[], physicalVehicles: any[] = []) {
-    // SOURCE OF TRUTH: sum of quantities from cars table
     const totalVehicles = vehicles.reduce((sum, v) => sum + Number(v.quantity || 0), 0);
+    const now = new Date();
 
-    const activeRentals = allReservations.filter(r => {
-      const today = new Date();
-      const pickup = new Date(r.pickup_date);
-      const returnDate = new Date(r.return_date);
-      return r.status === "accepted" && today >= pickup && today <= returnDate;
-    }).length;
+    // SOURCE DE VÉRITÉ : Véhicules physiquement réservés via datetime
+    const reservedFromResIds = new Set(
+      allReservations
+        .filter(r => {
+          if (r.status !== "accepted" || !r.assigned_vehicle_id) return false;
+          
+          // Reconstitution précise du datetime
+          const pickup = new Date(`${r.pickup_date}T${r.pickup_time}`);
+          const returnDate = new Date(`${r.return_date}T${r.return_time}`);
+          
+          return now >= pickup && now <= returnDate;
+        })
+        .map(r => r.assigned_vehicle_id)
+    );
 
-    // Count vehicles currently in maintenance (not available for rental)
-    const maintenanceCount = physicalVehicles.filter(v => v.status === "maintenance").length;
+    // Un véhicule est indisponible (non disponible à la location NOW) si :
+    // 1. En maintenance
+    // 2. Réservé via une réservation active (datetime)
+    // 3. Marqué manuellement comme 'reserved'
+    const unavailableCount = physicalVehicles.filter(v => 
+      v.status === "maintenance" || 
+      reservedFromResIds.has(v.id) || 
+      v.status === "reserved"
+    ).length;
 
-    // Available = total stock minus active rentals minus those in maintenance
-    const availableVehicles = Math.max(0, totalVehicles - activeRentals - maintenanceCount);
+    // Available = total stock minus unavailable units
+    const availableVehicles = Math.max(0, totalVehicles - unavailableCount);
+    
+    // Active Rentals = nombre de véhicules physiquement chez le client (via datetime)
+    const activeRentals = reservedFromResIds.size;
 
     const currentMonthStart = startOfMonth(new Date());
     const currentMonthEnd = endOfMonth(new Date());

@@ -72,7 +72,7 @@ export default function AdminVehicles() {
     try {
       setIsLoading(true);
 
-      // Récupère les modèles
+      // 1. Récupère les modèles
       const { data: carsData, error: carsError } = await supabase
         .from("cars")
         .select("*")
@@ -80,33 +80,65 @@ export default function AdminVehicles() {
 
       if (carsError) throw carsError;
 
-      // Récupère l'état réel de chaque véhicule physique
+      // 2. Récupère l'état réel de chaque véhicule physique
       const { data: vehiclesData, error: vehiclesError } = await supabase
         .from("vehicles")
-        .select("car_id, status")
+        .select("id, car_id, status")
         .is("is_deleted", false);
 
       if (vehiclesError) throw vehiclesError;
 
-      // Construire la map count par modèle
-      const stockTracker = (carsData || []).map(car => {
-        // Log full object for debugging as requested by user
-        console.log('Vehicle data from DB (AdminVehicles):', car);
+      // 3. Récupère les réservations actives (Source de Vérité avec Datetime)
+      const now = new Date();
+      const { data: activeResData, error: resError } = await supabase
+        .from("reservations")
+        .select("assigned_vehicle_id, pickup_date, pickup_time, return_date, return_time")
+        .eq("status", "accepted");
 
+      if (resError) throw resError;
+
+      // Filtrage par Datetime Complet
+      const reservedVehicleIds = new Set(
+        (activeResData || [])
+          .filter(res => {
+            if (!res.assigned_vehicle_id) return false;
+            
+            // Reconstitution du pickup et return datetime
+            const pickup = new Date(`${res.pickup_date}T${res.pickup_time}`);
+            const returnDate = new Date(`${res.return_date}T${res.return_time}`);
+            
+            // Un véhicule est bloqué SI nous sommes entre le pickup et le return
+            return now >= pickup && now <= returnDate;
+          })
+          .map(r => r.assigned_vehicle_id)
+      );
+
+      // 4. Construire la map count par modèle
+      const stockTracker = (carsData || []).map(car => {
         // SOURCE OF TRUTH: must use car.quantity
         const totalStock = Number(car.quantity || 0);
         
-        // Count reservations from established units if needed for "available_now"
+        // Filtrer les véhicules physiques de ce modèle
         const relatedVehicles = (vehiclesData || []).filter(v => v.car_id === car.id);
-        const reservedCount = relatedVehicles.filter(v => v.status === "reserved").length;
+        
+        // UN VEHICULE EST EN MAINTENANCE SI :
+        // - Son statut dans la table 'vehicles' est 'maintenance'
         const maintenanceCount = relatedVehicles.filter(v => v.status === "maintenance").length;
+
+        // UN VEHICULE EST RESERVÉ SI :
+        // - Son ID est dans la liste des réservations 'accepted' de ce jour
+        // - OU son statut est manuellement 'reserved'
+        // - ET il n'est pas déjà compté comme 'maintenance' (pour éviter le double comptage)
+        const actualReservedCount = relatedVehicles.filter(v => 
+          v.status !== "maintenance" && (reservedVehicleIds.has(v.id) || v.status === "reserved")
+        ).length;
 
         return {
           ...car,
           quantity: totalStock,
-          // Subtract both reserved AND maintenance vehicles from available count
-          available_now: Math.max(0, totalStock - reservedCount - maintenanceCount),
-          reservation_count: reservedCount,
+          // Un véhicule est disponible s'il n'est ni réservé pour aujourd'hui, ni en maintenance
+          available_now: Math.max(0, totalStock - actualReservedCount - maintenanceCount),
+          reservation_count: actualReservedCount,
           maintenance_count: maintenanceCount,
         };
       });

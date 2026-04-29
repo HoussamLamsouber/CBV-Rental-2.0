@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -48,6 +48,70 @@ const MaReservation = () => {
   const { user } = useAuth();
   const { t, i18n } = useTranslation();
 
+  const loadUserReservations = useCallback(async () => {
+    // 1️⃣ Récupérer les réservations
+    const { data: reservationsData, error: reservationsError } = await supabase
+      .from("reservations")
+      .select("*")
+      .eq("user_id", user?.id)
+      .neq("status", "cancelled")
+      .order("created_at", { ascending: false });
+
+    if (reservationsError) throw reservationsError;
+
+    if (!reservationsData || reservationsData.length === 0) {
+      setReservations([]);
+      return;
+    }
+
+    // 2️⃣ Récupérer le profil utilisateur
+    const { data: profileData, error: profileError } = await supabase
+      .from("profiles")
+      .select("full_name, email, telephone")
+      .eq("id", user?.id)
+      .single();
+
+    if (profileError) console.error("Erreur chargement profil:", profileError);
+
+    // 3️⃣ Récupérer les localisations traduites
+    const locationIds = [
+      ...new Set(
+        reservationsData.flatMap(r => [r.pickup_location, r.return_location])
+      )
+    ];
+
+    const { data: locationsData, error: locationsError } = await supabase
+      .from("localisation_translations")
+      .select("localisation_id, language, display_name")
+      .in("localisation_id", locationIds)
+      .eq("language", i18n.language);
+
+    if (locationsError) console.error("Erreur chargement localisations:", locationsError);
+
+    // 4️⃣ Construire un dictionnaire pour lookup rapide
+    const locationMap = new Map<string, string>();
+    locationsData?.forEach(loc => {
+      locationMap.set(loc.localisation_id, loc.display_name);
+    });
+
+    // 5️⃣ Construire les réservations finales
+    const reservationsWithProfile: ReservationWithProfile[] = reservationsData.map(reservation => ({
+      ...reservation,
+      client_name: profileData?.full_name || user?.email || t('ma_reservation.messages.not_specified'),
+      client_email: profileData?.email || user?.email || '',
+      client_phone: profileData?.telephone,
+      pickup_location_name: locationMap.get(reservation.pickup_location) || reservation.pickup_location,
+      return_location_name: locationMap.get(reservation.return_location) || reservation.return_location,
+      computed_status: getReservationStatus({
+        status: reservation.status,
+        start_date: reservation.pickup_date,
+        end_date: reservation.return_date
+      })
+    }));
+
+    setReservations(reservationsWithProfile);
+  }, [user, i18n.language, t]);
+
   useEffect(() => {
     let mounted = true;
 
@@ -74,74 +138,9 @@ const MaReservation = () => {
       }
     };
 
-    const loadUserReservations = async () => {
-      // 1️⃣ Récupérer les réservations
-      const { data: reservationsData, error: reservationsError } = await supabase
-        .from("reservations")
-        .select("*")
-        .eq("user_id", user.id)
-        .neq("status", "cancelled")
-        .order("created_at", { ascending: false });
-
-      if (reservationsError) throw reservationsError;
-
-      if (!reservationsData || reservationsData.length === 0) {
-        setReservations([]);
-        return;
-      }
-
-      // 2️⃣ Récupérer le profil utilisateur
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("full_name, email, telephone")
-        .eq("id", user.id)
-        .single();
-
-      if (profileError) console.error("Erreur chargement profil:", profileError);
-
-      // 3️⃣ Récupérer les localisations traduites
-      const locationIds = [
-        ...new Set(
-          reservationsData.flatMap(r => [r.pickup_location, r.return_location])
-        )
-      ];
-
-      const { data: locationsData, error: locationsError } = await supabase
-        .from("localisation_translations")
-        .select("localisation_id, language, display_name")
-        .in("localisation_id", locationIds)
-        .eq("language", i18n.language);
-
-      if (locationsError) console.error("Erreur chargement localisations:", locationsError);
-
-      // 4️⃣ Construire un dictionnaire pour lookup rapide
-      const locationMap = new Map<string, string>();
-      locationsData?.forEach(loc => {
-        locationMap.set(loc.localisation_id, loc.display_name);
-      });
-
-      // 5️⃣ Construire les réservations finales
-      const reservationsWithProfile: ReservationWithProfile[] = reservationsData.map(reservation => ({
-        ...reservation,
-        client_name: profileData?.full_name || user.email || t('ma_reservation.messages.not_specified'),
-        client_email: profileData?.email || user.email,
-        client_phone: profileData?.telephone,
-        pickup_location_name: locationMap.get(reservation.pickup_location) || reservation.pickup_location,
-        return_location_name: locationMap.get(reservation.return_location) || reservation.return_location,
-        computed_status: getReservationStatus({
-          status: reservation.status,
-          start_date: reservation.pickup_date,
-          end_date: reservation.return_date
-        })
-      }));
-
-      setReservations(reservationsWithProfile);
-    };
-
-
     loadReservations();
     return () => { mounted = false; };
-  }, [user, t]);
+  }, [user, loadUserReservations, t]);
 
   const getLocationName = async (id: string) => {
     const { data, error } = await supabase
@@ -164,14 +163,10 @@ const MaReservation = () => {
     try {
       setCancellingId(res.id);
   
-      // 🔥 REMPLACER LA SUPPRESSION PAR UN SOFT DELETE
-      const { error } = await supabase
-        .from("reservations")
-        .update({ 
-          status: "cancelled",
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", res.id);
+      // 🔥 UTILISER L'RPC POUR UNE ANNULATION ATOMIQUE ET ROBUSTE
+      const { error } = await supabase.rpc('cancel_reservation', { 
+        res_id: res.id 
+      });
   
       if (error) throw error;
   
@@ -213,10 +208,8 @@ const MaReservation = () => {
         description: t('ma_reservation.messages.reservation_cancelled_for').replace('{carName}', res.car_name)
       });
       
-      // 🔥 METTRE À JOUR LE STATUT LOCALEMENT AU LIEU DE SUPPRIMER
-      setReservations(prev => prev.map(r => 
-        r.id === res.id ? { ...r, status: 'cancelled' } : r
-      ));
+      // 🔥 RECHARGER LA LISTE POUR FAIRE DISPARAÎTRE LA RÉSERVATION
+      await loadUserReservations();
     } catch (err) {
       console.error("Erreur annulation:", err);
       toast({ 
