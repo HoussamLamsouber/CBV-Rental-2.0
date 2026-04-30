@@ -1511,7 +1511,7 @@ export default function AdminVehicleDetail() {
                       <th className="p-4 text-left whitespace-nowrap">{t('admin_vehicle_detail.reservations.period')}</th>
                       <th className="p-4 text-left whitespace-nowrap">{t('admin_vehicle_detail.reservations.status')}</th>
                       <th className="p-4 text-left whitespace-nowrap">{t('admin_vehicle_detail.reservations.assigned_vehicle', 'Véhicule attribué')}</th>
-                      <th className="p-4 text-left whitespace-nowrap">{t('admin_vehicle_detail.reservations.localisations')}</th>
+                      <th className="p-4 text-left min-w-[200px]">{t('admin_vehicle_detail.reservations.localisations')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1595,7 +1595,7 @@ export default function AdminVehicleDetail() {
                             )}
                           </td>
                           <td className="p-4 text-sm">
-                            <div className="truncate max-w-[160px]" title={`${translateLocation(reservation.pickup_location)} → ${translateLocation(reservation.return_location)}`}>
+                            <div className="min-w-[200px] max-w-[300px] whitespace-normal break-words">
                               {translateLocation(reservation.pickup_location)}{" "}→{" "}
                               {translateLocation(reservation.return_location)}
                             </div>

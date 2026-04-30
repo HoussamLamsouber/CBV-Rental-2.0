@@ -612,7 +612,7 @@ export default function AdminLocalisations() {
                     <th className="px-6 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest whitespace-nowrap">
                       {t('admin_localisations.table.type')}
                     </th>
-                    <th className="px-6 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-widest whitespace-nowrap">
+                    <th className="px-6 py-3 text-center text-[11px] font-semibold text-slate-500 uppercase tracking-widest whitespace-nowrap">
                       {t('admin_localisations.table.technical_value')}
                     </th>
                     <th className="px-6 py-3 text-center text-[11px] font-semibold text-slate-500 uppercase tracking-widest w-[120px] whitespace-nowrap">
@@ -632,12 +632,12 @@ export default function AdminLocalisations() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">
                             {getLocalisationIcon(localisation.localisation_type)}
-                            <span className="font-medium text-gray-900 truncate max-w-[120px]">
+                            <span className="font-medium text-gray-900 truncate max-w-[300px]">
                               {displayName}
                             </span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-2 py-4 whitespace-nowrap">
                           <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${localisation.localisation_type === 'airport'
                             ? 'bg-blue-100 text-blue-800'
                             : 'bg-green-100 text-green-800'
@@ -645,7 +645,7 @@ export default function AdminLocalisations() {
                             {t(`admin_localisations.types.${localisation.localisation_type}`)}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-500 font-mono whitespace-nowrap">
+                        <td className="px-6 py-4 text-sm text-center text-gray-500 font-mono whitespace-nowrap">
                           {localisation.localisation_value}
                         </td>
                         <td className="px-6 py-4">
